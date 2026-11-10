@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 

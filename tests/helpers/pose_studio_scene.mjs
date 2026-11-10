@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import vm from "node:vm";
+import "./i18n_vm.mjs";
 import { gunzipSync } from "node:zlib";
 import * as THREE from "../../web/vendor/three/three.module.js";
 import { PoseViewerCore } from "../../web/pose_studio/core.js";

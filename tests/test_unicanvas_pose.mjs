@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import * as THREE from "../web/vendor/three/three.module.js";
 import { POSE_HELP_CSS, buildPoseHelp } from "../web/unicanvas/pose_help.mjs";
 import * as state from "../web/unicanvas/pose_state.mjs";

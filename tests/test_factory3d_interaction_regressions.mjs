@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import * as schema from "../web/factory3d/editor_schema.mjs";
 import * as descriptors from "../web/factory3d/core/property_descriptors.mjs";
 import * as parts from "../web/factory3d/geometry/parametric_parts.mjs";

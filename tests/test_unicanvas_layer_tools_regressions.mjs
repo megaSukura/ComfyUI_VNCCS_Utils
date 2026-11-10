@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import { writePsd, readPsd, initializeCanvas } from "../web/vendor/ag-psd.bundle.mjs";
 
 const source = readFileSync(new URL("../web/unicanvas/layer_tools.mjs", import.meta.url), "utf8");

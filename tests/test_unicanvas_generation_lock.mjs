@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import { trimPanoramaHistory } from "../web/unicanvas/panorama.mjs";
 
 const source = readFileSync(new URL("../web/vnccs_unicanvas.js", import.meta.url), "utf8");

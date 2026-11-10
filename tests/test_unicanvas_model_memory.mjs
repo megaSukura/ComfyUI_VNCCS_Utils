@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
+import "./helpers/i18n_vm.mjs";
 
 import {
     MODEL_MEMORY_ROUTE,

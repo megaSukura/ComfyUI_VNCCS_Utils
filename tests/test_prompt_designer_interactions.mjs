@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import { defaultState, normalizeState, readEditor } from "../web/prompt_designer/state.mjs";
 import { blockRows, blockSourceMode } from "../web/prompt_designer/block_source.mjs";
 import { PromptDesignerWidget } from "../web/prompt_designer/widget.mjs";

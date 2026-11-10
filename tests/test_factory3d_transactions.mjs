@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import { FactoryCommandHistory } from "../web/factory3d/editor_commands.mjs";
 import { FactoryPropertyGesture } from "../web/factory3d/core/property_gesture.mjs";
 import { LIGHT_NUMERIC_PROPERTIES, acceptNumericDraft, readLightProperty, writeLightProperty } from "../web/factory3d/core/property_descriptors.mjs";

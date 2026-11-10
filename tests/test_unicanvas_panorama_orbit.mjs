@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import { PanoramaOrbitControl, orbitPoint, orbitDrag, drawPanoramaOrbit } from "../web/unicanvas/panorama_orbit.mjs";
 import { normalizePanorama, PanoramaDocument, trimPanoramaHistory } from "../web/unicanvas/panorama.mjs";
 import { createCanvasDocument, deleteCanvasDocument, openCanvasDocument } from "../web/unicanvas/documents.mjs";

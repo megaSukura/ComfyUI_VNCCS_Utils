@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import { checkModelDependencies, disposeModelDependencies, openModelDependencies } from "../web/unicanvas/model_dependencies.mjs";
 
 const source = await readFile(new URL("../web/vnccs_unicanvas.js", import.meta.url), "utf8");

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import test from "node:test";
 import { forceUniCanvasPresetModelSettings } from "../web/unicanvas/presets.mjs";
 import { UNICANVAS_QWEN21_MODULE } from "../web/unicanvas/qwen21.mjs";

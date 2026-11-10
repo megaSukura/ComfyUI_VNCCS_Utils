@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import test from "node:test";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import { createScene, Element } from "./helpers/pose_studio_scene.mjs";
 import {
     createAnimationCacheReference, createDefaultAnimationState,

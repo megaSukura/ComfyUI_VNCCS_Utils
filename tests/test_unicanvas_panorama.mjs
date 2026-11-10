@@ -4,6 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import { normalizePanorama, isPanoramaCandidate, viewToSphere, sphereToView, PanoramaDocument, trimPanoramaHistory, DEFAULT_PANORAMA_CAMERA } from "../web/unicanvas/panorama.mjs";
 import { snapAxisAngles } from "../web/unicanvas/panorama_orbit.mjs";
 import { normalizeTransformMode } from "../web/unicanvas/transform.mjs";

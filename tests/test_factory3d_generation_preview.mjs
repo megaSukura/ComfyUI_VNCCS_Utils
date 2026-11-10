@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 
 const source = fs.readFileSync(new URL("../web/factory3d/generation_preview.mjs", import.meta.url), "utf8");
 const studio = fs.readFileSync(new URL("../web/vnccs_3d_factory.js", import.meta.url), "utf8");

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import { UNICANVAS_QWEN21_MODULE } from "../web/unicanvas/qwen21.mjs";
 
 import {

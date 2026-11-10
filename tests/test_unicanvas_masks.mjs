@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import { normalizePanorama } from "../web/unicanvas/panorama.mjs";
 import { normalizeTransformMode } from "../web/unicanvas/transform.mjs";
 import { isImageLayer, serializePose } from "../web/unicanvas/pose_state.mjs";

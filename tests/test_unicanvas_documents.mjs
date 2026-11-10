@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
+import "./helpers/i18n_vm.mjs";
 import { readFileSync } from 'node:fs';
 import { applyCanvasDocument, createCanvasDocument, deleteCanvasDocument, ensureCanvasDocument, installCanvasDocuments, openCanvasDocument, openCanvasManager } from '../web/unicanvas/documents.mjs';
 import { normalizePanorama } from '../web/unicanvas/panorama.mjs';

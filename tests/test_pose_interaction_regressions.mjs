@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import test from "node:test";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import * as animation from "../web/pose_studio/animation.mjs";
 import * as characters from "../web/pose_studio/characters.mjs";
 import * as THREE from "../web/vendor/three/three.module.js";

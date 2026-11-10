@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 
 // All regexes avoid literal line breaks so the suite stays CRLF-tolerant on
 // Windows checkouts (see tests/test_unicanvas_frontend.mjs for the contrast).

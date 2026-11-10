@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 
 const source = readFileSync(new URL("../web/vnccs_unicanvas.js", import.meta.url), "utf8");
 const tools = readFileSync(new URL("../web/unicanvas/layer_tools.mjs", import.meta.url), "utf8");

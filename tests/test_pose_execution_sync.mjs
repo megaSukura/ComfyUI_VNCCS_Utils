@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import test from "node:test";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 
 const source = await fs.readFile(new URL("../web/vnccs_pose_studio.js", import.meta.url), "utf8");
 const widgetSource = source.slice(source.indexOf("class PoseStudioWidget {"),

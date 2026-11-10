@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import test from "node:test";
 import { autoNameLayers } from "../web/unicanvas/naming.mjs";
 import { compositeBlendModeToPsd } from "../web/unicanvas/layer_tools.mjs";

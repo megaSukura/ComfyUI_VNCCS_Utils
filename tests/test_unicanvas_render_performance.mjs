@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import { homographyFromUnitSquare, normalizeTransformMode, rectToQuad, transformDraftBounds } from "../web/unicanvas/transform.mjs";
 import { normalizePanorama, trimPanoramaHistory } from "../web/unicanvas/panorama.mjs";
 

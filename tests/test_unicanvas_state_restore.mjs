@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
+import "./helpers/i18n_vm.mjs";
 import test from "node:test";
 import { mergePoseCache, serializePose } from "../web/unicanvas/pose_state.mjs";
 import { normalizePanorama } from "../web/unicanvas/panorama.mjs";
