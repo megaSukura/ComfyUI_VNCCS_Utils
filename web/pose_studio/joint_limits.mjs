@@ -37,6 +37,7 @@ const JOINT_LIMITS = {
 };
 
 const clampRange = (value, [min, max]) => Math.min(max, Math.max(min, value));
+const outsideRange = (value, [min, max]) => Math.max(0, min - value, value - max);
 
 export class JointLimiter {
     constructor(THREE) {
@@ -46,6 +47,7 @@ export class JointLimiter {
         this._local = new THREE.Quaternion();
         this._twist = new THREE.Quaternion();
         this._swing = new THREE.Quaternion();
+        this._step = new THREE.Quaternion();
         this._worldQuat = new THREE.Quaternion();
         this._parentQuat = new THREE.Quaternion();
         this._basis = new THREE.Matrix4();
@@ -118,10 +120,10 @@ export class JointLimiter {
     }
 
     // Split a bone's local rotation into the frame's flexion, lateral and twist angles.
-    _decompose(bone) {
+    _decompose(bone, quaternion = bone.quaternion) {
         const limit = this._resolve(bone);
         if (!limit) return null;
-        const q = this._local.copy(this._inverseFrame).multiply(bone.quaternion).multiply(this._frame);
+        const q = this._local.copy(this._inverseFrame).multiply(quaternion).multiply(this._frame);
         if (q.w < 0) q.set(-q.x, -q.y, -q.z, -q.w);
 
         const twistLength = Math.hypot(q.y, q.w);
@@ -160,6 +162,36 @@ export class JointLimiter {
         return true;
     }
 
+    // How far a local rotation lies outside the bone's ranges, summed over its three angles.
+    _violation(bone, quaternion) {
+        const state = this._decompose(bone, quaternion);
+        if (!state) return 0;
+        const { limit } = state;
+        return outsideRange(state.flexion, limit.flexion) + outsideRange(state.lateral, limit.lateral) + outsideRange(state.twist, limit.twist);
+    }
+
+    /**
+     * Turn a bone from `from` toward `to` and stop where it would leave its range,
+     * instead of projecting onto the range like clamp(), which can swing the bone
+     * around another axis. A rotation that is already out of range may move back
+     * but not further out. Writes bone.quaternion; returns true when it stopped.
+     */
+    stopAtLimit(bone, from, to) {
+        const allowed = this._violation(bone, from) + 1e-9;
+        if (this._violation(bone, to) <= allowed) {
+            bone.quaternion.copy(to);
+            return false;
+        }
+        let low = 0, high = 1;
+        for (let i = 0; i < 24; i++) {
+            const middle = (low + high) / 2;
+            if (this._violation(bone, this._step.slerpQuaternions(from, to, middle)) <= allowed) low = middle;
+            else high = middle;
+        }
+        bone.quaternion.slerpQuaternions(from, to, low);
+        return true;
+    }
+
     /**
      * Twist the root of a two-bone chain around its own axis by the smallest
      * angle that lets the mid joint (elbow/knee) point at the target within its
@@ -186,7 +218,6 @@ export class JointLimiter {
         const turnedHinge = new THREE.Vector3();
         const turnedRest = new THREE.Vector3();
         const turnedSide = new THREE.Vector3();
-        const outside = (value, [min, max]) => Math.max(0, min - value, value - max);
         // How far the mid joint (and the root twist) would leave their ranges after turning the root.
         const violation = angle => {
             turn.setFromAxisAngle(axis, angle);
@@ -198,8 +229,8 @@ export class JointLimiter {
             const swing = Math.atan2(sine, y);
             const flexion = sine > 1e-9 ? z / sine * swing : 0;
             const lateral = sine > 1e-9 ? -x / sine * swing : 0;
-            return outside(flexion, limit.flexion) + outside(lateral, limit.lateral)
-                + (root ? outside(root.twist + angle, root.limit.twist) : 0);
+            return outsideRange(flexion, limit.flexion) + outsideRange(lateral, limit.lateral)
+                + (root ? outsideRange(root.twist + angle, root.limit.twist) : 0);
         };
 
         let best = { angle: 0, violation: violation(0) };

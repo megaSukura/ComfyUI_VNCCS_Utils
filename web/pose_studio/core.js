@@ -7,7 +7,7 @@
 
 import { normalizeCaptureLens } from "./animation.mjs?v=20261110.1";
 import { t as tr } from "../i18n/index.mjs";
-import { JointLimiter } from "./joint_limits.mjs?v=20261110.1";
+import { JointLimiter } from "./joint_limits.mjs?v=20261110.2";
 
 // Determine the extension's base URL dynamically to support varied directory names
 const EXTENSION_URL = new URL(".", import.meta.url).toString();
@@ -1210,6 +1210,7 @@ export class PoseViewerCore {
         this.useHandControlPopover = this.options.useHandControlPopover !== false;
         this.jointLimitsEnabled = this.options.jointLimits === true;
         this._jointLimiter = null;
+        this._gizmoDrag = null;
     }
 
     _getHandSideFromBoneName(name) {
@@ -1332,6 +1333,22 @@ export class PoseViewerCore {
         if (!limiter || !bone || !limiter.clamp(bone)) return false;
         bone.updateMatrixWorld(true);
         return true;
+    }
+
+    // TransformControls rebuilds the rotation from the drag start on every move, so the
+    // gizmo's own rotation is tracked apart from the limited bone and only each move's
+    // increment is applied to it. A joint stopped at its limit follows again as soon as
+    // the drag turns back.
+    limitGizmoRotation(bone) {
+        const drag = this._gizmoDrag;
+        const limiter = this._activeJointLimiter();
+        if (!limiter?.hasLimit(bone) || drag?.bone !== bone) return false;
+        const target = drag.limited.clone().multiply(drag.gizmo.invert()).multiply(bone.quaternion).normalize();
+        drag.gizmo.copy(bone.quaternion);
+        const stopped = limiter.stopAtLimit(bone, drag.limited, target);
+        drag.limited.copy(bone.quaternion);
+        bone.updateMatrixWorld(true);
+        return stopped;
     }
 
     dispatchPoseChange() {
@@ -1585,8 +1602,11 @@ export class PoseViewerCore {
             if (e.value) {
                 // Drag Started: Record state for Undo
                 this.recordState();
+                const bone = this.transform.object === this.selectedBone ? this.selectedBone : null;
+                this._gizmoDrag = bone && { bone, gizmo: bone.quaternion.clone(), limited: bone.quaternion.clone() };
             } else {
                 // Drag Ended
+                this._gizmoDrag = null;
                 // If dragging an IK effector, do final IK solve
                 if (this.selectedIKEffector && this.transform.mode === 'translate') {
                     this.solveIKForEffector();
@@ -1617,8 +1637,8 @@ export class PoseViewerCore {
                 // Pole target moved - solve IK for this chain
                 this.solveIKForPoleTarget();
             } else if (this.selectedBone) {
-                // FK rotation - keep the joint in range, then update all effector positions to follow bones
-                this.applyJointLimits(this.selectedBone);
+                // FK rotation - stop at the joint limit, then update all effector positions to follow bones
+                this.limitGizmoRotation(this.selectedBone);
                 this.updateIKEffectorPositions();
             }
             this.requestRender();
