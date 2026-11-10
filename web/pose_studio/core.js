@@ -6,6 +6,7 @@
 
 
 import { normalizeCaptureLens } from "./animation.mjs?v=20261105.1";
+import { JointLimiter } from "./joint_limits.mjs?v=20261110.1";
 
 // Determine the extension's base URL dynamically to support varied directory names
 const EXTENSION_URL = new URL(".", import.meta.url).toString();
@@ -537,7 +538,7 @@ export class AnalyticIKSolver {
     }
 
     // Solve 2-bone chain analytically (100% accurate)
-    solve2Bone(rootBone, midBone, effectorBone, targetPos, poleTarget, THREE) {
+    solve2Bone(rootBone, midBone, effectorBone, targetPos, poleTarget, THREE, limiter = null) {
         // Get bone lengths from actual bone positions
         const rootPos = new THREE.Vector3();
         const midPos = new THREE.Vector3();
@@ -647,6 +648,18 @@ export class AnalyticIKSolver {
         // Update matrices
         midBone.updateMatrixWorld(true);
 
+        if (limiter) {
+            // Turn the root so the elbow/knee hinge faces the target, then aim the
+            // mid bone again from the limited root.
+            limiter.alignHinge(rootBone, midBone, targetPos);
+            limiter.clamp(rootBone);
+            rootBone.updateMatrixWorld(true);
+            effectorBone.getWorldPosition(effPos);
+            this.rotateBoneToPoint(midBone, effPos, targetPos, THREE);
+            limiter.clamp(midBone);
+            midBone.updateMatrixWorld(true);
+        }
+
         return true;
     }
 
@@ -710,7 +723,7 @@ class CCDIKSolver {
         this.analyticSolver = new AnalyticIKSolver(THREE);
     }
 
-    solve(chainDef, bones, target, poleTarget = null) {
+    solve(chainDef, bones, target, poleTarget = null, limiter = null) {
         const THREE = this.THREE;
 
         const chainBones = chainDef.bones.map(name => bones[name]).filter(b => b);
@@ -729,7 +742,8 @@ class CCDIKSolver {
                 effectorBone,
                 target,
                 poleTarget,
-                THREE
+                THREE,
+                limiter
             );
         }
 
@@ -745,7 +759,8 @@ class CCDIKSolver {
                 effectorBone,  // hand
                 target,
                 poleTarget,
-                THREE
+                THREE,
+                limiter
             );
         }
 
@@ -805,6 +820,7 @@ class CCDIKSolver {
                 }
 
                 bone.quaternion.copy(newWorldQuat);
+                limiter?.clamp(bone);
                 bone.updateMatrixWorld(true);
             }
         }
@@ -983,7 +999,7 @@ class IKController {
         }
     }
 
-    solveWithPole(chainDef, bones, effectorTarget, chainKey) {
+    solveWithPole(chainDef, bones, effectorTarget, chainKey, limiter = null) {
         let poleTarget = null;
 
         // Check if pole target is enabled for this chain
@@ -1002,7 +1018,7 @@ class IKController {
             }
         }
 
-        return this.ccdSolver.solve(chainDef, bones, effectorTarget, poleTarget);
+        return this.ccdSolver.solve(chainDef, bones, effectorTarget, poleTarget, limiter);
     }
 
     createEffectorHelper(effectorName, bone, THREE, isRoot = false) {
@@ -1191,6 +1207,8 @@ export class PoseViewerCore {
         this.isInteractionActive = null;
         this._hoveredHandSide = null;
         this.useHandControlPopover = this.options.useHandControlPopover !== false;
+        this.jointLimitsEnabled = this.options.jointLimits === true;
+        this._jointLimiter = null;
     }
 
     _getHandSideFromBoneName(name) {
@@ -1295,6 +1313,24 @@ export class PoseViewerCore {
         }
         this.updateMarkers();
         this.requestRender();
+    }
+
+    setJointLimitsEnabled(enabled) {
+        this.jointLimitsEnabled = enabled === true;
+    }
+
+    // Interactive edits only: imports, saved poses and animation playback keep their rotations.
+    _activeJointLimiter() {
+        if (!this.jointLimitsEnabled || !this.THREE) return null;
+        if (!this._jointLimiter) this._jointLimiter = new JointLimiter(this.THREE);
+        return this._jointLimiter;
+    }
+
+    applyJointLimits(bone) {
+        const limiter = this._activeJointLimiter();
+        if (!limiter || !bone || !limiter.clamp(bone)) return false;
+        bone.updateMatrixWorld(true);
+        return true;
     }
 
     dispatchPoseChange() {
@@ -1580,7 +1616,8 @@ export class PoseViewerCore {
                 // Pole target moved - solve IK for this chain
                 this.solveIKForPoleTarget();
             } else if (this.selectedBone) {
-                // FK rotation - update all effector positions to follow bones
+                // FK rotation - keep the joint in range, then update all effector positions to follow bones
+                this.applyJointLimits(this.selectedBone);
                 this.updateIKEffectorPositions();
             }
             this.requestRender();
@@ -2188,6 +2225,7 @@ export class PoseViewerCore {
                         // Pivot parent to place midBone perfectly on mouse cursor
                         const analytic = this.ikController.ccdSolver.analyticSolver;
                         analytic.rotateBoneToPoint(rootBone, midWorld, targetPos, this.THREE);
+                        this.applyJointLimits(rootBone);
                         rootBone.updateMatrixWorld(true);
                         if (this.skeleton) this.skeleton.update();
 
@@ -2598,7 +2636,7 @@ export class PoseViewerCore {
 
                             if (legDef && footTarget && this.ikController.getMode(legKey) === 'ik') {
                                 // Solve leg IK to keep foot at original position
-                                this.ikController.solveWithPole(legDef, this.bones, footTarget, legKey);
+                                this.ikController.solveWithPole(legDef, this.bones, footTarget, legKey, this._activeJointLimiter());
                             }
                         }
                         // Update matrix world between passes
@@ -2628,7 +2666,7 @@ export class PoseViewerCore {
             // Don't update pole target positions - they should stay where user placed them
         } else if (this.ikController.ccdSolver) {
             // Standard IK solve for limbs
-            this.ikController.solveWithPole(chainDef, this.bones, targetPos, chainKey);
+            this.ikController.solveWithPole(chainDef, this.bones, targetPos, chainKey, this._activeJointLimiter());
 
             // Update skeleton after IK solve
             if (this.skeleton) {
@@ -2664,7 +2702,7 @@ export class PoseViewerCore {
 
         // Solve IK with the moved pole target
         if (this.ikController.ccdSolver) {
-            this.ikController.solveWithPole(chainDef, this.bones, targetPos, chainKey);
+            this.ikController.solveWithPole(chainDef, this.bones, targetPos, chainKey, this._activeJointLimiter());
 
             // Update skeleton after IK solve
             if (this.skeleton) {
@@ -4021,31 +4059,43 @@ export class PoseViewerCore {
         this.requestRender();
     }
 
-    resetSelectedBone() {
-        if (!this.selectedBone) return;
+    /**
+     * Return the selected joint (and optionally every joint below it) to the
+     * rest rotation and the shaped rest position, as one undoable pose edit.
+     */
+    resetSelectedBone({ includeChildren = false } = {}) {
+        const selected = this.selectedBone;
+        if (!selected || this.transform?.dragging || this.directDrag?.active) return false;
+
+        const isBelowSelected = bone => {
+            for (let parent = bone.parent; parent?.isBone; parent = parent.parent) {
+                if (parent === selected) return true;
+            }
+            return false;
+        };
+        const restPosition = bone => this.shapedBoneRestPositions?.[bone.name] || this.initialBoneStates?.[bone.name]?.position;
+        const bones = includeChildren
+            ? this.boneList.filter(bone => bone === selected || isBelowSelected(bone))
+            : [selected];
+        const moved = bones.filter(bone => {
+            const rest = restPosition(bone);
+            return Math.abs(bone.rotation.x) > 1e-6 || Math.abs(bone.rotation.y) > 1e-6 || Math.abs(bone.rotation.z) > 1e-6
+                || (rest && bone.position.distanceToSquared(rest) > 1e-12);
+        });
+        if (!moved.length) return false;
 
         this.recordState();
-
-        // Reset the selected bone's rotation
-        this.selectedBone.rotation.set(0, 0, 0);
-
-        // Reset position to initial state (important for hips IK)
-        if (this.initialBoneStates && this.initialBoneStates[this.selectedBone.name]) {
-            const initialState = this.initialBoneStates[this.selectedBone.name];
-            this.selectedBone.position.copy(initialState.position);
+        for (const bone of moved) {
+            bone.quaternion.identity();
+            const rest = restPosition(bone);
+            if (rest) bone.position.copy(rest);
         }
-
-        this.selectedBone.updateMatrixWorld(true);
-
-        // Update skeleton
-        if (this.skeleton) {
-            this.skeleton.update();
-        }
-
-        // Update IK effector positions since bone changed
+        selected.updateMatrixWorld(true);
+        if (this.skeleton) this.skeleton.update();
         this.updateIKEffectorPositions();
-
         this.requestRender();
+        this.dispatchPoseChange();
+        return true;
     }
 
     interpolateFingerPose(poseA, poseB, t, side, fingerPrefix, bias = [1, 1, 1]) {

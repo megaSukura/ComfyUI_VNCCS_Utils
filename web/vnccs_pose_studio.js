@@ -10,7 +10,7 @@ import {
     POSE_STUDIO_CAPTURE_FOV,
     PoseViewerCore,
     buildEquivalentPerspectiveProjectionFrame,
-} from "./pose_studio/core.js?v=20261107.1";
+} from "./pose_studio/core.js?v=20261110.1";
 import {
     cameraPromptToSkydomeRotation,
 } from "./camera_control/utils.mjs";
@@ -1499,6 +1499,12 @@ input.vnccs-ps-value-input:disabled {
 .vnccs-ps-actions .vnccs-ps-btn {
     flex: 1;
     min-width: 40px;
+}
+
+.vnccs-ps-actions .vnccs-ps-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* === Animation Timeline / Dope Sheet === */
@@ -4453,6 +4459,7 @@ class PoseStudioWidget {
             editor_mode: "image",
             animation_image_batch: false,
             hand_controls_v2: true,
+            joint_limits: false,
             directional_skydome_enabled: false,
         };
 
@@ -5452,6 +5459,14 @@ class PoseStudioWidget {
         resetBtn.title = "Reset pose and Mesh Proportions; in Animation mode clear the entire animation and all keyframes";
         resetBtn.addEventListener("click", () => this.resetCurrentPose());
 
+        const resetJointBtn = document.createElement("button");
+        resetJointBtn.className = "vnccs-ps-btn";
+        resetJointBtn.innerHTML = '<span class="vnccs-ps-btn-icon">⟲</span> Reset Joint';
+        resetJointBtn.title = "Reset the selected joint's rotation (Alt+R). Shift+click or Alt+Shift+R also resets every joint below it";
+        resetJointBtn.disabled = true;
+        resetJointBtn.addEventListener("click", event => this.resetSelectedBone({ includeChildren: event.shiftKey }));
+        this.resetJointBtn = resetJointBtn;
+
         const snapBtn = document.createElement("button");
         snapBtn.className = "vnccs-ps-btn primary";
         snapBtn.innerHTML = '<span class="vnccs-ps-btn-icon">👁</span> Preview';
@@ -5473,6 +5488,7 @@ class PoseStudioWidget {
         actions.appendChild(undoBtn);
         actions.appendChild(redoBtn);
         actions.appendChild(resetBtn);
+        actions.appendChild(resetJointBtn);
         actions.appendChild(snapBtn);
         actions.appendChild(copyBtn);
         actions.appendChild(pasteBtn);
@@ -6471,6 +6487,7 @@ class PoseStudioWidget {
             showCaptureFrame: true,
             syncMode: 'end',
             useHandControlPopover: this.exportParams.hand_controls_v2 !== false,
+            jointLimits: this.exportParams.joint_limits === true,
             profileResizePhase: profilePoseStudioResize,
             onHandHover: ({ side }) => {
                 this._hoveredHandSide = side;
@@ -6482,6 +6499,7 @@ class PoseStudioWidget {
                 this.showHandControlPopover(side);
             },
             onBoneSelectionChange: ({ boneName, source }) => {
+                if (this.resetJointBtn) this.resetJointBtn.disabled = !boneName;
                 if (source === "external" || !this.isAnimationMode()) return;
                 this.animationTimeline?.notifyActiveTrack?.(
                     boneName || MODEL_ROTATION_TRACK,
@@ -8360,12 +8378,12 @@ class PoseStudioWidget {
     }
 
     installCaptureViewShortcut() {
-        // Ctrl+Shift+F belongs to Pose Studio only after the user last pointed or
-        // focused inside it; otherwise the browser and ComfyUI keep the shortcut.
+        // Ctrl+Shift+F and Alt+R belong to Pose Studio only after the user last pointed or
+        // focused inside it; otherwise the browser and ComfyUI keep the shortcuts.
         this._boundTrackPoseStudioFocus = event => {
             this._poseStudioHasFocus = !!this.container?.contains(event.target);
         };
-        this._boundHandleCaptureViewShortcut = event => this.handleCaptureViewShortcut(event);
+        this._boundHandleCaptureViewShortcut = event => this.handleCaptureViewShortcut(event) || this.handleJointResetShortcut(event);
         document.addEventListener("pointerdown", this._boundTrackPoseStudioFocus, true);
         document.addEventListener("focusin", this._boundTrackPoseStudioFocus, true);
         window.addEventListener("keydown", this._boundHandleCaptureViewShortcut, true);
@@ -8380,6 +8398,18 @@ class PoseStudioWidget {
         event.preventDefault();
         event.stopImmediatePropagation();
         this.alignCaptureCameraToView();
+        return true;
+    }
+
+    handleJointResetShortcut(event) {
+        if (!event.altKey || event.ctrlKey || event.metaKey) return false;
+        if (event.code !== "KeyR" && String(event.key || "").toLowerCase() !== "r") return false;
+        if (!this._poseStudioHasFocus || this._disposed || this.host?.embedded === true) return false;
+        if (!this.container?.isConnected || !this.viewer?.selectedBone) return false;
+        if (event.target?.matches?.("input, select, textarea, [contenteditable='true']")) return false;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this.resetSelectedBone({ includeChildren: event.shiftKey });
         return true;
     }
 
@@ -10359,11 +10389,11 @@ class PoseStudioWidget {
         this.syncToNode(false, { skipCapture: true });
     }
 
-    resetSelectedBone() {
-        if (this.viewer && this.viewer.isInitialized()) {
-            this.viewer.resetSelectedBone();
-            this.syncToNode(false);
-        }
+    resetSelectedBone({ includeChildren = false } = {}) {
+        if (!this.viewer?.isInitialized?.()) return false;
+        this._finishPoseGesture?.();
+        // The viewer reports the reset through onPoseChange like a finished joint drag.
+        return this.viewer.resetSelectedBone({ includeChildren });
     }
 
     copyPose() {
@@ -14559,6 +14589,34 @@ class PoseStudioWidget {
         handControlsRow.appendChild(handControlsLabel);
         content.appendChild(handControlsRow);
 
+        const jointLimitsRow = document.createElement("div");
+        jointLimitsRow.className = "vnccs-ps-field";
+        jointLimitsRow.style.marginBottom = "14px";
+
+        const jointLimitsLabel = document.createElement("label");
+        jointLimitsLabel.style.display = "flex";
+        jointLimitsLabel.style.alignItems = "center";
+        jointLimitsLabel.style.gap = "10px";
+        jointLimitsLabel.style.cursor = "pointer";
+        jointLimitsLabel.style.userSelect = "none";
+
+        const jointLimitsCheckbox = document.createElement("input");
+        jointLimitsCheckbox.type = "checkbox";
+        jointLimitsCheckbox.checked = this.exportParams.joint_limits === true;
+        jointLimitsCheckbox.onchange = () => {
+            this.exportParams.joint_limits = jointLimitsCheckbox.checked;
+            this.viewer?.setJointLimitsEnabled?.(jointLimitsCheckbox.checked);
+            this.syncToNode(false);
+        };
+
+        const jointLimitsText = document.createElement("div");
+        jointLimitsText.innerHTML = "<strong>Joint Limits</strong><div style='font-size:11px; color:#888; margin-top:4px;'>When enabled, rotating a joint or dragging a limb keeps the spine, neck, head, shoulders, elbows, wrists, hips, knees and ankles within a loose human range of motion. Fingers, imported poses and saved poses are not changed.</div>";
+
+        jointLimitsLabel.appendChild(jointLimitsCheckbox);
+        jointLimitsLabel.appendChild(jointLimitsText);
+        jointLimitsRow.appendChild(jointLimitsLabel);
+        content.appendChild(jointLimitsRow);
+
         const skydomeRow = document.createElement("div");
         skydomeRow.className = "vnccs-ps-field";
         skydomeRow.style.marginBottom = "14px";
@@ -16812,6 +16870,7 @@ class PoseStudioWidget {
                 this.viewer.setKpFigureVisible(this.exportParams.debugShowSAMHelper !== false);
             }
             this.viewer?.setUseHandControlPopover?.(this.exportParams.hand_controls_v2 !== false);
+            this.viewer?.setJointLimitsEnabled?.(this.exportParams.joint_limits === true);
             this.applyDirectionalSkydomeSetting();
             if (this.updateOverrideBtn) this.updateOverrideBtn();
 

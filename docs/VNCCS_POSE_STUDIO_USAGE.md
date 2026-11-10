@@ -138,6 +138,8 @@ The center is the interactive 3D editor:
 - Select joints/bones directly in the viewport.
 - Use FK/IK controls where available.
 - Rotate, move, and reset pose elements.
+- **Reset Joint** (`Alt+R`) returns the selected joint to its rest rotation;
+  Shift+click or `Alt+Shift+R` also resets every joint below it.
 - Use the frame preview to match the final render crop.
 - Manage multiple pose tabs.
 - Copy/paste pose states between tabs.
@@ -154,6 +156,23 @@ The right side focuses on prompt, pose library, and lighting:
 - Ambient, directional, and point light controls.
 - Light position/radar controls.
 - Lighting prompt generation state.
+
+## Resetting Joints and Joint Limits
+
+Select a joint and press **Reset Joint** in the action bar (or `Alt+R` while
+Pose Studio has focus) to return it to the rest rotation. Shift+click the button
+or press `Alt+Shift+R` to also reset every joint below it, for example a whole
+arm from the clavicle or a hand with its fingers. Bone-length sliders are kept.
+The reset is one Undo step and, in Animation mode, is keyed like a joint drag.
+
+**Settings → Joint Limits** (off by default) keeps the spine, neck, head,
+clavicles, shoulders, elbows, wrists, hips, knees, ankles, and toes within a
+loose human range of motion while you rotate a joint or drag a limb. Elbows and
+knees bend only in their natural direction; when you drag a hand or foot, the
+upper arm or thigh turns so the elbow or knee can follow its hinge. Limits apply
+only to interactive edits: fingers, hand sliders, imports, library poses, saved
+workflows, and animation playback are not changed. The setting is stored in
+`pose_data.export.joint_limits`.
 
 ## Characters
 
