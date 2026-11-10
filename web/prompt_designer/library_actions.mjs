@@ -1,4 +1,5 @@
 import { promptId } from "./state.mjs";
+import { t } from "../i18n/index.mjs";
 
 function node(tag, text, className) {
     const element = document.createElement(tag);
@@ -32,11 +33,11 @@ export class LibraryActions {
     menu(event, anchor, actions) {
         event.preventDefault(); event.stopPropagation();
         const menu = node("div", undefined, "vnccs-pd-library-menu");
-        menu.setAttribute("role", "menu"); menu.setAttribute("aria-label", "Library card actions");
+        menu.setAttribute("role", "menu"); menu.setAttribute("aria-label", t("Library card actions"));
         const on = this.mount(menu, anchor);
         on(menu, "contextmenu", event => { event.preventDefault(); event.stopPropagation(); });
         const buttons = actions.map(([label, action]) => {
-            const button = node("button", label); button.type = "button";
+            const button = node("button", t(label)); button.type = "button";
             button.setAttribute("role", "menuitem"); button.tabIndex = -1;
             if (label === "Delete") button.className = "danger";
             on(button, "click", () => { this.close(); action(); });
@@ -70,12 +71,12 @@ export class LibraryActions {
         let input;
         if (value !== undefined) {
             input = node("input"); input.value = value; input.required = true; input.maxLength = 128;
-            input.setAttribute("aria-label", "New name"); form.append(input);
+            input.setAttribute("aria-label", t("New name")); form.append(input);
         }
-        const controls = node("div", undefined, "actions"), cancel = node("button", "Cancel"); cancel.type = "button";
-        const confirmLabel = label ?? (input ? "Rename" : "Delete");
+        const controls = node("div", undefined, "actions"), cancel = node("button", t("Cancel")); cancel.type = "button";
+        const confirmLabel = label ?? (input ? t("Rename") : t("Delete"));
         const confirm = node("button", confirmLabel, "primary"); confirm.type = "submit";
-        const discardButton = discard && node("button", "Discard");
+        const discardButton = discard && node("button", t("Discard"));
         controls.append(cancel);
         if (discardButton) {
             discardButton.type = "button"; controls.append(discardButton);
@@ -90,7 +91,7 @@ export class LibraryActions {
             const name = input?.value.trim();
             if (input && !name) { input.focus(); return; }
             confirm.disabled = true; cancel.disabled = true; if (discardButton) discardButton.disabled = true; error.hidden = true;
-            confirm.textContent = label ? "Saving…" : input ? "Renaming…" : "Deleting…";
+            confirm.textContent = label ? t("Saving…") : input ? t("Renaming…") : t("Deleting…");
             try {
                 await action(name);
                 if (this.popup?.element === dialog) this.close();

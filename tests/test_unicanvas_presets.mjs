@@ -40,7 +40,7 @@ test("UniCanvas preset card renders the resolved model name", async () => {
     const source = await readFile(new URL("../web/vnccs_unicanvas.js", import.meta.url), "utf8");
 
     assert.match(source, /const modelName = turbo \? "" : getUniCanvasPresetModelName\(preset\)/);
-    assert.ok(source.includes('vnccs-uc-model-card-model">${row ? "" : "Model: "}${this._escape(modelName)}'));
+    assert.ok(source.includes('vnccs-uc-model-card-model">${row ? "" : `${tr("Model:")} `}${this._escape(modelName)}'));
 });
 
 

@@ -7,7 +7,8 @@
  */
 
 import { app } from "../../../scripts/app.js";
-import { STANDALONE_STYLES } from "./standalone_theme.mjs?v=1791754604000";
+import { STANDALONE_STYLES } from "./standalone_theme.mjs?v=1794326400000";
+import { t } from "../i18n/index.mjs";
 
 export const UNICANVAS_STANDALONE_STORAGE_KEY = "vnccs-unicanvas-standalone";
 
@@ -257,7 +258,7 @@ export function handleUniCanvasShortcut(widget, event, options = null) {
 function installUniCanvasShortcuts(widget) {
   if (widget.canvas) {
     widget.canvas.tabIndex = 0;
-    widget.canvas.setAttribute("aria-label", "UniCanvas stage");
+    widget.canvas.setAttribute("aria-label", t("UniCanvas stage"));
     widget.canvas.addEventListener("pointerdown", () => {
       widget.canvas.focus({ preventScroll: true });
     });
@@ -380,8 +381,8 @@ function handleUniCanvasHistoryKeyDown(event) {
   if (!fullKeyboard && !isUniCanvasHistoryCombo(event)) return;
   // Visible trace so the user can see who took the key (status line of the widget).
   if (isUniCanvasHistoryCombo(event)) {
-    const label = String(event.key).toLowerCase() === "y" ? "Redo" : "Undo";
-    widget.setStatus?.(`[VNCCS UniCanvas] ${label} key captured`);
+    const label = String(event.key).toLowerCase() === "y" ? t("Redo") : t("Undo");
+    widget.setStatus?.(t("[VNCCS UniCanvas] {label} key captured", { label }));
   }
   if (isUniCanvasTextTarget(event)) {
     // A focused text field keeps its native editing and undo; ComfyUI still
@@ -528,7 +529,7 @@ function toggleUniCanvasTrueFullscreen(widget) {
   }
   const request = portal?.requestFullscreen?.();
   request?.catch?.((err) => {
-    widget.setStatus(`[VNCCS UniCanvas] Browser fullscreen failed: ${err?.message || err}`, true);
+    widget.setStatus(t("[VNCCS UniCanvas] Browser fullscreen failed: {message}", { message: err?.message || err }), true);
   });
 }
 
@@ -537,11 +538,11 @@ function buildUniCanvasFullscreenChrome(widget) {
   chrome.className = "vnccs-uc2-fullscreen-chrome";
   const title = document.createElement("span");
   title.className = "vnccs-uc2-fullscreen-title";
-  title.textContent = "Unicanvas";
+  title.textContent = t("Unicanvas");
   const trueFullscreenBtn = document.createElement("button");
   trueFullscreenBtn.type = "button";
   trueFullscreenBtn.className = "vnccs-uc2-true-fullscreen";
-  trueFullscreenBtn.title = "Toggle browser fullscreen";
+  trueFullscreenBtn.title = t("Toggle browser fullscreen");
   trueFullscreenBtn.innerHTML = TRUE_FULLSCREEN_ICON_SVG;
   trueFullscreenBtn.addEventListener("click", (event) => {
     event.preventDefault();
@@ -669,7 +670,7 @@ function syncUniCanvasFullscreenButton(widget) {
   const btn = widget?._vnccsFullscreenButton;
   if (!btn) return;
   const active = Boolean(widget._vnccsFullscreen);
-  const label = active ? "Exit fullscreen" : "Fullscreen";
+  const label = active ? t("Exit fullscreen") : t("Fullscreen");
   btn.classList.toggle("exit", active);
   btn.title = label;
   btn.setAttribute("aria-label", label);
@@ -722,7 +723,7 @@ export function showUniCanvasToast(widget, title, detail = "", kind = "success")
   const close = document.createElement("button");
   close.type = "button";
   close.className = "vnccs-uc2-toast-close";
-  close.title = "Close";
+  close.title = t("Close");
   close.textContent = "×";
   const remove = () => toast.remove();
   close.addEventListener("click", (event) => { event.stopPropagation(); remove(); });
@@ -763,7 +764,7 @@ export function buildUniCanvasCompositeCanvas(widget) {
 }
 
 const canvasToPngBlob = (canvas) => new Promise((resolve, reject) => {
-  canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("The canvas could not be encoded as PNG."))), "image/png");
+  canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error(t("The canvas could not be encoded as PNG.")))), "image/png");
 });
 
 export async function saveUniCanvasOutput(widget, layerId = null) {
@@ -772,17 +773,17 @@ export async function saveUniCanvasOutput(widget, layerId = null) {
   // Without it (the standalone "Save to output" button) the bbox crop is downloaded, like Export PSD.
   try {
     if (!layerId) {
-      widget.setStatus("[VNCCS UniCanvas] Preparing download...");
+      widget.setStatus(t("[VNCCS UniCanvas] Preparing download..."));
       const blob = await canvasToPngBlob(buildUniCanvasBboxCompositeCanvas(widget));
       const fileName = `unicanvas-${new Date().toISOString().slice(0, 19).replace(/[T:]/g, "-")}.png`;
       widget.downloadBlob(blob, fileName);
-      widget.setStatus(`[VNCCS UniCanvas] Downloaded ${fileName}`);
-      showUniCanvasToast(widget, "Image downloaded", fileName);
+      widget.setStatus(t("[VNCCS UniCanvas] Downloaded {name}", { name: fileName }));
+      showUniCanvasToast(widget, t("Image downloaded"), fileName);
       return;
     }
-    widget.setStatus("[VNCCS UniCanvas] Saving to output...");
+    widget.setStatus(t("[VNCCS UniCanvas] Saving to output..."));
     const layer = widget.layers.find((item) => item.id === String(layerId));
-    if (!layer) throw new Error(`[VNCCS UniCanvas] Layer '${layerId}' was not found.`);
+    if (!layer) throw new Error(t("[VNCCS UniCanvas] Layer '{id}' was not found.", { id: layerId }));
     const payload = { state: { version: 2, layers: [widget.serializeLayer(layer, true)] }, layer_id: String(layerId) };
     const res = await fetch("/vnccs/unicanvas/save_output", {
       method: "POST",
@@ -794,12 +795,12 @@ export async function saveUniCanvasOutput(widget, layerId = null) {
     if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status} ${res.statusText || ""}`.trim());
     const fileName = String(data.path || "").split(/[\\/]/).pop() || "image";
     const size = data.width && data.height ? ` (${data.width}×${data.height})` : "";
-    widget.setStatus(`[VNCCS UniCanvas] Saved ${data.path}`);
-    showUniCanvasToast(widget, "Saved to output", `${fileName}${size}`);
+    widget.setStatus(t("[VNCCS UniCanvas] Saved {path}", { path: data.path }));
+    showUniCanvasToast(widget, t("Saved to output"), `${fileName}${size}`);
   } catch (err) {
     const message = String(err?.message || err).replace(/^\[VNCCS UniCanvas\]\s*/, "");
-    widget.setStatus(`[VNCCS UniCanvas] Save to output failed: ${message}`, true);
-    showUniCanvasToast(widget, "Save to output failed", message, "error");
+    widget.setStatus(t("[VNCCS UniCanvas] Save to output failed: {message}", { message }), true);
+    showUniCanvasToast(widget, t("Save to output failed"), message, "error");
   }
 }
 
@@ -814,7 +815,7 @@ function installUniCanvasOutputActions(widget) {
   if (!widget.standalone) return;
   const saveRow = document.createElement("div");
   saveRow.className = "vnccs-uc2-save-actions";
-  saveRow.append(widget._button("Save to output", "vnccs-uc-btn", () => void saveUniCanvasOutput(widget), "Download the flattened generation box as a PNG file"));
+  saveRow.append(widget._button(t("Save to output"), "vnccs-uc-btn", () => void saveUniCanvasOutput(widget), t("Download the flattened generation box as a PNG file")));
   widget.side.insertBefore(saveRow, widget.side.firstChild);
   widget._vnccsSaveActions = saveRow;
 }
@@ -925,8 +926,8 @@ function createStandaloneWidget(UniCanvasWidgetClass) {
   widget.container.classList.add("vnccs-uc-standalone");
   widget.syncStandaloneGenerationControls?.();
   widget.syncInferenceControls?.();
-  widget.drawBtn.textContent = "Generate";
-  widget.donateLink.textContent = "Support MIUProject";
+  widget.drawBtn.textContent = t("Generate");
+  widget.donateLink.textContent = t("Support MIUProject");
   installUniCanvasWidgetModes(widget);
   return widget;
 }

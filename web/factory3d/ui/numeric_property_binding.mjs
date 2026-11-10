@@ -1,3 +1,5 @@
+import { t } from "../../i18n/index.mjs";
+
 /** Bind existing numeric rows without replacing their DOM, focus or scroll. */
 export function bindNumericPropertyInputs(root, { descriptors, ref, gesture, read, feedback, prefix = "light." }) {
     const listeners = [];
@@ -28,7 +30,7 @@ export function bindNumericPropertyInputs(root, { descriptors, ref, gesture, rea
         const path = pathOf(control);
         const value = read(ref, path);
         if (Number.isFinite(value)) sync(path, value);
-        feedback("Edit cancelled.");
+        feedback(t("Edit cancelled."));
     };
     for (const control of controls) {
         const path = pathOf(control);
@@ -125,7 +127,7 @@ export function bindNumericPropertyInputs(root, { descriptors, ref, gesture, rea
             const accepted = gesture.input(ref, descriptor, String(descriptor.defaultValue));
             if (accepted.valid) sync(path, accepted.value);
             gesture.commit();
-            feedback(accepted.message || `${descriptor.label} reset.`);
+            feedback(accepted.message || t("{label} reset.", { label: t(descriptor.label) }));
         });
     }
     return ({ cancel: rollback = false } = {}) => {

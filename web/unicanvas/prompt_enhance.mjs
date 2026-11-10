@@ -12,6 +12,8 @@
  * system prompt, so the wand is hidden and no enhance setting reaches the draw.
  */
 
+import { t } from "../i18n/index.mjs";
+
 export const ENHANCE_PROMPTS_ID = "VNCCS.UniCanvas.PromptEnhance.Prompts";
 // Node-level switches (UniCanvas settings popover); they never reach a draw, only `prompt_enhance` does.
 export const ENHANCE_ENABLED = "prompt_enhance_enabled";
@@ -172,7 +174,7 @@ export function syncPromptEnhance(widget) {
     // The wand is pointless in automatic mode: both prompts are enhanced on Generate.
     const available = Boolean(entry) && !auto && (kind !== "negative" || (Boolean(text(entry.negative)) && widget.modelUsesNegative()));
     button.hidden = !available;
-    button.title = "Enhance Prompt";
+    button.title = t("Enhance Prompt");
     button.parentElement?.classList.toggle("has-enhance", available);
   });
 }
@@ -233,7 +235,7 @@ async function runEnhance(widget, button) {
   const original = text(textarea.value);
   const documentRevision = widget._documentRevision || 0;
   if (!entry || !original) {
-    flash(button, "Type a prompt first");
+    flash(button, t("Type a prompt first"));
     return;
   }
   button.classList.remove("error", "done");
@@ -253,12 +255,12 @@ async function runEnhance(widget, button) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
     if (widget._disposed || widget.editingBlocked || documentRevision !== (widget._documentRevision || 0)) return;
-    if (text(textarea.value) !== original) throw new Error("The prompt changed while it was being enhanced, so the result was dropped.");
+    if (text(textarea.value) !== original) throw new Error(t("The prompt changed while it was being enhanced, so the result was dropped."));
     setTextareaValue(widget, textarea, String(data.prompt));
     succeeded = true;
   } catch (error) {
     flash(button, error.message || String(error));
-    widget.setStatus(`Prompt enhance: ${error.message || error}`, true);
+    widget.setStatus(t("Prompt enhance: {message}", { message: error.message || error }), true);
   } finally {
     flowGradient(button, false);
     button.classList.remove("working");
@@ -343,9 +345,9 @@ export function openPromptsDialog(families, save, onChange = () => {}) {
   const overlay = document.createElement("div");
   overlay.className = "vnccs-pe-overlay";
   overlay.innerHTML = `<div class="vnccs-pe-dialog" role="dialog" aria-modal="true" aria-labelledby="vnccs-pe-title">
-    <div class="vnccs-pe-head"><h2 id="vnccs-pe-title">Prompt enhance - system prompts</h2><p>One tab per model family. Changes are saved as you type.</p></div>
+    <div class="vnccs-pe-head"><h2 id="vnccs-pe-title">${t("Prompt enhance - system prompts")}</h2><p>${t("One tab per model family. Changes are saved as you type.")}</p></div>
     <div class="vnccs-pe-body"><div class="vnccs-pe-tabs" role="tablist" aria-orientation="vertical"></div><div class="vnccs-pe-pane" role="tabpanel"></div></div>
-    <div class="vnccs-pe-foot"><span>A family without any system prompt has no magic wand.</span><button type="button" class="vnccs-pe-btn primary" data-close>Done</button></div>
+    <div class="vnccs-pe-foot"><span>${t("A family without any system prompt has no magic wand.")}</span><button type="button" class="vnccs-pe-btn primary" data-close>${t("Done")}</button></div>
   </div>`;
   const tabs = overlay.querySelector(".vnccs-pe-tabs");
   const pane = overlay.querySelector(".vnccs-pe-pane");
@@ -398,7 +400,7 @@ export function openPromptsDialog(families, save, onChange = () => {}) {
     const status = title.querySelector(".vnccs-pe-status");
     const paintStatus = () => {
       status.classList.toggle("on", hasPrompts(entry));
-      status.textContent = hasPrompts(entry) ? (shipped && sameEntry(entry, shipped) ? "Shipped default" : "Customised") : "No system prompt - no wand";
+      status.textContent = hasPrompts(entry) ? (shipped && sameEntry(entry, shipped) ? t("Shipped default") : t("Customised")) : t("No system prompt - no wand");
     };
     paintStatus();
     const fields = document.createElement("div");
@@ -410,8 +412,8 @@ export function openPromptsDialog(families, save, onChange = () => {}) {
       const caption = document.createElement("label");
       caption.htmlFor = `vnccs-pe-${family.key}-${field}`;
       caption.innerHTML = "<span></span><small></small>";
-      caption.firstChild.textContent = label;
-      caption.lastChild.textContent = help;
+      caption.firstChild.textContent = t(label);
+      caption.lastChild.textContent = t(help);
       const area = document.createElement("textarea");
       area.id = caption.htmlFor;
       area.value = entry[field] || "";
@@ -431,9 +433,9 @@ export function openPromptsDialog(families, save, onChange = () => {}) {
     const reset = document.createElement("button");
     reset.type = "button";
     reset.className = "vnccs-pe-btn";
-    reset.textContent = "Reset to shipped default";
+    reset.textContent = t("Reset to shipped default");
     reset.disabled = !shipped;
-    reset.title = shipped ? "Discard your changes to this family" : "This family has no shipped default";
+    reset.title = shipped ? t("Discard your changes to this family") : t("This family has no shipped default");
     reset.addEventListener("click", () => {
       store({ ...blankEntry(family.key), ...shipped, family: family.key });
       paintTabs();
@@ -442,7 +444,7 @@ export function openPromptsDialog(families, save, onChange = () => {}) {
     const clear = document.createElement("button");
     clear.type = "button";
     clear.className = "vnccs-pe-btn";
-    clear.textContent = "Clear (no wand for this family)";
+    clear.textContent = t("Clear (no wand for this family)");
     clear.addEventListener("click", () => {
       store(blankEntry(family.key));
       paintTabs();
@@ -491,13 +493,13 @@ export function buildPromptsButton(families, save) {
   row.style.cssText = "display:flex; gap:10px; align-items:center;";
   const button = document.createElement("button");
   button.type = "button";
-  button.textContent = "Edit system prompts...";
+  button.textContent = t("Edit system prompts...");
   button.style.cssText = "padding:6px 14px; border-radius:8px; cursor:pointer;";
   const summary = document.createElement("span");
   summary.style.opacity = ".75";
   const paint = () => {
     const configured = enhanceEntries().filter(hasPrompts).length;
-    summary.textContent = `${configured} of ${families.length || configured} model families have a system prompt`;
+    summary.textContent = t("{configured} of {total} model families have a system prompt", { configured, total: families.length || configured });
   };
   button.addEventListener("click", () => openPromptsDialog(families, save, paint));
   paint();
@@ -513,20 +515,20 @@ export function buildPromptsButton(families, save) {
  */
 export function buildPromptEnhanceSettings(s, { body, bind, makeSelect, installed = [], checkboxRow, commit, families, changed }) {
   const apply = (mutate) => { mutate(); commit(); changed(); };
-  checkboxRow("Magic wand in the prompt boxes", s[ENHANCE_ENABLED] !== false, (checked) => apply(() => { s[ENHANCE_ENABLED] = checked; }),
-    "Rewrites a prompt with a Qwen3-VL encoder and the system prompt of the model family. Never used while a VNCSS Config is linked.");
-  checkboxRow("Always enhance when I press Generate", s[ENHANCE_AUTO] === true, (checked) => apply(() => { s[ENHANCE_AUTO] = checked; }),
-    "The prompts are rewritten in the background right before generating; the boxes keep what you typed. This always uses the CLIP of the model family that draws, so it costs no extra VRAM.");
+  checkboxRow(t("Magic wand in the prompt boxes"), s[ENHANCE_ENABLED] !== false, (checked) => apply(() => { s[ENHANCE_ENABLED] = checked; }),
+    t("Rewrites a prompt with a Qwen3-VL encoder and the system prompt of the model family. Never used while a VNCSS Config is linked."));
+  checkboxRow(t("Always enhance when I press Generate"), s[ENHANCE_AUTO] === true, (checked) => apply(() => { s[ENHANCE_AUTO] = checked; }),
+    t("The prompts are rewritten in the background right before generating; the boxes keep what you typed. This always uses the CLIP of the model family that draws, so it costs no extra VRAM."));
   const chosen = text(s[ENHANCE_MODEL]) || DEFAULT_ENHANCE_MODEL;
   const names = [...new Set([DEFAULT_ENHANCE_MODEL, ...installed.filter((name) => /qwen3.?vl/i.test(name)), chosen])];
   const select = makeSelect(names.map((name) => [name, name]), chosen);
   select.addEventListener("input", () => apply(() => { s[ENHANCE_MODEL] = select.value === DEFAULT_ENHANCE_MODEL ? "" : select.value; }));
-  bind("Wand encoder", select).title = "The Qwen3-VL encoder the magic wand rewrites with. The default is the one Qwen-Image-2.1 uses; it downloads on first use and is unloaded again after each rewrite.";
+  bind(t("Wand encoder"), select).title = t("The Qwen3-VL encoder the magic wand rewrites with. The default is the one Qwen-Image-2.1 uses; it downloads on first use and is unloaded again after each rewrite.");
   const edit = document.createElement("button");
   edit.type = "button";
   edit.className = "vnccs-uc-btn";
-  edit.textContent = "Edit system prompts...";
-  edit.title = "One tab per model family; also in the ComfyUI settings under VNCCS > UniCanvas > Prompt enhance";
+  edit.textContent = t("Edit system prompts...");
+  edit.title = t("One tab per model family; also in the ComfyUI settings under VNCCS > UniCanvas > Prompt enhance");
   edit.addEventListener("click", () => openPromptsDialog(families, (value) => writeSetting(ENHANCE_PROMPTS_ID, value), changed));
   body.appendChild(edit);
 }

@@ -248,7 +248,7 @@ test("successful FBX retargeting keeps calibrated geometry when camera reset fol
     const { THREE } = neutral;
     let root;
     const modules = { THREE, FBXLoader: class { async loadAsync() { return root.clone(true); } } };
-    const { importer, names } = vm.runInNewContext(mixamo.replace(/^export /gm, "")
+    const { importer, names } = vm.runInNewContext(mixamo.replace(/^import .*;$/gm, "").replace(/^export /gm, "")
         + "\nloaderPromise = Promise.resolve(modules); ({ importer: importMixamoFBXAnimation, names: MIXAMO_TO_MH_BONE_MAP });", {
         modules, URL: { createObjectURL: () => "blob:test", revokeObjectURL: noop }, console: { info: noop },
     });

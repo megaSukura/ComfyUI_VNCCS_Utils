@@ -1,14 +1,16 @@
 // Equirectangular document storage and a perspective editing window.
+import { t as tr } from "../i18n/index.mjs";
+
 export const PANORAMA_MAX_PIXELS = 8192 * 4096;
 export const PANORAMA_MAX_VIEW = 4096;
 export const isPanoramaCandidate = (width, height) => height > 0 && width / height >= 1.9;
 
 export function normalizePanorama(value) {
   if (!value) return null;
-  if (value.projection !== "equirectangular") throw new Error("Unsupported panorama projection");
+  if (value.projection !== "equirectangular") throw new Error(tr("Unsupported panorama projection"));
   const width = Math.round(Number(value.width)), height = Math.round(Number(value.height));
   if (!(width > 0 && height > 0 && width <= 8192 && height <= 8192 && width * height <= PANORAMA_MAX_PIXELS)) {
-    throw new Error("Panorama dimensions are too large or invalid");
+    throw new Error(tr("Panorama dimensions are too large or invalid"));
   }
   const finite = (n, fallback) => Number.isFinite(Number(n)) ? Number(n) : fallback;
   return {
@@ -126,7 +128,7 @@ export class PanoramaRenderer {
   constructor() {
     this.canvas = canvas(1, 1);
     const gl = this.gl = this.canvas.getContext("webgl2", { alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true, antialias: false });
-    if (!gl) throw new Error("Panorama mode requires WebGL 2");
+    if (!gl) throw new Error(tr("Panorama mode requires WebGL 2"));
     this.textures = new Map();
     const shaders = [];
     try {
@@ -170,15 +172,15 @@ export class PanoramaRenderer {
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
-      if (gl.getError() !== gl.NO_ERROR) throw new Error("The GPU could not allocate the panorama texture");
+      if (gl.getError() !== gl.NO_ERROR) throw new Error(tr("The GPU could not allocate the panorama texture"));
       entry.dirty = false;
     }
   }
 
   render(source, camera, width, height, before = null, after = null) {
     const gl = this.gl;
-    if (gl.isContextLost()) throw new Error("Panorama GPU context lost. Save the workflow and reload the editor.");
-    if (Math.max(width, height, source.width, source.height) > this.limit) throw new Error(`Panorama exceeds the GPU limit (${this.limit}px)`);
+    if (gl.isContextLost()) throw new Error(tr("Panorama GPU context lost. Save the workflow and reload the editor."));
+    if (Math.max(width, height, source.width, source.height) > this.limit) throw new Error(tr("Panorama exceeds the GPU limit ({limit}px)", { limit: this.limit }));
     if (this.canvas.width !== width) this.canvas.width = width;
     if (this.canvas.height !== height) this.canvas.height = height;
     gl.viewport(0, 0, width, height);
@@ -195,7 +197,7 @@ export class PanoramaRenderer {
     gl.uniform1f(this.locations.cameraRoll, (camera.roll || 0) * Math.PI / 180);
     gl.uniform3f(this.locations.camera, camera.yaw * Math.PI / 180, camera.pitch * Math.PI / 180, Math.tan(camera.fov * Math.PI / 360));
     gl.drawArrays(gl.TRIANGLES, 0, 6);
-    if (gl.getError() !== gl.NO_ERROR) throw new Error("The GPU could not render the panorama");
+    if (gl.getError() !== gl.NO_ERROR) throw new Error(tr("The GPU could not render the panorama"));
     return this.canvas;
   }
 
@@ -223,7 +225,7 @@ export class PanoramaDocument {
     this.renderer = new PanoramaRenderer();
     if (Math.max(this.settings.width, this.settings.height) > this.renderer.limit) {
       this.renderer.dispose();
-      throw new Error(`Panorama exceeds the GPU limit (${this.renderer.limit}px)`);
+      throw new Error(tr("Panorama exceeds the GPU limit ({limit}px)", { limit: this.renderer.limit }));
     }
     this.revision = 0;
     this.pendingCamera = null;
@@ -288,7 +290,7 @@ export class PanoramaDocument {
   canRotate() {
     const w = this.widget;
     if (w._isRestoring || w.transformDraft || (w.isPointerDown && w.pointerMode !== "panorama")) {
-      w.setStatus("Finish the current edit before rotating the panorama", true); return false;
+      w.setStatus(tr("Finish the current edit before rotating the panorama"), true); return false;
     }
     return true;
   }
@@ -319,7 +321,7 @@ export class PanoramaDocument {
       } catch (error) {
         this.settings = previous;
         this.widget.updatePanoramaControls(previous);
-        this.widget.setStatus(`Panorama view failed: ${error.message || error}`, true);
+        this.widget.setStatus(tr("Panorama view failed: {message}", { message: error.message || error }), true);
       }
     });
   }

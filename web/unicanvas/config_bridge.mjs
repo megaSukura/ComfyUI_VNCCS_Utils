@@ -11,16 +11,18 @@
  * image) does the caller fall back to queueing the prompt.
  */
 
+import { t } from "../i18n/index.mjs";
+
 const MODEL_LOADERS = {
   CheckpointLoaderSimple: (node) => ({ model_loader: "checkpoint", ckpt_name: widget(node, "ckpt_name"), _ckptNode: node.id }),
   UNETLoader: (node) => widget(node, "weight_dtype") && widget(node, "weight_dtype") !== "default"
-    ? { unsupported: "UNETLoader weight_dtype requires the original loader" }
+    ? { unsupported: t("UNETLoader weight_dtype requires the original loader") }
     : { model_loader: "diffusion_model", diffusion_model_name: widget(node, "unet_name") },
   UnetLoaderGGUF: (node) => ({ model_loader: "gguf", gguf_model_name: widget(node, "unet_name") }),
 };
 const CLIP_LOADERS = {
   CLIPLoader: (node) => widget(node, "device") && widget(node, "device") !== "default"
-    ? { unsupported: "CLIPLoader device requires the original loader" }
+    ? { unsupported: t("CLIPLoader device requires the original loader") }
     : { clip_name: widget(node, "clip_name"), clip_type: lower(widget(node, "type")) },
   CheckpointLoaderSimple: (node) => ({ _ckptNode: node.id }),
 };
@@ -65,9 +67,9 @@ export function upstreamNode(graph, node, inputName) {
  */
 function walk(graph, node, inputName, loaders) {
   const current = upstreamNode(graph, node, inputName);
-  if (!current) return { unsupported: `nothing is connected to ${inputName}` };
+  if (!current) return { unsupported: t("nothing is connected to {name}", { name: inputName }) };
   if (current.inputs?.some(input => input.link != null)) {
-    return { unsupported: `${current.type} has linked loader settings` };
+    return { unsupported: t("{type} has linked loader settings", { type: current.type }) };
   }
   const read = loaders[current.type];
   return read ? read(current) : { unsupported: `${current.title || current.type} (${current.type})` };
@@ -94,28 +96,28 @@ function configLoraStack(configNode) {
  */
 export function resolveConfigDrawSettings(graph, widgetNode) {
   const configNode = upstreamNode(graph, widgetNode, "config");
-  if (!configNode) return { unsupported: "the VNCSS Config node was not found" };
+  if (!configNode) return { unsupported: t("the VNCSS Config node was not found") };
   const model = walk(graph, configNode, "model", MODEL_LOADERS);
-  if (model.unsupported) return { unsupported: `model: ${model.unsupported}` };
+  if (model.unsupported) return { unsupported: t("model: {reason}", { reason: model.unsupported }) };
   const clip = walk(graph, configNode, "clip", CLIP_LOADERS);
-  if (clip.unsupported) return { unsupported: `clip: ${clip.unsupported}` };
+  if (clip.unsupported) return { unsupported: t("clip: {reason}", { reason: clip.unsupported }) };
   const vae = walk(graph, configNode, "vae", VAE_LOADERS);
-  if (vae.unsupported) return { unsupported: `vae: ${vae.unsupported}` };
+  if (vae.unsupported) return { unsupported: t("vae: {reason}", { reason: vae.unsupported }) };
   if (model.model_loader === "checkpoint") {
     // UniCanvas loads CLIP and VAE from the checkpoint itself.
     if (clip._ckptNode !== model._ckptNode || vae._ckptNode !== model._ckptNode) {
-      return { unsupported: "a checkpoint model with a separate CLIP or VAE loader" };
+      return { unsupported: t("a checkpoint model with a separate CLIP or VAE loader") };
     }
   } else if (clip._ckptNode != null || vae._ckptNode != null) {
-    return { unsupported: "CLIP or VAE from a checkpoint next to a separate model file" };
+    return { unsupported: t("CLIP or VAE from a checkpoint next to a separate model file") };
   }
   const references = [];
   for (let index = 1; index <= 10; index += 1) {
     const source = upstreamNode(graph, configNode, `reference_image_${index}`);
     if (!source) continue;
-    if (source.type !== "LoadImage") return { unsupported: `reference_image_${index} comes from ${source.type}` };
+    if (source.type !== "LoadImage") return { unsupported: t("reference_image_{index} comes from {type}", { index, type: source.type }) };
     const file = String(widget(source, "image") || "");
-    if (!file) return { unsupported: `reference_image_${index} has no image` };
+    if (!file) return { unsupported: t("reference_image_{index} has no image", { index }) };
     const slash = Math.max(file.lastIndexOf("/"), file.lastIndexOf("\\"));
     references.push({ slot: index, filename: slash >= 0 ? file.slice(slash + 1) : file, subfolder: slash >= 0 ? file.slice(0, slash) : "", type: "input" });
   }
@@ -135,7 +137,7 @@ export async function loadConfigReferences(references) {
   for (const ref of references || []) {
     const params = new URLSearchParams({ filename: ref.filename, subfolder: ref.subfolder || "", type: ref.type || "input" });
     const res = await fetch(`/view?${params.toString()}`);
-    if (!res.ok) throw new Error(`reference ${ref.filename}: HTTP ${res.status}`);
+    if (!res.ok) throw new Error(t("reference {name}: HTTP {status}", { name: ref.filename, status: res.status }));
     const blob = await res.blob();
     urls[(ref.slot ?? urls.length + 1) - 1] = await new Promise((resolve, reject) => {
       const reader = new FileReader();

@@ -1,13 +1,14 @@
 import { PARAMETRIC_PARTS, PRIMITIVE_KINDS, primitiveLabel } from "./factory3d/geometry/parametric_parts.mjs";
+import { t } from "./i18n/index.mjs";
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { installCustomSelects } from "./shared/custom_select.mjs?v=20261104-scaled-menu";
-import { Factory3DViewer } from "./factory3d/viewer.js?v=20261107.1";
+import { Factory3DViewer } from "./factory3d/viewer.js?v=20261110.1";
 import { hasRenderableFactoryScene } from "./factory3d/scene_content.mjs?v=20260905.1";
 import {
     allocateLocalLightShadows,
     localLightStatusLabel,
-} from "./factory3d/lighting_policy.mjs?v=20260905.1";
+} from "./factory3d/lighting_policy.mjs?v=20261110.1";
 import {
     FACTORY_EDITOR_SCHEMA_VERSION,
     DEFAULT_LEVEL,
@@ -29,7 +30,7 @@ import { FactoryPropertyGesture } from "./factory3d/core/property_gesture.mjs";
 import { bindNumericPropertyInputs } from "./factory3d/ui/numeric_property_binding.mjs";
 import { enqueueFactorySceneSave } from "./factory3d/core/save_queue.mjs";
 import { migrateEditorState } from "./factory3d/core/editor_migrations.mjs";
-import { FactoryWorkspace, activateWorkspaceTab } from "./factory3d/ui/workspace.mjs?v=20260908.2";
+import { FactoryWorkspace, activateWorkspaceTab } from "./factory3d/ui/workspace.mjs?v=20261110.1";
 import { ensureFactorySceneOutput } from "./factory3d/core/node_outputs.mjs?v=20260908.1";
 import { factoryCameraQuaternion, factoryCameraEuler } from "./factory3d/core/camera_rotation.mjs";
 import { findFactoryCommands } from "./factory3d/ui/command_registry.mjs";
@@ -308,7 +309,7 @@ function formatCacheBytes(value) {
     return Number(value) > 0 ? formatBytes(value) : "0 B";
 }
 
-function errorText(error, fallback = "The operation could not be completed.") {
+function errorText(error, fallback = t("The operation could not be completed.")) {
     if (error instanceof Error) return error.message || fallback;
     if (typeof error === "string") return error || fallback;
     try { return JSON.stringify(error, null, 2); } catch (_) { return fallback; }
@@ -357,7 +358,7 @@ function imageFileDimensions(file) {
         };
         image.onerror = () => {
             URL.revokeObjectURL(url);
-            reject(new Error("The selected image could not be decoded."));
+            reject(new Error(t("The selected image could not be decoded.")));
         };
         image.src = url;
     });
@@ -405,7 +406,7 @@ function blobToDataURL(blob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(String(reader.result || ""));
-        reader.onerror = () => reject(reader.error || new Error("Could not read preview image"));
+        reader.onerror = () => reject(reader.error || new Error(t("Could not read preview image")));
         reader.readAsDataURL(blob);
     });
 }
@@ -525,7 +526,7 @@ class Factory3DWidget {
         this.history = new FactoryCommandHistory({
             limit: 200,
             onChange: () => this._syncHistoryControls(),
-            onDiscard: () => this.toast("Oldest undo steps were discarded to stay within the history budget.", "info"),
+            onDiscard: () => this.toast(t("Oldest undo steps were discarded to stay within the history budget."), "info"),
             onPatch: (patches, context) => {
                 const owner = this.scene;
                 const operation = this._historyRestoreSerial.then(() => {
@@ -647,7 +648,7 @@ class Factory3DWidget {
                 }
             },
             onLoadingChange: loading => this.els.viewerHost.classList.toggle("is-loading", loading),
-            onError: error => this._showError("Viewport error", error),
+            onError: error => this._showError(t("Viewport error"), error),
             resolveAssetURL: apiUrl,
         });
         this._customSelects = installCustomSelects(this.container, { theme: "pose-studio" });
@@ -674,7 +675,7 @@ class Factory3DWidget {
         this._syncExportSettings();
         this._syncLighting();
         this._syncSkydome();
-        this._setStatus("Ready", "idle");
+        this._setStatus(t("Ready"), "idle");
     }
 
     _createLayout() {
@@ -682,21 +683,21 @@ class Factory3DWidget {
         root.style.containerType = "inline-size";
         root.setAttribute("aria-label", "VNCCS 3D Factory");
         root.innerHTML = `
-            <aside class="vnccs-i3s__side vnccs-i3s__side--left" aria-label="Creation and camera tools">
-                <div class="vnccs-i3s__workspace-tabs" role="tablist" aria-label="Creation workspace">
+            <aside class="vnccs-i3s__side vnccs-i3s__side--left" aria-label="${t("Creation and camera tools")}">
+                <div class="vnccs-i3s__workspace-tabs" role="tablist" aria-label="${t("Creation workspace")}">
                     <button class="vnccs-i3s__workspace-tab" type="button" role="tab"
                         data-workspace-side="left" data-workspace-tab="generate"
                         id="${this._workspaceId}-left-generate-tab"
-                        title="Generation tools"
+                        title="${t("Generation tools")}"
                         aria-controls="${this._workspaceId}-left-generate" aria-selected="true">
-                        <span aria-hidden="true">${ICONS.upload}</span><span>Generate</span>
+                        <span aria-hidden="true">${ICONS.upload}</span><span>${t("Generate")}</span>
                     </button>
                     <button class="vnccs-i3s__workspace-tab" type="button" role="tab"
                         data-workspace-side="left" data-workspace-tab="cameras"
                         id="${this._workspaceId}-left-cameras-tab"
-                        title="Camera tools"
+                        title="${t("Camera tools")}"
                         aria-controls="${this._workspaceId}-left-cameras" aria-selected="false" tabindex="-1">
-                        <span aria-hidden="true">${ICONS.camera}</span><span>Cameras</span>
+                        <span aria-hidden="true">${ICONS.camera}</span><span>${t("Cameras")}</span>
                     </button>
                 </div>
                 <div class="vnccs-i3s__workspace-panels">
@@ -706,56 +707,56 @@ class Factory3DWidget {
                         data-workspace-side="left" data-workspace-panel="generate"
                         data-preserve-scroll="workspace-left-generate">
                 <section class="vnccs-i3s__section">
-                    <div class="vnccs-i3s__section-head"><span>Reference</span></div>
+                    <div class="vnccs-i3s__section-head"><span>${t("Reference")}</span></div>
                     <div class="vnccs-i3s__section-body">
                         <div class="vnccs-i3s__dropzone" role="button" tabindex="0">
                             <input class="vnccs-i3s__file-input vnccs-i3s__source-input" type="file" accept="image/png,image/jpeg,image/webp" tabindex="-1" />
                             <div class="vnccs-i3s__drop-empty">
                                 <span class="vnccs-i3s__drop-icon">${ICONS.upload}</span>
-                                <span class="vnccs-i3s__drop-title">Drop a reference image</span>
-                                <span class="vnccs-i3s__drop-meta">PNG, JPEG or WebP · up to 32 MB</span>
+                                <span class="vnccs-i3s__drop-title">${t("Drop a reference image")}</span>
+                                <span class="vnccs-i3s__drop-meta">${t("PNG, JPEG or WebP · up to 32 MB")}</span>
                             </div>
-                            <img class="vnccs-i3s__source-preview" alt="Selected reference" decoding="async" />
+                            <img class="vnccs-i3s__source-preview" alt="${t("Selected reference")}" decoding="async" />
                             <div class="vnccs-i3s__source-overlay">
                                 <span class="vnccs-i3s__source-name"></span>
-                                <button class="vnccs-i3s__button vnccs-i3s__button--quiet vnccs-i3s__source-change" type="button">Replace</button>
+                                <button class="vnccs-i3s__button vnccs-i3s__button--quiet vnccs-i3s__source-change" type="button">${t("Replace")}</button>
                             </div>
                         </div>
                     </div>
                 </section>
                 <section class="vnccs-i3s__section">
-                    <div class="vnccs-i3s__section-head"><span>Generator</span></div>
+                    <div class="vnccs-i3s__section-head"><span>${t("Generator")}</span></div>
                     <div class="vnccs-i3s__section-body">
                         <div class="vnccs-i3s__provider-card vnccs-i3s__generator-card">
-                            <button class="vnccs-i3s__generator-select" type="button" aria-haspopup="dialog" aria-label="Choose 3D generator">
+                            <button class="vnccs-i3s__generator-select" type="button" aria-haspopup="dialog" aria-label="${t("Choose 3D generator")}">
                                 <span class="vnccs-i3s__provider-dot vnccs-i3s__weights-dot" aria-hidden="true"></span>
                                 <span class="vnccs-i3s__provider-copy">
                                     <span class="vnccs-i3s__provider-name vnccs-i3s__generator-name">TripoSplat</span>
-                                    <span class="vnccs-i3s__provider-model vnccs-i3s__weights-summary">Checking weights…</span>
+                                    <span class="vnccs-i3s__provider-model vnccs-i3s__weights-summary">${t("Checking weights…")}</span>
                                 </span>
                                 <span class="vnccs-i3s__generator-chevron" aria-hidden="true">${ICONS.chevron}</span>
                             </button>
-                            <button class="vnccs-i3s__button vnccs-i3s__button--quiet vnccs-i3s__icon-button vnccs-i3s__model-setup" type="button" title="Model setup" aria-label="Open model setup">${ICONS.settings}</button>
+                            <button class="vnccs-i3s__button vnccs-i3s__button--quiet vnccs-i3s__icon-button vnccs-i3s__model-setup" type="button" title="${t("Model setup")}" aria-label="${t("Open model setup")}">${ICONS.settings}</button>
                         </div>
                         <label class="vnccs-i3s__field">
-                            <span class="vnccs-i3s__label">Object name</span>
-                            <input class="vnccs-i3s__input vnccs-i3s__object-name-input" maxlength="80" placeholder="Generated object" />
+                            <span class="vnccs-i3s__label">${t("Object name")}</span>
+                            <input class="vnccs-i3s__input vnccs-i3s__object-name-input" maxlength="80" placeholder="${t("Generated object")}" />
                         </label>
                         <div class="vnccs-i3s__generator-settings" data-generator-settings="triposplat">
                         <div class="vnccs-i3s__field-row">
                             <label class="vnccs-i3s__field">
-                                <span class="vnccs-i3s__label">Gaussians</span>
+                                <span class="vnccs-i3s__label">${t("Gaussians")}</span>
                                 <select class="vnccs-i3s__select vnccs-i3s__density">
-                                    <option value="32768">32K · Draft</option>
-                                    <option value="65536">65K · Fast</option>
-                                    <option value="131072">131K · Quality</option>
-                                    <option value="262144">262K · Maximum</option>
-                                    <option value="524288">524K · Experimental</option>
-                                    <option value="1048576">1.05M · Extreme</option>
+                                    <option value="32768">${t("32K · Draft")}</option>
+                                    <option value="65536">${t("65K · Fast")}</option>
+                                    <option value="131072">${t("131K · Quality")}</option>
+                                    <option value="262144">${t("262K · Maximum")}</option>
+                                    <option value="524288">${t("524K · Experimental")}</option>
+                                    <option value="1048576">${t("1.05M · Extreme")}</option>
                                 </select>
                             </label>
                             <label class="vnccs-i3s__field">
-                                <span class="vnccs-i3s__label">Steps</span>
+                                <span class="vnccs-i3s__label">${t("Steps")}</span>
                                 <input class="vnccs-i3s__input vnccs-i3s__steps" type="number" min="1" max="100" step="1" />
                             </label>
                         </div>
@@ -763,53 +764,53 @@ class Factory3DWidget {
                             Experimental 2× density. Requires substantially more VRAM and decode time.
                         </div>
                         <label class="vnccs-i3s__field">
-                            <span class="vnccs-i3s__label"><span>Guidance</span><span class="vnccs-i3s__guidance-value">3.0</span></span>
+                            <span class="vnccs-i3s__label"><span>${t("Guidance")}</span><span class="vnccs-i3s__guidance-value">3.0</span></span>
                             <input class="vnccs-i3s__range vnccs-i3s__guidance" type="range" min="1" max="10" step=".1" />
                         </label>
                         </div>
                         <div class="vnccs-i3s__generator-settings vnccs-i3s__mesh-settings" data-generator-settings="mesh" hidden>
                             <label class="vnccs-i3s__field">
-                                <span class="vnccs-i3s__label">Quality</span>
+                                <span class="vnccs-i3s__label">${t("Quality")}</span>
                                 <select class="vnccs-i3s__select vnccs-i3s__mesh-quality">
-                                    <option value="preview">Preview · 1K</option>
-                                    <option value="balanced">Balanced · 2K</option>
-                                    <option value="high">High · 4K</option>
+                                    <option value="preview">${t("Preview · 1K")}</option>
+                                    <option value="balanced">${t("Balanced · 2K")}</option>
+                                    <option value="high">${t("High · 4K")}</option>
                                 </select>
                             </label>
-                            <div class="vnccs-i3s__mesh-quality-summary">Textured GLB · 700K face target · 4K material</div>
+                            <div class="vnccs-i3s__mesh-quality-summary">${t("Textured GLB · 700K face target · 4K material")}</div>
                             <details class="vnccs-i3s__advanced-settings">
-                                <summary>Advanced sampling</summary>
+                                <summary>${t("Advanced sampling")}</summary>
                                 <div class="vnccs-i3s__field-row">
-                                    <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Structure</span><input class="vnccs-i3s__input vnccs-i3s__mesh-structure-steps" type="number" min="1" max="100" step="1" /></label>
-                                    <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Shape</span><input class="vnccs-i3s__input vnccs-i3s__mesh-shape-steps" type="number" min="1" max="100" step="1" /></label>
+                                    <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Structure")}</span><input class="vnccs-i3s__input vnccs-i3s__mesh-structure-steps" type="number" min="1" max="100" step="1" /></label>
+                                    <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Shape")}</span><input class="vnccs-i3s__input vnccs-i3s__mesh-shape-steps" type="number" min="1" max="100" step="1" /></label>
                                 </div>
                                 <div class="vnccs-i3s__field-row">
-                                    <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Upsample</span><input class="vnccs-i3s__input vnccs-i3s__mesh-upsample-steps" type="number" min="1" max="100" step="1" /></label>
-                                    <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Texture</span><input class="vnccs-i3s__input vnccs-i3s__mesh-texture-steps" type="number" min="1" max="100" step="1" /></label>
+                                    <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Upsample")}</span><input class="vnccs-i3s__input vnccs-i3s__mesh-upsample-steps" type="number" min="1" max="100" step="1" /></label>
+                                    <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Texture")}</span><input class="vnccs-i3s__input vnccs-i3s__mesh-texture-steps" type="number" min="1" max="100" step="1" /></label>
                                 </div>
                             </details>
                             <div class="vnccs-i3s__switch-row">
-                                <span>Refine Textures and Materials</span>
-                                <button class="vnccs-i3s__switch vnccs-i3s__refine-textures" type="button" role="switch" aria-checked="false" aria-label="Refine Textures and Materials"></button>
+                                <span>${t("Refine Textures and Materials")}</span>
+                                <button class="vnccs-i3s__switch vnccs-i3s__refine-textures" type="button" role="switch" aria-checked="false" aria-label="${t("Refine Textures and Materials")}"></button>
                             </div>
-                            <div class="vnccs-i3s__hint">Automatic multiview textures and PBR materials</div>
+                            <div class="vnccs-i3s__hint">${t("Automatic multiview textures and PBR materials")}</div>
                             <label class="vnccs-i3s__field vnccs-i3s__refine-resolution-field" hidden>
-                                <span class="vnccs-i3s__label"><span>Resolution Scale</span><span class="vnccs-i3s__refine-resolution-value">4.0 MP</span></span>
-                                <input class="vnccs-i3s__range vnccs-i3s__refine-resolution" type="range" min="1" max="4" step="0.1" value="4" aria-label="Refine resolution scale in megapixels" />
+                                <span class="vnccs-i3s__label"><span>${t("Resolution Scale")}</span><span class="vnccs-i3s__refine-resolution-value">4.0 MP</span></span>
+                                <input class="vnccs-i3s__range vnccs-i3s__refine-resolution" type="range" min="1" max="4" step="0.1" value="4" aria-label="${t("Refine resolution scale in megapixels")}" />
                             </label>
                         </div>
                         <div class="vnccs-i3s__switch-row vnccs-i3s__background-row">
-                            <span class="vnccs-i3s__background-title">Remove background</span>
-                            <button class="vnccs-i3s__switch vnccs-i3s__remove-background" type="button" role="switch" aria-checked="true" aria-label="Remove image background"></button>
+                            <span class="vnccs-i3s__background-title">${t("Remove background")}</span>
+                            <button class="vnccs-i3s__switch vnccs-i3s__remove-background" type="button" role="switch" aria-checked="true" aria-label="${t("Remove image background")}"></button>
                         </div>
                         <label class="vnccs-i3s__field">
-                            <span class="vnccs-i3s__label">Seed</span>
+                            <span class="vnccs-i3s__label">${t("Seed")}</span>
                             <span class="vnccs-i3s__seed-row">
                                 <input class="vnccs-i3s__input vnccs-i3s__seed" type="number" min="0" max="2147483647" step="1" />
-                                <button class="vnccs-i3s__button vnccs-i3s__seed-dice" type="button" title="Random seed" aria-label="Toggle random seed" aria-pressed="true">${ICONS.dice}</button>
+                                <button class="vnccs-i3s__button vnccs-i3s__seed-dice" type="button" title="${t("Random seed")}" aria-label="${t("Toggle random seed")}" aria-pressed="true">${ICONS.dice}</button>
                             </span>
                         </label>
-                        <button class="vnccs-i3s__button vnccs-i3s__button--primary vnccs-i3s__button--block vnccs-i3s__generate" type="button">${ICONS.play}<span>Generate object</span></button>
+                        <button class="vnccs-i3s__button vnccs-i3s__button--primary vnccs-i3s__button--block vnccs-i3s__generate" type="button">${ICONS.play}<span>${t("Generate object")}</span></button>
                     </div>
                 </section>
                     </div>
@@ -820,13 +821,13 @@ class Factory3DWidget {
                         data-preserve-scroll="workspace-left-cameras" hidden>
                 <section class="vnccs-i3s__section vnccs-i3s__camera-section">
                     <div class="vnccs-i3s__section-head">
-                        <span>Camera</span>
+                        <span>${t("Camera")}</span>
                         <span class="vnccs-i3s__camera-count">0</span>
                     </div>
                     <div class="vnccs-i3s__section-body">
                         <div class="vnccs-i3s__camera-look" role="slider" tabindex="0"
-                            aria-label="First-person camera look control"
-                            aria-valuetext="Drag to look left, right, up or down">
+                            aria-label="${t("First-person camera look control")}"
+                            aria-valuetext="${t("Drag to look left, right, up or down")}">
                             <span class="vnccs-i3s__camera-look-axis vnccs-i3s__camera-look-axis--x"></span>
                             <span class="vnccs-i3s__camera-look-axis vnccs-i3s__camera-look-axis--y"></span>
                             <span class="vnccs-i3s__camera-look-arrow vnccs-i3s__camera-look-arrow--up">⌃</span>
@@ -835,27 +836,27 @@ class Factory3DWidget {
                             <span class="vnccs-i3s__camera-look-arrow vnccs-i3s__camera-look-arrow--left">‹</span>
                             <span class="vnccs-i3s__camera-look-reticle" aria-hidden="true"></span>
                         </div>
-                        <div class="vnccs-i3s__camera-help">Drag to look</div>
+                        <div class="vnccs-i3s__camera-help">${t("Drag to look")}</div>
                         <label class="vnccs-i3s__field vnccs-i3s__camera-zoom-speed">
-                            <span class="vnccs-i3s__label"><span>Wheel zoom speed</span><output class="vnccs-i3s__camera-zoom-speed-value">0.10×</output></span>
-                            <input class="vnccs-i3s__range vnccs-i3s__camera-zoom-speed-range" type="range" min="-2" max="0.30103" step="0.01" value="-1" aria-label="Mouse wheel zoom speed" aria-valuetext="0.10×" />
+                            <span class="vnccs-i3s__label"><span>${t("Wheel zoom speed")}</span><output class="vnccs-i3s__camera-zoom-speed-value">0.10×</output></span>
+                            <input class="vnccs-i3s__range vnccs-i3s__camera-zoom-speed-range" type="range" min="-2" max="0.30103" step="0.01" value="-1" aria-label="${t("Mouse wheel zoom speed")}" aria-valuetext="0.10×" />
                         </label>
                         <div class="vnccs-i3s__camera-view-presets">
-                            <span class="vnccs-i3s__label">View projection</span>
-                            <div class="vnccs-i3s__camera-view-preset-grid" role="group" aria-label="Camera view projections">
-                                <button class="vnccs-i3s__button" type="button" data-camera-preset="perspective">Perspective</button>
-                                <button class="vnccs-i3s__button" type="button" data-camera-preset="front">Front</button>
-                                <button class="vnccs-i3s__button" type="button" data-camera-preset="right">Right</button>
-                                <button class="vnccs-i3s__button" type="button" data-camera-preset="top">Top</button>
+                            <span class="vnccs-i3s__label">${t("View projection")}</span>
+                            <div class="vnccs-i3s__camera-view-preset-grid" role="group" aria-label="${t("Camera view projections")}">
+                                <button class="vnccs-i3s__button" type="button" data-camera-preset="perspective">${t("Perspective")}</button>
+                                <button class="vnccs-i3s__button" type="button" data-camera-preset="front">${t("Front")}</button>
+                                <button class="vnccs-i3s__button" type="button" data-camera-preset="right">${t("Right")}</button>
+                                <button class="vnccs-i3s__button" type="button" data-camera-preset="top">${t("Top")}</button>
                             </div>
                         </div>
                         <button class="vnccs-i3s__button vnccs-i3s__button--primary vnccs-i3s__button--block vnccs-i3s__camera-add" type="button">
-                            ${ICONS.cameraAdd}<span>Add camera</span>
+                            ${ICONS.cameraAdd}<span>${t("Add camera")}</span>
                         </button>
-                        <div class="vnccs-i3s__camera-manager" aria-label="Saved cameras">
+                        <div class="vnccs-i3s__camera-manager" aria-label="${t("Saved cameras")}">
                             <div class="vnccs-i3s__camera-group-head">
                                 <span>${ICONS.camera}</span>
-                                <strong>Cameras</strong>
+                                <strong>${t("Cameras")}</strong>
                                 <span class="vnccs-i3s__camera-group-count">0</span>
                             </div>
                             <div class="vnccs-i3s__camera-list"></div>
@@ -863,254 +864,254 @@ class Factory3DWidget {
                         <div class="vnccs-i3s__camera-track-editor">
                             <div class="vnccs-i3s__camera-group-head">
                                 <span>${ICONS.play}</span>
-                                <strong>Camera path</strong>
+                                <strong>${t("Camera path")}</strong>
                             </div>
                             <div class="vnccs-i3s__camera-track-row">
-                                <select class="vnccs-i3s__select vnccs-i3s__camera-track-select" aria-label="Camera path"></select>
-                                <button class="vnccs-i3s__button vnccs-i3s__camera-track-add" type="button" title="Add camera path">+</button>
-                                <button class="vnccs-i3s__button vnccs-i3s__camera-track-delete" type="button" title="Delete active camera path" aria-label="Delete active camera path">${ICONS.trash}</button>
+                                <select class="vnccs-i3s__select vnccs-i3s__camera-track-select" aria-label="${t("Camera path")}"></select>
+                                <button class="vnccs-i3s__button vnccs-i3s__camera-track-add" type="button" title="${t("Add camera path")}">+</button>
+                                <button class="vnccs-i3s__button vnccs-i3s__camera-track-delete" type="button" title="${t("Delete active camera path")}" aria-label="${t("Delete active camera path")}">${ICONS.trash}</button>
                             </div>
-                            <input class="vnccs-i3s__input vnccs-i3s__camera-track-name" maxlength="80" placeholder="Camera path name" aria-label="Camera path name" />
+                            <input class="vnccs-i3s__input vnccs-i3s__camera-track-name" maxlength="80" placeholder="${t("Camera path name")}" aria-label="${t("Camera path name")}" />
                             <div class="vnccs-i3s__camera-track-actions">
-                                <button class="vnccs-i3s__button vnccs-i3s__camera-keyframe-add" type="button">Add point</button>
-                                <button class="vnccs-i3s__button vnccs-i3s__camera-track-play" type="button">Play</button>
+                                <button class="vnccs-i3s__button vnccs-i3s__camera-keyframe-add" type="button">${t("Add point")}</button>
+                                <button class="vnccs-i3s__button vnccs-i3s__camera-track-play" type="button">${t("Play")}</button>
                             </div>
-                            <input class="vnccs-i3s__range vnccs-i3s__camera-track-time" type="range" min="0" max="5" step="0.001" value="0" aria-label="Camera path time" />
-                            <div class="vnccs-i3s__camera-track-meta">No camera path</div>
+                            <input class="vnccs-i3s__range vnccs-i3s__camera-track-time" type="range" min="0" max="5" step="0.001" value="0" aria-label="${t("Camera path time")}" />
+                            <div class="vnccs-i3s__camera-track-meta">${t("No camera path")}</div>
                             <div class="vnccs-i3s__camera-keyframes" data-preserve-scroll="camera-keyframes"></div>
                         </div>
                     </div>
                 </section>
                     </div>
                 </div>
-                <a class="vnccs-i3s__donate-link" href="https://www.buymeacoffee.com/MIUProject" target="_blank" rel="noopener noreferrer" title="Support MIUProject">
-                    <img src="${VNCCS_DONATE_BANNER_URL}" alt="Support MIUProject" width="1859" height="525" decoding="async" />
+                <a class="vnccs-i3s__donate-link" href="https://www.buymeacoffee.com/MIUProject" target="_blank" rel="noopener noreferrer" title="${t("Support MIUProject")}">
+                    <img src="${VNCCS_DONATE_BANNER_URL}" alt="${t("Support MIUProject")}" width="1859" height="525" decoding="async" />
                 </a>
             </aside>
             <main class="vnccs-i3s__center">
                 <header class="vnccs-i3s__topbar">
                     <div class="vnccs-i3s__crumb">
                         <span class="vnccs-i3s__crumb-icon">${ICONS.cube}</span>
-                        <input class="vnccs-i3s__scene-name-input" value="Untitled scene" maxlength="96" aria-label="Scene name" />
+                        <input class="vnccs-i3s__scene-name-input" value="Untitled scene" maxlength="96" aria-label="${t("Scene name")}" />
                         <span class="vnccs-i3s__project-id"></span>
                     </div>
                     <div class="vnccs-i3s__status-group">
-                        <button class="vnccs-i3s__button vnccs-i3s__top-action vnccs-i3s__scene-manager" type="button">${ICONS.scenes}<span>Scenes</span></button>
-                        <div class="vnccs-i3s__status-pill" data-tone="idle">Ready</div>
+                        <button class="vnccs-i3s__button vnccs-i3s__top-action vnccs-i3s__scene-manager" type="button">${ICONS.scenes}<span>${t("Scenes")}</span></button>
+                        <div class="vnccs-i3s__status-pill" data-tone="idle">${t("Ready")}</div>
                     </div>
                 </header>
                 <div class="vnccs-i3s__viewport">
-                    <div class="vnccs-i3s__viewer-host" aria-label="3D scene viewport"></div>
+                    <div class="vnccs-i3s__viewer-host" aria-label="${t("3D scene viewport")}"></div>
                     <div class="vnccs-i3s__toolbar" role="toolbar">
-                        <div class="vnccs-i3s__view-switch" role="group" aria-label="Viewport mode">
+                        <div class="vnccs-i3s__view-switch" role="group" aria-label="${t("Viewport mode")}">
                             <button class="vnccs-i3s__tool-label vnccs-i3s__view-3d" type="button" aria-pressed="true">3D</button>
-                            <button class="vnccs-i3s__tool-label vnccs-i3s__view-plan" type="button" aria-pressed="false">Plan</button>
+                            <button class="vnccs-i3s__tool-label vnccs-i3s__view-plan" type="button" aria-pressed="false">${t("Plan")}</button>
                         </div>
-                        <button class="vnccs-i3s__tool-label vnccs-i3s__undo" type="button" title="Undo (Ctrl/Cmd+Z)" disabled>Undo</button>
-                        <button class="vnccs-i3s__tool-label vnccs-i3s__redo" type="button" title="Redo (Ctrl/Cmd+Shift+Z)" disabled>Redo</button>
+                        <button class="vnccs-i3s__tool-label vnccs-i3s__undo" type="button" title="${t("Undo (Ctrl/Cmd+Z)")}" disabled>${t("Undo")}</button>
+                        <button class="vnccs-i3s__tool-label vnccs-i3s__redo" type="button" title="${t("Redo (Ctrl/Cmd+Shift+Z)")}" disabled>${t("Redo")}</button>
                         <span class="vnccs-i3s__tool-separator"></span>
-                        <button class="vnccs-i3s__tool-label vnccs-i3s__selection-copy" type="button" title="Copy selected scene objects (Ctrl/Cmd+C)" disabled>Copy</button>
-                        <button class="vnccs-i3s__tool-label vnccs-i3s__selection-paste" type="button" title="Paste copied scene objects (Ctrl/Cmd+V)" disabled>Paste</button>
+                        <button class="vnccs-i3s__tool-label vnccs-i3s__selection-copy" type="button" title="${t("Copy selected scene objects (Ctrl/Cmd+C)")}" disabled>${t("Copy")}</button>
+                        <button class="vnccs-i3s__tool-label vnccs-i3s__selection-paste" type="button" title="${t("Paste copied scene objects (Ctrl/Cmd+V)")}" disabled>${t("Paste")}</button>
                         <span class="vnccs-i3s__tool-separator"></span>
-                        <button class="vnccs-i3s__tool vnccs-i3s__fit" type="button" title="Fit scene" aria-label="Fit scene">${ICONS.fit}</button>
+                        <button class="vnccs-i3s__tool vnccs-i3s__fit" type="button" title="${t("Fit scene")}" aria-label="${t("Fit scene")}">${ICONS.fit}</button>
                         <button class="vnccs-i3s__tool-label vnccs-i3s__cutaway" type="button"
-                            title="Interior cutaway (viewport only): hide ceilings and the nearest blocking wall"
-                            aria-label="Toggle viewport-only interior cutaway for this mode"
-                            aria-pressed="false">Cutaway</button>
+                            title="${t("Interior cutaway (viewport only): hide ceilings and the nearest blocking wall")}"
+                            aria-label="${t("Toggle viewport-only interior cutaway for this mode")}"
+                            aria-pressed="false">${t("Cutaway")}</button>
                         <span class="vnccs-i3s__tool-separator"></span>
-                        <button class="vnccs-i3s__tool vnccs-i3s__mode-move" type="button" title="Move" aria-label="Move selected objects" aria-pressed="true">${ICONS.move}</button>
-                        <button class="vnccs-i3s__tool vnccs-i3s__mode-rotate" type="button" title="Rotate" aria-label="Rotate selected objects" aria-pressed="false">${ICONS.rotate}</button>
-                        <button class="vnccs-i3s__tool vnccs-i3s__mode-scale" type="button" title="Scale uniformly" aria-label="Scale selected objects uniformly" aria-pressed="false">${ICONS.scale}</button>
-                        <button class="vnccs-i3s__tool-label vnccs-i3s__drop-surface" type="button" title="Drop selection to the nearest surface (End)">Drop</button>
+                        <button class="vnccs-i3s__tool vnccs-i3s__mode-move" type="button" title="${t("Move")}" aria-label="${t("Move selected objects")}" aria-pressed="true">${ICONS.move}</button>
+                        <button class="vnccs-i3s__tool vnccs-i3s__mode-rotate" type="button" title="${t("Rotate")}" aria-label="${t("Rotate selected objects")}" aria-pressed="false">${ICONS.rotate}</button>
+                        <button class="vnccs-i3s__tool vnccs-i3s__mode-scale" type="button" title="${t("Scale uniformly")}" aria-label="${t("Scale selected objects uniformly")}" aria-pressed="false">${ICONS.scale}</button>
+                        <button class="vnccs-i3s__tool-label vnccs-i3s__drop-surface" type="button" title="${t("Drop selection to the nearest surface (End)")}">${t("Drop")}</button>
                         <span class="vnccs-i3s__tool-separator"></span>
-                        <button class="vnccs-i3s__tool vnccs-i3s__skydome-open" type="button" title="Skydome" aria-label="Open skydome controls" aria-pressed="false">${ICONS.image}</button>
-                        <button class="vnccs-i3s__tool vnccs-i3s__lighting-open" type="button" title="Scene lighting and point lights" aria-label="Open scene lighting and point light controls" aria-pressed="false">${ICONS.sun}</button>
-                        <button class="vnccs-i3s__tool vnccs-i3s__grid" type="button" title="Grid" aria-label="Toggle 3D grid" aria-pressed="false">${ICONS.grid}</button>
+                        <button class="vnccs-i3s__tool vnccs-i3s__skydome-open" type="button" title="${t("Skydome")}" aria-label="${t("Open skydome controls")}" aria-pressed="false">${ICONS.image}</button>
+                        <button class="vnccs-i3s__tool vnccs-i3s__lighting-open" type="button" title="${t("Scene lighting and point lights")}" aria-label="${t("Open scene lighting and point light controls")}" aria-pressed="false">${ICONS.sun}</button>
+                        <button class="vnccs-i3s__tool vnccs-i3s__grid" type="button" title="${t("Grid")}" aria-label="${t("Toggle 3D grid")}" aria-pressed="false">${ICONS.grid}</button>
                     </div>
-                    <div class="vnccs-i3s__plan-tools" role="toolbar" aria-label="Scene creation tools" hidden>
-                        <button type="button" data-plan-tool="select" aria-pressed="true" title="Select and edit architecture"><span>Select</span></button>
-                        <button type="button" data-plan-tool="wall" aria-pressed="false" title="Press and drag to draw a wall"><span>Wall</span></button>
-                        <button type="button" data-plan-tool="room" aria-pressed="false" title="Press and drag diagonally to draw a rectangular room"><span>Room</span></button>
-                        <button type="button" data-plan-tool="opening" aria-pressed="false" title="Press on a wall and drag to set the opening width"><span>Opening</span></button>
+                    <div class="vnccs-i3s__plan-tools" role="toolbar" aria-label="${t("Scene creation tools")}" hidden>
+                        <button type="button" data-plan-tool="select" aria-pressed="true" title="${t("Select and edit architecture")}"><span>${t("Select")}</span></button>
+                        <button type="button" data-plan-tool="wall" aria-pressed="false" title="${t("Press and drag to draw a wall")}"><span>${t("Wall")}</span></button>
+                        <button type="button" data-plan-tool="room" aria-pressed="false" title="${t("Press and drag diagonally to draw a rectangular room")}"><span>${t("Room")}</span></button>
+                        <button type="button" data-plan-tool="opening" aria-pressed="false" title="${t("Press on a wall and drag to set the opening width")}"><span>${t("Opening")}</span></button>
                         <label class="vnccs-i3s__opening-kind-shortcut" hidden>
-                            <span>Place</span>
-                            <select class="vnccs-i3s__select" data-plan-setting="opening_kind" aria-label="Opening type">
-                                <option value="window">Window</option><option value="door">Door</option><option value="empty">Empty</option>
+                            <span>${t("Place")}</span>
+                            <select class="vnccs-i3s__select" data-plan-setting="opening_kind" aria-label="${t("Opening type")}">
+                                <option value="window">${t("Window")}</option><option value="door">${t("Door")}</option><option value="empty">${t("Empty")}</option>
                             </select>
                         </label>
-                        <button type="button" data-plan-tool="camera" aria-pressed="false" title="Press and drag to place and aim a saved camera"><span>Camera</span></button>
-                        <button class="vnccs-i3s__plan-grid-toggle" type="button" aria-pressed="true" title="Show plan grid">Grid</button>
-                        <button class="vnccs-i3s__snap-toggle" type="button" aria-pressed="true" title="Snap drawing and edits to the plan grid">Snap</button>
-                        <label class="vnccs-i3s__snap-grid">Step <input type="number" min="0.001" max="1000" step="0.01" value="0.1" inputmode="decimal" aria-label="Plan grid step in meters" /><span>m</span></label>
+                        <button type="button" data-plan-tool="camera" aria-pressed="false" title="${t("Press and drag to place and aim a saved camera")}"><span>${t("Camera")}</span></button>
+                        <button class="vnccs-i3s__plan-grid-toggle" type="button" aria-pressed="true" title="${t("Show plan grid")}">${t("Grid")}</button>
+                        <button class="vnccs-i3s__snap-toggle" type="button" aria-pressed="true" title="${t("Snap drawing and edits to the plan grid")}">${t("Snap")}</button>
+                        <label class="vnccs-i3s__snap-grid">${t("Step")} <input type="number" min="0.001" max="1000" step="0.01" value="0.1" inputmode="decimal" aria-label="${t("Plan grid step in meters")}" /><span>m</span></label>
                         <details class="vnccs-i3s__plan-settings">
-                            <summary>Options</summary>
+                            <summary>${t("Options")}</summary>
                             <div class="vnccs-i3s__plan-settings-popover">
-                                <label><span>Grid step · m</span><input class="vnccs-i3s__input" data-plan-setting="grid_step" type="number" min="0.001" max="1000" step="0.01" /></label>
-                                <label><span>Major line every</span><input class="vnccs-i3s__input" data-plan-setting="major_every" type="number" min="2" max="100" step="1" /></label>
-                                <label><span>Angle step</span><input class="vnccs-i3s__input" data-plan-setting="angle" type="number" min="0" max="180" step="1" /></label>
-                                <label><span>Opening type</span><select class="vnccs-i3s__select" data-plan-setting="opening_kind"><option value="window">Window</option><option value="door">Door</option><option value="empty">Empty</option></select></label>
-                                <label><input data-plan-setting="endpoints" type="checkbox" /> Snap to endpoints</label>
-                                <label><input data-plan-setting="midpoints" type="checkbox" /> Snap to midpoints</label>
-                                <label><input data-plan-setting="orthogonal" type="checkbox" /> Automatic orthogonal snap</label>
+                                <label><span>${t("Grid step · m")}</span><input class="vnccs-i3s__input" data-plan-setting="grid_step" type="number" min="0.001" max="1000" step="0.01" /></label>
+                                <label><span>${t("Major line every")}</span><input class="vnccs-i3s__input" data-plan-setting="major_every" type="number" min="2" max="100" step="1" /></label>
+                                <label><span>${t("Angle step")}</span><input class="vnccs-i3s__input" data-plan-setting="angle" type="number" min="0" max="180" step="1" /></label>
+                                <label><span>${t("Opening type")}</span><select class="vnccs-i3s__select" data-plan-setting="opening_kind"><option value="window">${t("Window")}</option><option value="door">${t("Door")}</option><option value="empty">${t("Empty")}</option></select></label>
+                                <label><input data-plan-setting="endpoints" type="checkbox" /> ${t("Snap to endpoints")}</label>
+                                <label><input data-plan-setting="midpoints" type="checkbox" /> ${t("Snap to midpoints")}</label>
+                                <label><input data-plan-setting="orthogonal" type="checkbox" /> ${t("Automatic orthogonal snap")}</label>
                             </div>
                         </details>
-                        <label class="vnccs-i3s__room-mode" hidden><span class="vnccs-i3s__label">Room shape</span><select class="vnccs-i3s__select" aria-label="Room shape"><option value="rectangle">Rectangle</option><option value="polygon">Polygon</option></select></label>
-                        <button type="button" class="vnccs-i3s__room-finish" hidden title="Close the contour and create the room (Enter)">Finish room</button>
-                        <button type="button" class="vnccs-i3s__room-back" hidden title="Remove the last contour point (Backspace)">Remove point</button>
-                        <span class="vnccs-i3s__plan-hint">Choose a tool, then press and drag in the plan.</span>
+                        <label class="vnccs-i3s__room-mode" hidden><span class="vnccs-i3s__label">${t("Room shape")}</span><select class="vnccs-i3s__select" aria-label="${t("Room shape")}"><option value="rectangle">${t("Rectangle")}</option><option value="polygon">${t("Polygon")}</option></select></label>
+                        <button type="button" class="vnccs-i3s__room-finish" hidden title="${t("Close the contour and create the room (Enter)")}">${t("Finish room")}</button>
+                        <button type="button" class="vnccs-i3s__room-back" hidden title="${t("Remove the last contour point (Backspace)")}">${t("Remove point")}</button>
+                        <span class="vnccs-i3s__plan-hint">${t("Choose a tool, then press and drag in the plan.")}</span>
                     </div>
-                    <section class="vnccs-i3s__skydome-panel" aria-label="Skydome controls" hidden>
+                    <section class="vnccs-i3s__skydome-panel" aria-label="${t("Skydome controls")}" hidden>
                         <div class="vnccs-i3s__lighting-head">
                             <div>
-                                <div class="vnccs-i3s__lighting-title">Skydome</div>
-                                <div class="vnccs-i3s__lighting-subtitle">Equirectangular environment background</div>
+                                <div class="vnccs-i3s__lighting-title">${t("Skydome")}</div>
+                                <div class="vnccs-i3s__lighting-subtitle">${t("Equirectangular environment background")}</div>
                             </div>
-                            <button class="vnccs-i3s__skydome-close vnccs-i3s__lighting-close" type="button" title="Close skydome controls">${ICONS.close}</button>
+                            <button class="vnccs-i3s__skydome-close vnccs-i3s__lighting-close" type="button" title="${t("Close skydome controls")}">${ICONS.close}</button>
                         </div>
                         <input class="vnccs-i3s__skydome-input" type="file" accept="image/jpeg,image/png,image/webp" hidden />
                         <div class="vnccs-i3s__skydome-source">
                             <div class="vnccs-i3s__skydome-preview">${ICONS.image}</div>
                             <div class="vnccs-i3s__skydome-source-copy">
-                                <b class="vnccs-i3s__skydome-name">No skydome loaded</b>
-                                <span class="vnccs-i3s__skydome-meta">JPEG, PNG or WebP · equirectangular</span>
+                                <b class="vnccs-i3s__skydome-name">${t("No skydome loaded")}</b>
+                                <span class="vnccs-i3s__skydome-meta">${t("JPEG, PNG or WebP · equirectangular")}</span>
                             </div>
-                            <button class="vnccs-i3s__button vnccs-i3s__button--primary vnccs-i3s__skydome-upload" type="button">${ICONS.upload}<span>Load</span></button>
+                            <button class="vnccs-i3s__button vnccs-i3s__button--primary vnccs-i3s__skydome-upload" type="button">${ICONS.upload}<span>${t("Load")}</span></button>
                         </div>
                         <div class="vnccs-i3s__skydome-settings" hidden>
                             <div class="vnccs-i3s__switch-row vnccs-i3s__skydome-visible-row">
                                 <div>
-                                    <div class="vnccs-i3s__scene-frame-title">Visible in background</div>
-                                    <div class="vnccs-i3s__scene-frame-copy">Keeps the skydome available without rendering it.</div>
+                                    <div class="vnccs-i3s__scene-frame-title">${t("Visible in background")}</div>
+                                    <div class="vnccs-i3s__scene-frame-copy">${t("Keeps the skydome available without rendering it.")}</div>
                                 </div>
-                                <button class="vnccs-i3s__switch vnccs-i3s__skydome-visible" type="button" role="switch" aria-checked="true" aria-label="Show skydome"></button>
+                                <button class="vnccs-i3s__switch vnccs-i3s__skydome-visible" type="button" role="switch" aria-checked="true" aria-label="${t("Show skydome")}"></button>
                             </div>
                             <label class="vnccs-i3s__lighting-control">
-                                <span><b>Horizontal rotation</b><output class="vnccs-i3s__skydome-yaw-value">0°</output></span>
+                                <span><b>${t("Horizontal rotation")}</b><output class="vnccs-i3s__skydome-yaw-value">0°</output></span>
                                 <input class="vnccs-i3s__range vnccs-i3s__skydome-yaw" type="range" min="-180" max="180" step="1" value="0" />
                             </label>
                             <div class="vnccs-i3s__skydome-angle-grid">
                                 <label class="vnccs-i3s__lighting-control">
-                                    <span><b>Horizon tilt</b><output class="vnccs-i3s__skydome-pitch-value">0°</output></span>
+                                    <span><b>${t("Horizon tilt")}</b><output class="vnccs-i3s__skydome-pitch-value">0°</output></span>
                                     <input class="vnccs-i3s__range vnccs-i3s__skydome-pitch" type="range" min="-90" max="90" step="1" value="0" />
                                 </label>
                                 <label class="vnccs-i3s__lighting-control">
-                                    <span><b>Horizon roll</b><output class="vnccs-i3s__skydome-roll-value">0°</output></span>
+                                    <span><b>${t("Horizon roll")}</b><output class="vnccs-i3s__skydome-roll-value">0°</output></span>
                                     <input class="vnccs-i3s__range vnccs-i3s__skydome-roll" type="range" min="-180" max="180" step="1" value="0" />
                                 </label>
                             </div>
                             <label class="vnccs-i3s__lighting-control">
-                                <span><b>Exposure</b><output class="vnccs-i3s__skydome-exposure-value">0.0 EV</output></span>
+                                <span><b>${t("Exposure")}</b><output class="vnccs-i3s__skydome-exposure-value">0.0 EV</output></span>
                                 <input class="vnccs-i3s__range vnccs-i3s__skydome-exposure" type="range" min="-4" max="4" step="0.1" value="0" />
                             </label>
                             <label class="vnccs-i3s__lighting-control">
-                                <span><b>Background blur</b><output class="vnccs-i3s__skydome-blur-value">0%</output></span>
+                                <span><b>${t("Background blur")}</b><output class="vnccs-i3s__skydome-blur-value">0%</output></span>
                                 <input class="vnccs-i3s__range vnccs-i3s__skydome-blur" type="range" min="0" max="1" step="0.01" value="0" />
                             </label>
                             <div class="vnccs-i3s__skydome-actions">
-                                <button class="vnccs-i3s__button vnccs-i3s__skydome-level" type="button">Level horizon</button>
-                                <button class="vnccs-i3s__button vnccs-i3s__skydome-reset" type="button">Reset alignment</button>
-                                <button class="vnccs-i3s__button vnccs-i3s__button--danger vnccs-i3s__skydome-remove" type="button">${ICONS.trash}<span>Remove</span></button>
+                                <button class="vnccs-i3s__button vnccs-i3s__skydome-level" type="button">${t("Level horizon")}</button>
+                                <button class="vnccs-i3s__button vnccs-i3s__skydome-reset" type="button">${t("Reset alignment")}</button>
+                                <button class="vnccs-i3s__button vnccs-i3s__button--danger vnccs-i3s__skydome-remove" type="button">${ICONS.trash}<span>${t("Remove")}</span></button>
                             </div>
                         </div>
                     </section>
-                    <section class="vnccs-i3s__lighting-panel" aria-label="Scene lighting" hidden>
+                    <section class="vnccs-i3s__lighting-panel" aria-label="${t("Scene lighting")}" hidden>
                         <div class="vnccs-i3s__lighting-head">
                             <div>
-                                <div class="vnccs-i3s__lighting-title">Scene lighting</div>
-                                <div class="vnccs-i3s__lighting-subtitle">Realtime scene illumination</div>
+                                <div class="vnccs-i3s__lighting-title">${t("Scene lighting")}</div>
+                                <div class="vnccs-i3s__lighting-subtitle">${t("Realtime scene illumination")}</div>
                             </div>
-                            <button class="vnccs-i3s__lighting-close" type="button" title="Close lighting">${ICONS.close}</button>
+                            <button class="vnccs-i3s__lighting-close" type="button" title="${t("Close lighting")}">${ICONS.close}</button>
                         </div>
-                        <div class="vnccs-i3s__lighting-presets" role="group" aria-label="Lighting presets">
+                        <div class="vnccs-i3s__lighting-presets" role="group" aria-label="${t("Lighting presets")}">
                             ${Object.entries(LIGHTING_PRESETS).map(([key, preset]) => `
-                                <button class="vnccs-i3s__lighting-preset" type="button" data-preset="${key}" aria-pressed="false">${preset.label}</button>
+                                <button class="vnccs-i3s__lighting-preset" type="button" data-preset="${key}" aria-pressed="false">${t(preset.label)}</button>
                             `).join("")}
                         </div>
                         <label class="vnccs-i3s__lighting-control">
-                            <span><b>Strength</b><output class="vnccs-i3s__light-intensity-value">0.72</output></span>
+                            <span><b>${t("Strength")}</b><output class="vnccs-i3s__light-intensity-value">0.72</output></span>
                             <input class="vnccs-i3s__range vnccs-i3s__light-intensity" type="range" min="0" max="2.5" step="0.01" value="0.72" />
                         </label>
                         <label class="vnccs-i3s__lighting-color-row">
                             <span>
-                                <b>Light color</b>
-                                <small>Directional tint</small>
+                                <b>${t("Light color")}</b>
+                                <small>${t("Directional tint")}</small>
                             </span>
                             <span class="vnccs-i3s__lighting-color-control">
-                                <input class="vnccs-i3s__light-color" type="color" value="#fff1d6" aria-label="Light color" />
+                                <input class="vnccs-i3s__light-color" type="color" value="#fff1d6" aria-label="${t("Light color")}" />
                                 <output class="vnccs-i3s__light-color-value">#FFF1D6</output>
                             </span>
                         </label>
                         <div class="vnccs-i3s__lighting-direction">
                             <div class="vnccs-i3s__lighting-direction-head">
-                                <b>Direction</b>
+                                <b>${t("Direction")}</b>
                                 <span><output class="vnccs-i3s__light-azimuth-value">325°</output> · <output class="vnccs-i3s__light-elevation-value">42°</output></span>
                             </div>
                             <div class="vnccs-i3s__lighting-radar-row">
-                                <canvas class="vnccs-i3s__lighting-radar" width="144" height="144" aria-label="Light azimuth control"></canvas>
+                                <canvas class="vnccs-i3s__lighting-radar" width="144" height="144" aria-label="${t("Light azimuth control")}"></canvas>
                                 <label class="vnccs-i3s__lighting-elevation">
-                                    <span>HIGH</span>
-                                    <input class="vnccs-i3s__light-elevation" type="range" orient="vertical" min="-10" max="90" step="1" value="42" aria-label="Light elevation" />
-                                    <span>LOW</span>
+                                    <span>${t("HIGH")}</span>
+                                    <input class="vnccs-i3s__light-elevation" type="range" orient="vertical" min="-10" max="90" step="1" value="42" aria-label="${t("Light elevation")}" />
+                                    <span>${t("LOW")}</span>
                                 </label>
                             </div>
                         </div>
                         <div class="vnccs-i3s__lighting-advanced">
                             <div class="vnccs-i3s__switch-row">
-                                <div><div class="vnccs-i3s__scene-frame-title">Occlusion shadows</div><div class="vnccs-i3s__scene-frame-copy">Walls and opaque objects block direct light.</div></div>
-                                <button class="vnccs-i3s__switch vnccs-i3s__shadow-enabled" type="button" role="switch" aria-checked="true" aria-label="Enable shadows"></button>
+                                <div><div class="vnccs-i3s__scene-frame-title">${t("Occlusion shadows")}</div><div class="vnccs-i3s__scene-frame-copy">${t("Walls and opaque objects block direct light.")}</div></div>
+                                <button class="vnccs-i3s__switch vnccs-i3s__shadow-enabled" type="button" role="switch" aria-checked="true" aria-label="${t("Enable shadows")}"></button>
                             </div>
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Shadow quality</span>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Shadow quality")}</span>
                                 <select class="vnccs-i3s__select vnccs-i3s__shadow-quality">
-                                    <option value="low">Low · 512</option><option value="medium">Medium · 1024</option><option value="high">High · 2048</option><option value="ultra">Ultra · 4096</option>
+                                    <option value="low">${t("Low · 512")}</option><option value="medium">${t("Medium · 1024")}</option><option value="high">${t("High · 2048")}</option><option value="ultra">${t("Ultra · 4096")}</option>
                                 </select>
                             </label>
-                            <div class="vnccs-i3s__hint">Active local shadow lights: Low 2 · Medium 4 · High 6 · Ultra 8. Additional lights stay on without shadows. Deferred shadows can let light pass through walls; increase quality or disable shadows on less important lights to free a slot.</div>
+                            <div class="vnccs-i3s__hint">${t("Active local shadow lights: Low 2 · Medium 4 · High 6 · Ultra 8. Additional lights stay on without shadows. Deferred shadows can let light pass through walls; increase quality or disable shadows on less important lights to free a slot.")}</div>
                         </div>
                     </section>
-                    <div class="vnccs-i3s__viewport-help">Click: select · Shift-click: multi-select · Drag gizmo: transform · W/E/R: move/rotate/scale · End: drop · F: frame</div>
+                    <div class="vnccs-i3s__viewport-help">${t("Click: select · Shift-click: multi-select · Drag gizmo: transform · W/E/R: move/rotate/scale · End: drop · F: frame")}</div>
                     <div class="vnccs-i3s__progress">
                         <div class="vnccs-i3s__progress-copy">
                             <div class="vnccs-i3s__progress-head">
-                                <span class="vnccs-i3s__progress-stage">Preparing</span>
+                                <span class="vnccs-i3s__progress-stage">${t("Preparing")}</span>
                                 <span class="vnccs-i3s__progress-percent">0%</span>
                             </div>
                             <div class="vnccs-i3s__progress-track"><div class="vnccs-i3s__progress-bar"></div></div>
                             <div class="vnccs-i3s__job-detail"></div>
                             <div class="vnccs-i3s__texturing-views" hidden></div>
                         </div>
-                        <button class="vnccs-i3s__button vnccs-i3s__button--danger vnccs-i3s__cancel-job" type="button">${ICONS.stop}<span>Cancel</span></button>
+                        <button class="vnccs-i3s__button vnccs-i3s__button--danger vnccs-i3s__cancel-job" type="button">${ICONS.stop}<span>${t("Cancel")}</span></button>
                     </div>
                 </div>
             </main>
-            <aside class="vnccs-i3s__side vnccs-i3s__side--right" aria-label="Scene tools">
+            <aside class="vnccs-i3s__side vnccs-i3s__side--right" aria-label="${t("Scene tools")}">
                 <div class="vnccs-i3s__library-launcher-wrap">
                     <button class="vnccs-ps-btn primary vnccs-i3s__library-open" type="button">
                         <span class="vnccs-ps-btn-icon" aria-hidden="true">${ICONS.library}</span> Model Library
                     </button>
                 </div>
-                <div class="vnccs-i3s__workspace-tabs vnccs-i3s__workspace-tabs--three" role="tablist" aria-label="Scene workspace">
+                <div class="vnccs-i3s__workspace-tabs vnccs-i3s__workspace-tabs--three" role="tablist" aria-label="${t("Scene workspace")}">
                     <button class="vnccs-i3s__workspace-tab" type="button" role="tab"
                         data-workspace-side="right" data-workspace-tab="objects"
                         id="${this._workspaceId}-right-objects-tab"
-                        title="Scene objects"
+                        title="${t("Scene objects")}"
                         aria-controls="${this._workspaceId}-right-objects" aria-selected="true">
-                        <span aria-hidden="true">${ICONS.folder}</span><span>Objects</span>
+                        <span aria-hidden="true">${ICONS.folder}</span><span>${t("Objects")}</span>
                         <span class="vnccs-i3s__workspace-tab-count vnccs-i3s__object-count">0</span>
                     </button>
                     <button class="vnccs-i3s__workspace-tab vnccs-i3s__workspace-tab--inspector" type="button" role="tab"
                         data-workspace-side="right" data-workspace-tab="inspector"
                         id="${this._workspaceId}-right-inspector-tab"
-                        title="Selection inspector"
+                        title="${t("Selection inspector")}"
                         aria-controls="${this._workspaceId}-right-inspector" aria-selected="false" tabindex="-1">
-                        <span aria-hidden="true">${ICONS.settings}</span><span>Inspector</span>
+                        <span aria-hidden="true">${ICONS.settings}</span><span>${t("Inspector")}</span>
                         <span class="vnccs-i3s__workspace-tab-dot" aria-hidden="true"></span>
                     </button>
                     <button class="vnccs-i3s__workspace-tab" type="button" role="tab"
                         data-workspace-side="right" data-workspace-tab="export"
                         id="${this._workspaceId}-right-export-tab"
-                        title="Export settings"
+                        title="${t("Export settings")}"
                         aria-controls="${this._workspaceId}-right-export" aria-selected="false" tabindex="-1">
-                        <span aria-hidden="true">${ICONS.download}</span><span>Export</span>
+                        <span aria-hidden="true">${ICONS.download}</span><span>${t("Export")}</span>
                     </button>
                 </div>
                 <div class="vnccs-i3s__workspace-panels">
@@ -1119,34 +1120,34 @@ class Factory3DWidget {
                     aria-labelledby="${this._workspaceId}-right-objects-tab"
                     data-workspace-side="right" data-workspace-panel="objects">
                     <div class="vnccs-i3s__section-head">
-                        <span>Scene hierarchy</span>
+                        <span>${t("Scene hierarchy")}</span>
                     </div>
                     <div class="vnccs-i3s__section-body">
                         <div class="vnccs-i3s__object-create-menu">
-                            <button class="vnccs-i3s__button vnccs-i3s__ply-import" type="button" title="Import GLB, glTF, FBX, OBJ, STL, ZIP, or Gaussian PLY into the active scene">
-                                ${ICONS.upload}<span>Import</span>
+                            <button class="vnccs-i3s__button vnccs-i3s__ply-import" type="button" title="${t("Import GLB, glTF, FBX, OBJ, STL, ZIP, or Gaussian PLY into the active scene")}">
+                                ${ICONS.upload}<span>${t("Import")}</span>
                             </button>
                             <input class="vnccs-i3s__file-input vnccs-i3s__ply-input" type="file" multiple accept=".glb,.gltf,.fbx,.obj,.stl,.zip,.ply,.mtl,.bin,.png,.jpg,.jpeg,.webp,.bmp,.gif,.tga,application/octet-stream" tabindex="-1" />
-                            <div class="vnccs-i3s__object-create-label">Create</div>
-                            <div class="vnccs-i3s__primitive-launcher" aria-label="Create scene objects">
-                                <button class="vnccs-i3s__button vnccs-i3s__image-import" type="button" title="Import an image as a proportionally sized plane">${ICONS.image}<span>Image</span></button>
-                                <button class="vnccs-i3s__button vnccs-i3s__primitive-add" type="button" title="Add a parametric solid">${ICONS.grid}<span>Shape</span></button>
-                                <button class="vnccs-i3s__button vnccs-i3s__terrain-add" type="button" title="Create an editable terrain surface">${ICONS.grid}<span>Terrain</span></button>
-                                <button class="vnccs-i3s__button vnccs-i3s__local-light-add" type="button" title="Add a point light to the scene">${ICONS.sun}<span>Light</span></button>
+                            <div class="vnccs-i3s__object-create-label">${t("Create")}</div>
+                            <div class="vnccs-i3s__primitive-launcher" aria-label="${t("Create scene objects")}">
+                                <button class="vnccs-i3s__button vnccs-i3s__image-import" type="button" title="${t("Import an image as a proportionally sized plane")}">${ICONS.image}<span>${t("Image")}</span></button>
+                                <button class="vnccs-i3s__button vnccs-i3s__primitive-add" type="button" title="${t("Add a parametric solid")}">${ICONS.grid}<span>${t("Shape")}</span></button>
+                                <button class="vnccs-i3s__button vnccs-i3s__terrain-add" type="button" title="${t("Create an editable terrain surface")}">${ICONS.grid}<span>${t("Terrain")}</span></button>
+                                <button class="vnccs-i3s__button vnccs-i3s__local-light-add" type="button" title="${t("Add a point light to the scene")}">${ICONS.sun}<span>${t("Light")}</span></button>
                                 <input class="vnccs-i3s__file-input vnccs-i3s__image-input" type="file" accept="image/png,image/jpeg,image/webp" tabindex="-1" />
                             </div>
                         </div>
-                        <section class="vnccs-i3s__level-panel" aria-label="Floor levels" hidden>
+                        <section class="vnccs-i3s__level-panel" aria-label="${t("Floor levels")}" hidden>
                             <div class="vnccs-i3s__level-panel-head">
-                                <div><strong>Levels</strong><small>Active drawing plane</small></div>
-                                <button class="vnccs-i3s__button vnccs-i3s__button--quiet vnccs-i3s__level-add" type="button">Add level</button>
+                                <div><strong>${t("Levels")}</strong><small>${t("Active drawing plane")}</small></div>
+                                <button class="vnccs-i3s__button vnccs-i3s__button--quiet vnccs-i3s__level-add" type="button">${t("Add level")}</button>
                             </div>
-                            <div class="vnccs-i3s__level-list" role="listbox" aria-label="Floor levels"></div>
+                            <div class="vnccs-i3s__level-list" role="listbox" aria-label="${t("Floor levels")}"></div>
                         </section>
-                        <label class="vnccs-i3s__search">${ICONS.search}<input class="vnccs-i3s__input vnccs-i3s__object-search" type="search" placeholder="Filter objects" /></label>
+                        <label class="vnccs-i3s__search">${ICONS.search}<input class="vnccs-i3s__input vnccs-i3s__object-search" type="search" placeholder="${t("Filter objects")}" /></label>
                         <div class="vnccs-i3s__layer-tools">
-                            <button class="vnccs-i3s__button vnccs-i3s__group-selected" type="button" disabled>${ICONS.folder}<span>Group</span></button>
-                            <span class="vnccs-i3s__selection-count">Shift-click to select multiple</span>
+                            <button class="vnccs-i3s__button vnccs-i3s__group-selected" type="button" disabled>${ICONS.folder}<span>${t("Group")}</span></button>
+                            <span class="vnccs-i3s__selection-count">${t("Shift-click to select multiple")}</span>
                         </div>
                         <div class="vnccs-i3s__object-list" data-preserve-scroll="scene-objects"></div>
                     </div>
@@ -1156,83 +1157,83 @@ class Factory3DWidget {
                     aria-labelledby="${this._workspaceId}-right-inspector-tab"
                     data-workspace-side="right" data-workspace-panel="inspector" hidden>
                     <div class="vnccs-i3s__section-head">
-                        <span>Selection</span>
-                        <span class="vnccs-i3s__inspector-kind">Nothing selected</span>
+                        <span>${t("Selection")}</span>
+                        <span class="vnccs-i3s__inspector-kind">${t("Nothing selected")}</span>
                     </div>
                     <div class="vnccs-i3s__section-body vnccs-i3s__inspector" data-preserve-scroll="inspector">
-                        <div class="vnccs-i3s__inspector-empty">Select an object, light, wall, room, opening, or camera.</div>
+                        <div class="vnccs-i3s__inspector-empty">${t("Select an object, light, wall, room, opening, or camera.")}</div>
                     </div>
                 </section>
                 <section class="vnccs-i3s__section vnccs-i3s__workspace-panel vnccs-i3s__export-section"
                     id="${this._workspaceId}-right-export" role="tabpanel"
                     aria-labelledby="${this._workspaceId}-right-export-tab"
                     data-workspace-side="right" data-workspace-panel="export" hidden>
-                    <div class="vnccs-i3s__section-head"><span>Output settings</span></div>
+                    <div class="vnccs-i3s__section-head"><span>${t("Output settings")}</span></div>
                     <div class="vnccs-i3s__section-body">
-                        <div class="vnccs-i3s__hint vnccs-i3s__scene-summary">No objects in this scene.</div>
+                        <div class="vnccs-i3s__hint vnccs-i3s__scene-summary">${t("No objects in this scene.")}</div>
                         <div class="vnccs-i3s__conditioning-output">
-                            <div class="vnccs-i3s__scene-frame-title">Generation maps</div>
-                            <p class="vnccs-i3s__hint">Connect this node's <b>scene</b> output to <b>Factory Render</b> for RGB, depth, normals, alpha and object IDs. Connect its <b>capture</b> output to <b>Factory Mask</b> for selected regions.</p>
-                            <p class="vnccs-i3s__hint">Set map dimensions and depth range in Factory Render. Gaussian objects require explicit coarse box approval there. Fresh captures use the 3D view.</p>
-                            <button class="vnccs-i3s__button vnccs-i3s__conditioning-selection" type="button">Get selection keys for Mask</button>
+                            <div class="vnccs-i3s__scene-frame-title">${t("Generation maps")}</div>
+                            <p class="vnccs-i3s__hint">${t("Connect this node's")} <b>scene</b> ${t("output to")} <b>Factory Render</b>${t(" for RGB, depth, normals, alpha and object IDs. Connect its")} <b>capture</b> ${t("output to")} <b>Factory Mask</b>${t(" for selected regions.")}</p>
+                            <p class="vnccs-i3s__hint">${t("Set map dimensions and depth range in Factory Render. Gaussian objects require explicit coarse box approval there. Fresh captures use the 3D view.")}</p>
+                            <button class="vnccs-i3s__button vnccs-i3s__conditioning-selection" type="button">${t("Get selection keys for Mask")}</button>
                             <label class="vnccs-i3s__field">
-                                <span class="vnccs-i3s__label">Mask entity keys</span>
-                                <textarea class="vnccs-i3s__input vnccs-i3s__conditioning-keys" readonly rows="2" placeholder="Select geometry, then get its keys."></textarea>
+                                <span class="vnccs-i3s__label">${t("Mask entity keys")}</span>
+                                <textarea class="vnccs-i3s__input vnccs-i3s__conditioning-keys" readonly rows="2" placeholder="${t("Select geometry, then get its keys.")}"></textarea>
                             </label>
-                            <div class="vnccs-i3s__hint vnccs-i3s__conditioning-status" role="status" aria-live="polite">Ready for a Factory Render request.</div>
-                            <button class="vnccs-i3s__button vnccs-i3s__conditioning-cancel" type="button" hidden>Cancel capture</button>
+                            <div class="vnccs-i3s__hint vnccs-i3s__conditioning-status" role="status" aria-live="polite">${t("Ready for a Factory Render request.")}</div>
+                            <button class="vnccs-i3s__button vnccs-i3s__conditioning-cancel" type="button" hidden>${t("Cancel capture")}</button>
                         </div>
                         <div class="vnccs-i3s__scene-render-settings">
                             <label class="vnccs-i3s__field">
-                                <span class="vnccs-i3s__label">Aspect ratio</span>
+                                <span class="vnccs-i3s__label">${t("Aspect ratio")}</span>
                                 <select class="vnccs-i3s__select vnccs-i3s__scene-aspect">
-                                    <option value="1:1">1:1 · Square</option>
-                                    <option value="4:3">4:3 · Landscape</option>
-                                    <option value="3:4">3:4 · Portrait</option>
-                                    <option value="3:2">3:2 · Photo</option>
-                                    <option value="2:3">2:3 · Portrait photo</option>
-                                    <option value="16:9">16:9 · Widescreen</option>
-                                    <option value="9:16">9:16 · Vertical</option>
-                                    <option value="21:9">21:9 · Ultrawide</option>
-                                    <option value="custom">Custom</option>
+                                    <option value="1:1">${t("1:1 · Square")}</option>
+                                    <option value="4:3">${t("4:3 · Landscape")}</option>
+                                    <option value="3:4">${t("3:4 · Portrait")}</option>
+                                    <option value="3:2">${t("3:2 · Photo")}</option>
+                                    <option value="2:3">${t("2:3 · Portrait photo")}</option>
+                                    <option value="16:9">${t("16:9 · Widescreen")}</option>
+                                    <option value="9:16">${t("9:16 · Vertical")}</option>
+                                    <option value="21:9">${t("21:9 · Ultrawide")}</option>
+                                    <option value="custom">${t("Custom")}</option>
                                 </select>
                             </label>
                             <div class="vnccs-i3s__scene-size-grid">
                                 <label class="vnccs-i3s__field">
-                                    <span class="vnccs-i3s__label">Width</span>
+                                    <span class="vnccs-i3s__label">${t("Width")}</span>
                                     <input class="vnccs-i3s__input vnccs-i3s__scene-width" type="number" min="64" max="4096" step="64" value="1024" />
                                 </label>
                                 <label class="vnccs-i3s__field">
-                                    <span class="vnccs-i3s__label">Height</span>
+                                    <span class="vnccs-i3s__label">${t("Height")}</span>
                                     <input class="vnccs-i3s__input vnccs-i3s__scene-height" type="number" min="64" max="4096" step="64" value="1024" />
                                 </label>
                             </div>
                             <div class="vnccs-i3s__switch-row">
                                 <div>
-                                    <div class="vnccs-i3s__scene-frame-title">Camera frame</div>
-                                    <div class="vnccs-i3s__scene-frame-copy">Show the exact exported crop in the 3D editor.</div>
+                                    <div class="vnccs-i3s__scene-frame-title">${t("Camera frame")}</div>
+                                    <div class="vnccs-i3s__scene-frame-copy">${t("Show the exact exported crop in the 3D editor.")}</div>
                                 </div>
-                                <button class="vnccs-i3s__switch vnccs-i3s__scene-frame" type="button" role="switch" aria-checked="false" aria-label="Show camera frame"></button>
+                                <button class="vnccs-i3s__switch vnccs-i3s__scene-frame" type="button" role="switch" aria-checked="false" aria-label="${t("Show camera frame")}"></button>
                             </div>
-                            <div class="vnccs-i3s__scene-render-summary">1024 × 1024 px · Camera follows the current 3D view</div>
+                            <div class="vnccs-i3s__scene-render-summary">${t("1024 × 1024 px · Camera follows the current 3D view")}</div>
                         </div>
                         <div class="vnccs-i3s__export-grid">
-                            <button class="vnccs-i3s__button vnccs-i3s__scene-export" type="button">${ICONS.download}<span>Gaussian PLY</span></button>
+                            <button class="vnccs-i3s__button vnccs-i3s__scene-export" type="button">${ICONS.download}<span>${t("Gaussian PLY")}</span></button>
                         </div>
                         <div class="vnccs-i3s__panorama-export">
-                            <div class="vnccs-i3s__scene-frame-title">360° panorama</div>
-                            <div class="vnccs-i3s__scene-frame-copy">Export a 2:1 equirectangular PNG from a saved camera position.</div>
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Camera</span>
+                            <div class="vnccs-i3s__scene-frame-title">${t("360° panorama")}</div>
+                            <div class="vnccs-i3s__scene-frame-copy">${t("Export a 2:1 equirectangular PNG from a saved camera position.")}</div>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Camera")}</span>
                                 <select class="vnccs-i3s__select vnccs-i3s__panorama-camera"></select>
                             </label>
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Resolution</span>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Resolution")}</span>
                                 <select class="vnccs-i3s__select vnccs-i3s__panorama-size">
-                                    <option value="2048">2048 × 1024 · Draft</option>
-                                    <option value="4096">4096 × 2048 · High</option>
+                                    <option value="2048">${t("2048 × 1024 · Draft")}</option>
+                                    <option value="4096">${t("4096 × 2048 · High")}</option>
                                 </select>
                             </label>
-                            <div class="vnccs-i3s__panorama-summary">Add a saved camera before exporting.</div>
-                            <button class="vnccs-i3s__button vnccs-i3s__button--primary vnccs-i3s__panorama-export-button" type="button" disabled>${ICONS.download}<span>Export 360° PNG</span></button>
+                            <div class="vnccs-i3s__panorama-summary">${t("Add a saved camera before exporting.")}</div>
+                            <button class="vnccs-i3s__button vnccs-i3s__button--primary vnccs-i3s__panorama-export-button" type="button" disabled>${ICONS.download}<span>${t("Export 360° PNG")}</span></button>
                         </div>
                     </div>
                 </section>
@@ -1421,8 +1422,8 @@ class Factory3DWidget {
         const body = element("div");
         const input = element("input", "vnccs-i3s__input vnccs-i3s__command-search");
         input.type = "search";
-        input.placeholder = "Search tools, panels and actions";
-        input.setAttribute("aria-label", "Search Factory commands");
+        input.placeholder = t("Search tools, panels and actions");
+        input.setAttribute("aria-label", t("Search Factory commands"));
         const results = element("div", "vnccs-i3s__command-results");
         const actions = {
             save: () => this._saveSceneNow(), scenes: () => this.openSceneManager(),
@@ -1443,17 +1444,17 @@ class Factory3DWidget {
         const refresh = () => {
             results.replaceChildren();
             for (const command of findFactoryCommands(input.value)) {
-                const control = button("vnccs-i3s__button", `${command.group} · ${command.label}`);
+                const control = button("vnccs-i3s__button", `${t(command.group)} · ${t(command.label)}`);
                 control.disabled = command.id === "undo" ? !this.history.canUndo
                     : command.id === "redo" ? !this.history.canRedo
                     : !this.scene && !["scenes", "expand", "library"].includes(command.id);
                 control.addEventListener("click", () => {
                     this.closeModal();
-                    Promise.resolve(actions[command.id]?.()).catch(error => this._showError("Command failed", error));
+                    Promise.resolve(actions[command.id]?.()).catch(error => this._showError(t("Command failed"), error));
                 });
                 results.append(control);
             }
-            if (!results.children.length) results.append(element("div", "vnccs-i3s__hint", "No matching commands."));
+            if (!results.children.length) results.append(element("div", "vnccs-i3s__hint", t("No matching commands.")));
         };
         input.addEventListener("input", refresh);
         body.addEventListener("keydown", event => {
@@ -1466,7 +1467,7 @@ class Factory3DWidget {
             buttons[next]?.focus();
         });
         body.append(input, results); refresh();
-        this.openModal({ title: "Factory commands", body, initialFocus: input });
+        this.openModal({ title: t("Factory commands"), body, initialFocus: input });
     }
 
     _setWorkspaceTab(side, tab, { save = true, focus = false } = {}) {
@@ -1544,7 +1545,7 @@ class Factory3DWidget {
         this._listen(this.els.conditioningCancel, "click", () => {
             this._conditioningCancelled = true;
             this.els.conditioningCancel.disabled = true;
-            this.els.conditioningStatus.textContent = "Cancelling capture…";
+            this.els.conditioningStatus.textContent = t("Cancelling capture…");
             if (this._conditioningJobURL) void this._fetchJSON(`${this._conditioningJobURL}/error`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ error: "Capture cancelled by the user" }),
@@ -1666,7 +1667,7 @@ class Factory3DWidget {
         this._listen(this.els.libraryOpen, "click", () => void this.openLibrary());
         this._listen(this.els.plyImport, "click", () => {
             if (this.currentJobId || this.importingPly) {
-                this.toast("Wait for the active Factory job to finish.", "error");
+                this.toast(t("Wait for the active Factory job to finish."), "error");
                 return;
             }
             this.els.plyInput.click();
@@ -1744,7 +1745,7 @@ class Factory3DWidget {
         this._listen(this.els.levelAdd, "click", () => {
             if (!this.scene) return;
             if (this.scene.levels.length >= 64) {
-                this.toast("A scene can contain up to 64 floor levels.", "error");
+                this.toast(t("A scene can contain up to 64 floor levels."), "error");
                 return;
             }
             this._recordEditorCommand("Add floor level", () => {
@@ -2110,7 +2111,7 @@ class Factory3DWidget {
         });
         this._listen(this.els.localLightAdd, "click", () => {
             if (this.lighting.lights.length >= 32) {
-                this.toast("A scene can contain up to 32 local lights.", "error");
+                this.toast(t("A scene can contain up to 32 local lights."), "error");
                 return;
             }
             const shadowBudget = { low: 2, medium: 4, high: 6, ultra: 8 }[
@@ -2159,7 +2160,9 @@ class Factory3DWidget {
             this._syncToolbar();
             if (shadowBudgetExhausted) {
                 this.toast(
-                    `Light added without shadows. ${this.lighting.shadows.quality} quality supports ${shadowBudget} shadow-casting point light${shadowBudget === 1 ? "" : "s"}.`,
+                    shadowBudget === 1
+                        ? t("Light added without shadows. {quality} quality supports {count} shadow-casting point light.", { quality: this.lighting.shadows.quality, count: shadowBudget })
+                        : t("Light added without shadows. {quality} quality supports {count} shadow-casting point lights.", { quality: this.lighting.shadows.quality, count: shadowBudget }),
                     "info",
                 );
             }
@@ -2278,12 +2281,12 @@ class Factory3DWidget {
             this._viewerTransformHistoryBefore = null;
         }
         if (!results?.length) {
-            this.toast("Select an unlocked object to drop.", "info");
+            this.toast(t("Select an unlocked object to drop."), "info");
             return;
         }
         this.history.push("Drop to surface", before, this._captureEditorSnapshot());
         const support = Math.max(...results.map(result => Number(result.supportY) || 0));
-        this.toast(`Placed on the nearest support at ${support.toFixed(2)} m.`, "success");
+        this.toast(t("Placed on the nearest support at {height} m.", { height: support.toFixed(2) }), "success");
         this._renderInspector();
         this._scheduleSceneSave(0);
         this._scheduleStateSave(0);
@@ -2486,7 +2489,7 @@ class Factory3DWidget {
             const point = pending.tool === "opening"
                 ? [...pending.point]
                 : this._snapPlanPoint(pending.point, pending.event, pending.tool === "room" && this.editorView.room_shape === "polygon" ? this.planDraft?.points?.at(-1) : null);
-            if (pending.tool === "opening") this.planSnapHint = "Wall projection";
+            if (pending.tool === "opening") this.planSnapHint = t("Wall projection");
             const nearest = pending.tool === "opening"
                 ? this.editorView.view_mode === "3d"
                     ? this._editableWallProjection(point, pending.wallId)
@@ -2508,16 +2511,16 @@ class Factory3DWidget {
                 : "";
             if (pending.tool === "opening") {
                 this.els.planHint.textContent = openingPlacement
-                    ? `Press and drag on the wall to set width · ${nearest.length.toFixed(2)} m wall`
+                    ? t("Press and drag on the wall to set width · {length} m wall", { length: nearest.length.toFixed(2) })
                     : nearest
-                        ? "This wall has no free span for another opening."
-                        : "Move over an editable wall, then press and drag.";
+                        ? t("This wall has no free span for another opening.")
+                        : t("Move over an editable wall, then press and drag.");
             } else if (pending.tool === "room" && this.editorView.room_shape === "polygon") {
-                this.els.planHint.textContent = `Click next corner${measurement} · Enter: finish · Backspace: remove`;
+                this.els.planHint.textContent = t("Click next corner{measurement} · Enter: finish · Backspace: remove", { measurement });
             } else if (pending.tool === "camera" && previous) {
-                this.els.planHint.textContent = `Aim camera${measurement}`;
+                this.els.planHint.textContent = t("Aim camera{measurement}", { measurement });
             } else {
-                this.els.planHint.textContent = `${this.planSnapHint || "Free"}${measurement}`;
+                this.els.planHint.textContent = t("{snap}{measurement}", { snap: this.planSnapHint || t("Free"), measurement });
             }
             this._renderPlanPreview();
         });
@@ -2532,7 +2535,7 @@ class Factory3DWidget {
     _finishPolygonRoom() {
         const points = this.planDraft?.tool === "room" ? this.planDraft.points : [];
         if (this.editorView.room_shape !== "polygon" || points.length < 3) {
-            this.toast("Place at least three corners to create a room.", "info"); return;
+            this.toast(t("Place at least three corners to create a room."), "info"); return;
         }
         if (this._createRoomPolygon(points.map(point => [...point]))) {
             this._cancelPlanDraft(); this._syncToolbar();
@@ -2551,12 +2554,12 @@ class Factory3DWidget {
                 this._finishPolygonRoom(); return;
             }
             if (!points.length || Math.hypot(point[0] - points.at(-1)[0], point[1] - points.at(-1)[1]) > 0.001) {
-                if (points.length >= 512) this.toast("A room contour supports at most 512 corners.", "info");
+                if (points.length >= 512) this.toast(t("A room contour supports at most 512 corners."), "info");
                 else points.push(point);
             }
             this._syncToolbar();
         }
-        this.els.planHint.textContent = `${points.length} corners · Click next corner · Enter: finish · Backspace: remove · Escape: cancel`;
+        this.els.planHint.textContent = t("{count} corners · Click next corner · Enter: finish · Backspace: remove · Escape: cancel", { count: points.length });
         this._renderPlanPreview();
     }
 
@@ -2788,7 +2791,7 @@ class Factory3DWidget {
         const pointerPoint = [...point];
         const result = [...point];
         if (event.altKey || this.editorView.snap?.enabled === false) {
-            this.planSnapHint = event.altKey ? "Snap temporarily bypassed" : "Snap off";
+            this.planSnapHint = event.altKey ? t("Snap temporarily bypassed") : t("Snap off");
             return result;
         }
         const grid = Math.max(
@@ -2797,7 +2800,7 @@ class Factory3DWidget {
         );
         result[0] = Math.round(result[0] / grid) * grid;
         result[1] = Math.round(result[1] / grid) * grid;
-        this.planSnapHint = `Grid ${grid.toLocaleString()} m`;
+        this.planSnapHint = t("Grid {step} m", { step: grid.toLocaleString() });
         const previous = Array.isArray(snapOrigin)
             ? snapOrigin
             : ["wall", "camera"].includes(this.planDraft?.tool)
@@ -2809,7 +2812,7 @@ class Factory3DWidget {
             if (event.shiftKey || Math.min(dx, dz) <= grid * 0.35) {
                 if (dx >= dz) result[1] = previous[1];
                 else result[0] = previous[0];
-                this.planSnapHint = "Orthogonal";
+                this.planSnapHint = t("Orthogonal");
             }
         }
         if (previous && !event.shiftKey && Number(this.editorView.snap?.angle) > 0) {
@@ -2823,7 +2826,7 @@ class Factory3DWidget {
             if (radius > 0.001 && delta <= Math.min(increment * 0.3, 3 * Math.PI / 180)) {
                 result[0] = previous[0] + Math.cos(snappedAngle) * radius;
                 result[1] = previous[1] + Math.sin(snappedAngle) * radius;
-                this.planSnapHint = `Angle ${this.editorView.snap.angle}°`;
+                this.planSnapHint = t("Angle {angle}°", { angle: this.editorView.snap.angle });
             }
         }
         const threshold = 10 / Math.max(0.01, Number(this.viewerState.plan_camera?.zoom) || 24);
@@ -2857,7 +2860,7 @@ class Factory3DWidget {
                 }
             }
         }
-        if (nearest) this.planSnapHint = nearest.kind;
+        if (nearest) this.planSnapHint = t(nearest.kind);
         return nearest ? [...nearest.point] : result.map(value => Number(value.toFixed(6)));
     }
 
@@ -2909,7 +2912,7 @@ class Factory3DWidget {
     _createOpeningFromPlacement(placement, kind) {
         if (!placement) return false;
         if (this.scene.architecture.openings.length >= 4096) {
-            this.toast("The scene opening limit has been reached.", "error");
+            this.toast(t("The scene opening limit has been reached."), "error");
             return false;
         }
         const openingId = factoryId();
@@ -2959,7 +2962,7 @@ class Factory3DWidget {
         }
         if (!rawPoint) {
             this._cancelPlanDraft();
-            if (tool === "opening") this.els.planHint.textContent = "Point at a visible, unlocked wall to place an opening";
+            if (tool === "opening") this.els.planHint.textContent = t("Point at a visible, unlocked wall to place an opening");
             return;
         }
         if (tool === "room" && this.editorView.room_shape === "polygon") {
@@ -2971,7 +2974,7 @@ class Factory3DWidget {
             this._planHoverFrame = 0;
             this._pendingPlanHover = null;
             if (["wall", "room"].includes(tool) && this._activeBuilding()?.locked) {
-                this.toast("Unlock the active building before editing its plan.", "info");
+                this.toast(t("Unlock the active building before editing its plan."), "info");
                 this.planDraft = null;
                 return;
             }
@@ -2986,17 +2989,17 @@ class Factory3DWidget {
                 };
                 this.planHover = { tool, point: [...rawPoint], opening: this._openingPlacement(projection) };
                 this.els.planHint.textContent = projection
-                    ? "Drag along the wall to set the opening width"
-                    : "Start the drag on an editable wall";
+                    ? t("Drag along the wall to set the opening width")
+                    : t("Start the drag on an editable wall");
             } else {
                 const point = this._snapPlanPoint(rawPoint, event);
                 this.planDraft = { tool, points: [point] };
                 this.planHover = { tool, point };
                 this.els.planHint.textContent = tool === "wall"
-                    ? "Drag to set wall length"
+                    ? t("Drag to set wall length")
                     : tool === "room"
-                        ? "Drag diagonally to size the room"
-                        : "Click to place the camera, or drag to aim it";
+                        ? t("Drag diagonally to size the room")
+                        : t("Click to place the camera, or drag to aim it");
             }
             this._renderPlanPreview();
             return;
@@ -3025,8 +3028,8 @@ class Factory3DWidget {
         if (phase === "move") {
             if (tool === "opening") {
                 this.els.planHint.textContent = placement
-                    ? `Opening width ${placement.width.toFixed(2)} m`
-                    : "Drag along a free span of the wall";
+                    ? t("Opening width {width} m", { width: placement.width.toFixed(2) })
+                    : t("Drag along a free span of the wall");
             } else if (tool === "room") {
                 this.els.planHint.textContent = `${Math.abs(point[0] - start[0]).toFixed(2)} × ${Math.abs(point[1] - start[1]).toFixed(2)} m`;
             } else {
@@ -3083,7 +3086,7 @@ class Factory3DWidget {
     _createWallFromDrag(start, end) {
         if (!this.scene || !Array.isArray(start) || !Array.isArray(end)) return false;
         if (this.scene.architecture.walls.length >= 4096) {
-            this.toast("The scene wall limit has been reached.", "error");
+            this.toast(t("The scene wall limit has been reached."), "error");
             return false;
         }
         this._recordEditorCommand("Create wall", () => {
@@ -3106,7 +3109,7 @@ class Factory3DWidget {
     _createCameraFromDrag(position, target) {
         if (!this.scene || !Array.isArray(position) || !Array.isArray(target)) return false;
         if ((this.scene.cameras?.length || 0) >= 32) {
-            this.toast("A scene can contain up to 32 cameras.", "error");
+            this.toast(t("A scene can contain up to 32 cameras."), "error");
             return false;
         }
         const cameraId = factoryId();
@@ -3302,7 +3305,7 @@ class Factory3DWidget {
     _createRectangularRoom(start, end) {
         const rectangle = this._roomRectangle(start, end);
         if (!rectangle) {
-            this.toast("Choose an opposite corner with both width and depth.", "error");
+            this.toast(t("Choose an opposite corner with both width and depth."), "error");
             return false;
         }
         return this._createRoomPolygon(rectangle);
@@ -3310,19 +3313,19 @@ class Factory3DWidget {
 
     _createRoomPolygon(rectangle) {
         if (!isSimpleRoomPolygon(rectangle)) {
-            this.toast("The room contour must enclose an area without crossing or touching itself.", "error");
+            this.toast(t("The room contour must enclose an area without crossing or touching itself."), "error");
             return false;
         }
         if (this._activeBuilding()?.locked) {
-            this.toast("Unlock the active building before adding a room.", "info");
+            this.toast(t("Unlock the active building before adding a room."), "info");
             return false;
         }
         if (this.scene.architecture.rooms.length >= 1024) {
-            this.toast("The scene room limit has been reached.", "error");
+            this.toast(t("The scene room limit has been reached."), "error");
             return false;
         }
         if (this.scene.architecture.walls.length + rectangle.length > 4096) {
-            this.toast(`${rectangle.length} free wall slots are required to create this room.`, "error");
+            this.toast(t("{count} free wall slots are required to create this room.", { count: rectangle.length }), "error");
             return false;
         }
         const roomId = factoryId();
@@ -4020,10 +4023,10 @@ class Factory3DWidget {
         const rangeScaleAttribute = logarithmicSlider ? ' data-editor-scale="log10"' : "";
         return `
             <div class="vnccs-i3s__precision-row">
-                ${preservePrecision ? `<button type="button" class="vnccs-i3s__numeric-scrub" data-numeric-scrub="${path}" title="Drag to adjust ${escapeHTML(label)}. Shift: fine; Alt: coarse."${disabledAttribute}>${escapeHTML(label)}</button>` : `<span>${escapeHTML(label)}</span>`}
-                ${range ? `<input type="range" aria-label="${escapeHTML(label)} slider" data-editor-path="${path}"${rangeScaleAttribute} min="${rangeMinimumValue}" max="${rangeMaximumValue}" step="${rangeStep}" value="${rangeValue}"${disabledAttribute} />` : ""}
-                <input class="vnccs-i3s__input" aria-label="${escapeHTML(label)} exact value" type="${preservePrecision ? "text" : "number"}" inputmode="decimal" data-editor-path="${path}" min="${controlMinimum}" max="${controlMaximum}" step="${exactStep}" value="${controlValue}"${disabledAttribute} />
-                ${preservePrecision ? `<button type="button" class="vnccs-i3s__numeric-reset" data-numeric-reset="${path}" title="Reset ${escapeHTML(label)}" aria-label="Reset ${escapeHTML(label)}"${disabledAttribute}>↺</button>` : ""}
+                ${preservePrecision ? `<button type="button" class="vnccs-i3s__numeric-scrub" data-numeric-scrub="${path}" title="${t("Drag to adjust {label}. Shift: fine; Alt: coarse.", { label: escapeHTML(label) })}"${disabledAttribute}>${escapeHTML(label)}</button>` : `<span>${escapeHTML(label)}</span>`}
+                ${range ? `<input type="range" aria-label="${t("{label} slider", { label: escapeHTML(label) })}" data-editor-path="${path}"${rangeScaleAttribute} min="${rangeMinimumValue}" max="${rangeMaximumValue}" step="${rangeStep}" value="${rangeValue}"${disabledAttribute} />` : ""}
+                <input class="vnccs-i3s__input" aria-label="${t("{label} exact value", { label: escapeHTML(label) })}" type="${preservePrecision ? "text" : "number"}" inputmode="decimal" data-editor-path="${path}" min="${controlMinimum}" max="${controlMaximum}" step="${exactStep}" value="${controlValue}"${disabledAttribute} />
+                ${preservePrecision ? `<button type="button" class="vnccs-i3s__numeric-reset" data-numeric-reset="${path}" title="${t("Reset {label}", { label: escapeHTML(label) })}" aria-label="${t("Reset {label}", { label: escapeHTML(label) })}"${disabledAttribute}>↺</button>` : ""}
             </div>`;
     }
 
@@ -4068,21 +4071,21 @@ class Factory3DWidget {
             );
             inspectorTab?.setAttribute(
                 "aria-label",
-                hasSelection ? "Inspector, selection available" : "Inspector",
+                hasSelection ? t("Inspector, selection available") : t("Inspector"),
             );
             if (!item && !architecture && !camera && !light && !keyframe && !group) {
-                this.els.inspectorKind.textContent = "Nothing selected";
-                this.els.inspector.innerHTML = '<div class="vnccs-i3s__inspector-empty">Select an object, light, wall, room, opening, or camera.</div>';
+                this.els.inspectorKind.textContent = t("Nothing selected");
+                this.els.inspector.innerHTML = `<div class="vnccs-i3s__inspector-empty">${t("Select an object, light, wall, room, opening, or camera.")}</div>`;
                 return;
             }
             if (directSelectionCount > 1) {
                 const modelCount = this.selectedObjectIds.size;
-                this.els.inspectorKind.textContent = "Multiple selection";
+                this.els.inspectorKind.textContent = t("Multiple selection");
                 this.els.inspector.innerHTML = `
                     <section class="vnccs-i3s__inspector-section">
                         <div class="vnccs-i3s__inspector-title">${directSelectionCount} objects selected</div>
-                        <div class="vnccs-i3s__hint">${modelCount} model${modelCount === 1 ? "" : "s"} · ${architectureSelectionCount} architecture object${architectureSelectionCount === 1 ? "" : "s"} · ${cameraSelectionCount} camera${cameraSelectionCount === 1 ? "" : "s"}</div>
-                        <div class="vnccs-i3s__hint">Use Copy to place this complete selection in the Factory clipboard.</div>
+                        <div class="vnccs-i3s__hint">${modelCount === 1 ? t("{count} model", { count: modelCount }) : t("{count} models", { count: modelCount })} · ${architectureSelectionCount === 1 ? t("{count} architecture object", { count: architectureSelectionCount }) : t("{count} architecture objects", { count: architectureSelectionCount })} · ${cameraSelectionCount === 1 ? t("{count} camera", { count: cameraSelectionCount }) : t("{count} cameras", { count: cameraSelectionCount })}</div>
+                        <div class="vnccs-i3s__hint">${t("Use Copy to place this complete selection in the Factory clipboard.")}</div>
                     </section>`;
                 return;
             }
@@ -4166,7 +4169,7 @@ class Factory3DWidget {
             if (path.startsWith("primitive.")) this.viewer.updateObject(ref.id, { primitive: entity.primitive });
             else this.viewer.updateObject(ref.id, { transform: entity.transform });
             const dimensions = this.els.inspector.querySelector("[data-stair-dimensions]");
-            if (dimensions && entity.primitive?.kind === "stairs") dimensions.textContent = `Riser ${(entity.primitive.height / entity.primitive.steps).toFixed(3)} m · Tread ${(entity.primitive.depth / entity.primitive.steps).toFixed(3)} m`;
+            if (dimensions && entity.primitive?.kind === "stairs") dimensions.textContent = t("Riser {riser} m · Tread {tread} m", { riser: (entity.primitive.height / entity.primitive.steps).toFixed(3), tread: (entity.primitive.depth / entity.primitive.steps).toFixed(3) });
         }
         else if (ref.kind === "wall") this.viewer.updateArchitectureItem("wall", ref.id, this.scene);
         else {
@@ -4211,7 +4214,7 @@ class Factory3DWidget {
     }
 
     _descriptorControl(descriptor, path, value, extra = {}) {
-        return this._numericControl(descriptor.label, path, value, {
+        return this._numericControl(t(descriptor.label), path, value, {
             minimum: descriptor.hardMin, maximum: descriptor.hardMax, step: descriptor.step,
             sliderMinimum: descriptor.sliderMin, sliderMaximum: descriptor.sliderMax,
             preservePrecision: true, ...extra,
@@ -4220,7 +4223,7 @@ class Factory3DWidget {
 
     _lightNumericControl(path, light) {
         const descriptor = LIGHT_NUMERIC_PROPERTIES[path];
-        return this._numericControl(descriptor.label, `light.${path}`, readLightProperty(light, path), {
+        return this._numericControl(t(descriptor.label), `light.${path}`, readLightProperty(light, path), {
             minimum: descriptor.hardMin, maximum: descriptor.hardMax, step: descriptor.step,
             sliderMinimum: descriptor.sliderMin, sliderMaximum: descriptor.sliderMax,
             preservePrecision: true,
@@ -4232,40 +4235,40 @@ class Factory3DWidget {
         const currentLight = () => this.lighting?.lights?.find(
             item => item.light_id === lightId,
         );
-        const kindLabel = { point: "Point light", spot: "Spot light", directional: "Directional light" }[light.kind] || "Point light";
+        const kindLabel = t({ point: "Point light", spot: "Spot light", directional: "Directional light" }[light.kind] || "Point light");
         this.els.inspectorKind.textContent = kindLabel;
         this.els.inspector.innerHTML = `
-            <div class="vnccs-i3s__inspector-title">${escapeHTML(light.name || "Point light")}</div>
-            <div class="vnccs-i3s__hint">Scene object · editor sphere is excluded from camera exports.</div>
+            <div class="vnccs-i3s__inspector-title">${escapeHTML(light.name || t("Point light"))}</div>
+            <div class="vnccs-i3s__hint">${t("Scene object · editor sphere is excluded from camera exports.")}</div>
             <div class="vnccs-i3s__hint" data-light-status="${lightId}">${localLightStatusLabel(this._lightShadowAllocation().get(lightId))}</div>
-            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Name</span><input class="vnccs-i3s__input" data-light-property="name" value="${escapeHTML(light.name || "Point light")}" maxlength="80" /></label>
-            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Light type</span><select class="vnccs-i3s__select" data-light-property="kind">
-                ${["point", "spot", "directional"].map(kind => `<option value="${kind}"${light.kind === kind ? " selected" : ""}>${{ point: "Point", spot: "Spot", directional: "Directional" }[kind]}</option>`).join("")}
+            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Name")}</span><input class="vnccs-i3s__input" data-light-property="name" value="${escapeHTML(light.name || t("Point light"))}" maxlength="80" /></label>
+            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Light type")}</span><select class="vnccs-i3s__select" data-light-property="kind">
+                ${["point", "spot", "directional"].map(kind => `<option value="${kind}"${light.kind === kind ? " selected" : ""}>${{ point: t("Point"), spot: t("Spot"), directional: t("Directional") }[kind]}</option>`).join("")}
             </select></label>
-            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Floor level</span><select class="vnccs-i3s__select" data-light-property="level_id">
+            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Floor level")}</span><select class="vnccs-i3s__select" data-light-property="level_id">
                 ${(this.scene?.levels || []).map(level => `<option value="${level.level_id}"${light.level_id === level.level_id ? " selected" : ""}>${escapeHTML(level.name)}</option>`).join("")}
             </select></label>
-            <div class="vnccs-i3s__inspector-group"><b>Position · m</b>
+            <div class="vnccs-i3s__inspector-group"><b>${t("Position · m")}</b>
                 ${[0, 1, 2].map(index => this._lightNumericControl(`position.${index}`, light)).join("")}
             </div>
-            <div class="vnccs-i3s__inspector-group"><b>Emission</b>
-                <label class="vnccs-i3s__lighting-color-row"><span><b>Color</b></span><span class="vnccs-i3s__lighting-color-control"><input type="color" data-light-property="color" value="${light.color}" aria-label="${kindLabel} color" /><output>${escapeHTML(light.color.toUpperCase())}</output></span></label>
+            <div class="vnccs-i3s__inspector-group"><b>${t("Emission")}</b>
+                <label class="vnccs-i3s__lighting-color-row"><span><b>${t("Color")}</b></span><span class="vnccs-i3s__lighting-color-control"><input type="color" data-light-property="color" value="${light.color}" aria-label="${t("{kind} color", { kind: kindLabel })}" /><output>${escapeHTML(light.color.toUpperCase())}</output></span></label>
                 ${this._lightNumericControl("intensity", light)}
                 ${light.kind !== "directional" ? this._lightNumericControl("distance", light) : ""}
             </div>
-            ${light.kind !== "point" ? `<div class="vnccs-i3s__inspector-group"><b>Direction target · m</b>
+            ${light.kind !== "point" ? `<div class="vnccs-i3s__inspector-group"><b>${t("Direction target · m")}</b>
                 ${[0, 1, 2].map(index => this._lightNumericControl(`target.${index}`, light)).join("")}
-                <div class="vnccs-i3s__hint">Aim from the light position toward this world-space point.</div>
+                <div class="vnccs-i3s__hint">${t("Aim from the light position toward this world-space point.")}</div>
             </div>` : ""}
-            ${light.kind === "spot" ? `<div class="vnccs-i3s__inspector-group"><b>Cone</b>
+            ${light.kind === "spot" ? `<div class="vnccs-i3s__inspector-group"><b>${t("Cone")}</b>
                 ${this._lightNumericControl("angle", light)}
                 ${this._lightNumericControl("penumbra", light)}
-                <div class="vnccs-i3s__hint">The full cone is twice the half-angle. Range 0 means unlimited.</div>
+                <div class="vnccs-i3s__hint">${t("The full cone is twice the half-angle. Range 0 means unlimited.")}</div>
             </div>` : ""}
             <div class="vnccs-i3s__hint" data-property-feedback role="status" aria-live="polite"></div>
-            <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-light-property="visible"${light.visible !== false ? " checked" : ""} /> Light visible</label>
-            <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-light-property="cast_shadow"${light.cast_shadow !== false ? " checked" : ""} /> Cast shadow</label>
-            <button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-inspector-action="delete" title="Delete light (Delete/Backspace)">Delete light</button>`;
+            <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-light-property="visible"${light.visible !== false ? " checked" : ""} /> ${t("Light visible")}</label>
+            <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-light-property="cast_shadow"${light.cast_shadow !== false ? " checked" : ""} /> ${t("Cast shadow")}</label>
+            <button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-inspector-action="delete" title="${t("Delete light (Delete/Backspace)")}">${t("Delete light")}</button>`;
         let before = null;
         const begin = () => { before ||= this._captureEditorSnapshot(); };
         const apply = () => {
@@ -4328,20 +4331,20 @@ class Factory3DWidget {
 
     _renderGroupInspector(group) {
         const center = this.viewer?.getGroupPivotPosition?.() || [0, 0, 0];
-        this.els.inspectorKind.textContent = "Object group";
+        this.els.inspectorKind.textContent = t("Object group");
         this.els.inspector.innerHTML = `
             <div class="vnccs-i3s__inspector-title">${escapeHTML(group.name || "Group")}</div>
-            <div class="vnccs-i3s__hint">Position is absolute. Rotation and scale are applied as a precise delta around the group center.</div>
-            <div class="vnccs-i3s__inspector-group"><b>Position · m</b>
-                ${["X", "Y", "Z"].map((axis, index) => this._numericControl(axis, `group.position.${index}`, center[index], { minimum: -10000, maximum: 10000, step: 0.01 })).join("")}
+            <div class="vnccs-i3s__hint">${t("Position is absolute. Rotation and scale are applied as a precise delta around the group center.")}</div>
+            <div class="vnccs-i3s__inspector-group"><b>${t("Position · m")}</b>
+                ${["X", "Y", "Z"].map((axis, index) => this._numericControl(t(axis), `group.position.${index}`, center[index], { minimum: -10000, maximum: 10000, step: 0.01 })).join("")}
             </div>
-            <div class="vnccs-i3s__inspector-group"><b>Rotation delta · degrees</b>
-                ${["X", "Y", "Z"].map((axis, index) => this._numericControl(axis, `group.rotation.${index}`, 0, { minimum: -360, maximum: 360, step: 0.01 })).join("")}
+            <div class="vnccs-i3s__inspector-group"><b>${t("Rotation delta · degrees")}</b>
+                ${["X", "Y", "Z"].map((axis, index) => this._numericControl(t(axis), `group.rotation.${index}`, 0, { minimum: -360, maximum: 360, step: 0.01 })).join("")}
             </div>
-            <div class="vnccs-i3s__inspector-group"><b>Scale factor</b>
-                ${this._numericControl("Scale", "group.scale", 1, { minimum: 0.001, maximum: 100, step: 0.001 })}
+            <div class="vnccs-i3s__inspector-group"><b>${t("Scale factor")}</b>
+                ${this._numericControl(t("Scale"), "group.scale", 1, { minimum: 0.001, maximum: 100, step: 0.001 })}
             </div>
-            <div class="vnccs-i3s__hint">All group changes are applied to the viewport immediately.</div>`;
+            <div class="vnccs-i3s__hint">${t("All group changes are applied to the viewport immediately.")}</div>`;
         const staged = { position: [...center], rotation: [0, 0, 0], scale: 1 };
         let before = null;
         const begin = () => { before ||= this._captureEditorSnapshot(); };
@@ -4387,30 +4390,30 @@ class Factory3DWidget {
     _renderCameraInspector(camera) {
         const pose = cameraPoseFromLegacy(camera);
         const rotation = eulerDegreesFromQuaternion(pose.quaternion);
-        this.els.inspectorKind.textContent = "Saved camera";
+        this.els.inspectorKind.textContent = t("Saved camera");
         this.els.inspector.innerHTML = `
             <div class="vnccs-i3s__inspector-title">${escapeHTML(camera.name || "Camera")}</div>
             <div class="vnccs-i3s__hint">${this.previewCameraId === camera.camera_id
-                ? "Camera View is live: exact fields update the viewport and inset preview immediately."
-                : "Exact fields update the saved camera and inset preview immediately."}</div>
-            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Name</span><input class="vnccs-i3s__input" data-camera-property="name" value="${escapeHTML(camera.name || "Camera")}" maxlength="80" /></label>
-            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Floor level</span><select class="vnccs-i3s__select" data-camera-property="level_id">
+                ? t("Camera View is live: exact fields update the viewport and inset preview immediately.")
+                : t("Exact fields update the saved camera and inset preview immediately.")}</div>
+            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Name")}</span><input class="vnccs-i3s__input" data-camera-property="name" value="${escapeHTML(camera.name || "Camera")}" maxlength="80" /></label>
+            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Floor level")}</span><select class="vnccs-i3s__select" data-camera-property="level_id">
                 ${(this.scene?.levels || []).map(level => `<option value="${level.level_id}"${camera.level_id === level.level_id ? " selected" : ""}>${escapeHTML(level.name)}</option>`).join("")}
             </select></label>
-            <div class="vnccs-i3s__inspector-group"><b>Position · m</b>
+            <div class="vnccs-i3s__inspector-group"><b>${t("Position · m")}</b>
                 ${["X", "Y", "Z"].map((axis, index) => this._descriptorControl(CAMERA_NUMERIC_PROPERTIES[`position.${index}`], `camera.position.${index}`, pose.position[index])).join("")}
             </div>
-            <div class="vnccs-i3s__inspector-group"><b>Rotation · degrees</b>
+            <div class="vnccs-i3s__inspector-group"><b>${t("Rotation · degrees")}</b>
                 ${["Pitch X", "Yaw Y", "Roll Z"].map((axis, index) => this._descriptorControl(CAMERA_NUMERIC_PROPERTIES[`rotation.${index}`], `camera.rotation.${index}`, rotation[index])).join("")}
             </div>
-            <div class="vnccs-i3s__inspector-group"><b>Lens</b>
+            <div class="vnccs-i3s__inspector-group"><b>${t("Lens")}</b>
                 ${this._descriptorControl(CAMERA_NUMERIC_PROPERTIES.fov, "camera.fov", pose.fov)}
                 ${this._descriptorControl(CAMERA_NUMERIC_PROPERTIES.focus_distance, "camera.focus_distance", pose.focus_distance)}
             </div>
             <div class="vnccs-i3s__inspector-actions">
                 <button class="vnccs-i3s__button" type="button" data-inspector-action="preview-camera">${this.previewCameraId === camera.camera_id ? "Exit camera view" : "Enter camera view"}</button>
-                <button class="vnccs-i3s__button" type="button" data-inspector-action="update-camera">Update from current view</button>
-                <button class="vnccs-i3s__button" type="button" data-inspector-action="keyframe">Add camera as path point</button>
+                <button class="vnccs-i3s__button" type="button" data-inspector-action="update-camera">${t("Update from current view")}</button>
+                <button class="vnccs-i3s__button" type="button" data-inspector-action="keyframe">${t("Add camera as path point")}</button>
             </div>`;
         this._bindEntityNumeric({ kind: "camera", id: camera.camera_id, sceneId: this.sceneId }, CAMERA_NUMERIC_PROPERTIES, "camera.");
         this.els.inspector.querySelector('[data-camera-property="name"]')?.addEventListener("change", event => {
@@ -4468,31 +4471,31 @@ class Factory3DWidget {
     _renderKeyframeInspector(track, frame) {
         const pose = normalizedCameraPose(frame);
         const rotation = eulerDegreesFromQuaternion(pose.quaternion);
-        this.els.inspectorKind.textContent = "Camera path point";
+        this.els.inspectorKind.textContent = t("Camera path point");
         this.els.inspector.innerHTML = `
             <div class="vnccs-i3s__inspector-title">${escapeHTML(track.name || "Camera path")}</div>
-            <div class="vnccs-i3s__inspector-group"><b>Timeline</b>
-                ${this._numericControl("Time", "keyframe.time", frame.time, { minimum: 0, maximum: track.duration, step: 0.001 })}
-                ${this._numericControl("Duration", "track.duration", track.duration, { minimum: 0.1, maximum: 86400, step: 0.01 })}
-                ${this._numericControl("FPS", "track.fps", track.fps, { minimum: 1, maximum: 120, step: 1 })}
+            <div class="vnccs-i3s__inspector-group"><b>${t("Timeline")}</b>
+                ${this._numericControl(t("Time"), "keyframe.time", frame.time, { minimum: 0, maximum: track.duration, step: 0.001 })}
+                ${this._numericControl(t("Duration"), "track.duration", track.duration, { minimum: 0.1, maximum: 86400, step: 0.01 })}
+                ${this._numericControl(t("FPS"), "track.fps", track.fps, { minimum: 1, maximum: 120, step: 1 })}
             </div>
-            <div class="vnccs-i3s__inspector-group"><b>Position · m</b>
-                ${["X", "Y", "Z"].map((axis, index) => this._numericControl(axis, `keyframe.position.${index}`, pose.position[index], { minimum: -10000, maximum: 10000, step: 0.01 })).join("")}
+            <div class="vnccs-i3s__inspector-group"><b>${t("Position · m")}</b>
+                ${["X", "Y", "Z"].map((axis, index) => this._numericControl(t(axis), `keyframe.position.${index}`, pose.position[index], { minimum: -10000, maximum: 10000, step: 0.01 })).join("")}
             </div>
-            <div class="vnccs-i3s__inspector-group"><b>Rotation · degrees</b>
-                ${["Pitch X", "Yaw Y", "Roll Z"].map((axis, index) => this._numericControl(axis, `keyframe.rotation.${index}`, rotation[index], { minimum: -36000, maximum: 36000, sliderMinimum: -180, sliderMaximum: 180, step: 0.01 })).join("")}
+            <div class="vnccs-i3s__inspector-group"><b>${t("Rotation · degrees")}</b>
+                ${["Pitch X", "Yaw Y", "Roll Z"].map((axis, index) => this._numericControl(t(axis), `keyframe.rotation.${index}`, rotation[index], { minimum: -36000, maximum: 36000, sliderMinimum: -180, sliderMaximum: 180, step: 0.01 })).join("")}
             </div>
-            <div class="vnccs-i3s__inspector-group"><b>Lens</b>
-                ${this._numericControl("FOV", "keyframe.fov", pose.fov, { minimum: 5, maximum: 120, step: 0.01 })}
-                ${this._numericControl("Focus", "keyframe.focus_distance", pose.focus_distance, { minimum: 0.001, maximum: 1000000, step: 0.001, sliderScale: "logarithmic" })}
+            <div class="vnccs-i3s__inspector-group"><b>${t("Lens")}</b>
+                ${this._numericControl(t("FOV"), "keyframe.fov", pose.fov, { minimum: 5, maximum: 120, step: 0.01 })}
+                ${this._numericControl(t("Focus", null, "camera"), "keyframe.focus_distance", pose.focus_distance, { minimum: 0.001, maximum: 1000000, step: 0.001, sliderScale: "logarithmic" })}
             </div>
             <div class="vnccs-i3s__inspector-grid">
-                <label><span>Interpolation</span><select class="vnccs-i3s__select" data-track-property="interpolation"><option value="linear"${track.interpolation === "linear" ? " selected" : ""}>Linear</option><option value="catmullrom"${track.interpolation === "catmullrom" ? " selected" : ""}>Smooth path</option></select></label>
-                <label><span>Easing</span><select class="vnccs-i3s__select" data-keyframe-property="easing"><option value="linear"${frame.easing === "linear" ? " selected" : ""}>Linear</option><option value="smooth"${frame.easing === "smooth" ? " selected" : ""}>Smooth</option><option value="ease_in"${frame.easing === "ease_in" ? " selected" : ""}>Ease in</option><option value="ease_out"${frame.easing === "ease_out" ? " selected" : ""}>Ease out</option><option value="ease_in_out"${frame.easing === "ease_in_out" ? " selected" : ""}>Ease in/out</option></select></label>
+                <label><span>${t("Interpolation")}</span><select class="vnccs-i3s__select" data-track-property="interpolation"><option value="linear"${track.interpolation === "linear" ? " selected" : ""}>${t("Linear")}</option><option value="catmullrom"${track.interpolation === "catmullrom" ? " selected" : ""}>${t("Smooth path")}</option></select></label>
+                <label><span>${t("Easing")}</span><select class="vnccs-i3s__select" data-keyframe-property="easing"><option value="linear"${frame.easing === "linear" ? " selected" : ""}>${t("Linear")}</option><option value="smooth"${frame.easing === "smooth" ? " selected" : ""}>${t("Smooth")}</option><option value="ease_in"${frame.easing === "ease_in" ? " selected" : ""}>${t("Ease in")}</option><option value="ease_out"${frame.easing === "ease_out" ? " selected" : ""}>${t("Ease out")}</option><option value="ease_in_out"${frame.easing === "ease_in_out" ? " selected" : ""}>${t("Ease in/out")}</option></select></label>
             </div>
-            <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-track-property="constant_speed"${track.constant_speed ? " checked" : ""} /> Constant position speed</label>
-            <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-track-property="loop"${track.loop ? " checked" : ""} /> Loop playback</label>
-            <div class="vnccs-i3s__inspector-actions"><button class="vnccs-i3s__button" type="button" data-keyframe-action="update">Update from view</button><button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-keyframe-action="delete">Delete point</button></div>`;
+            <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-track-property="constant_speed"${track.constant_speed ? " checked" : ""} /> ${t("Constant position speed")}</label>
+            <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-track-property="loop"${track.loop ? " checked" : ""} /> ${t("Loop playback")}</label>
+            <div class="vnccs-i3s__inspector-actions"><button class="vnccs-i3s__button" type="button" data-keyframe-action="update">${t("Update from view")}</button><button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-keyframe-action="delete">${t("Delete point")}</button></div>`;
         const edited = {
             position: [...pose.position],
             rotation: [...rotation],
@@ -4615,98 +4618,98 @@ class Factory3DWidget {
         ).replaceAll("data-editor-path", "data-emission-path");
         const textureName = this.scene?.textures?.find(
             texture => texture.texture_id === primitive?.texture_id,
-        )?.name || "No texture";
+        )?.name || t("No texture");
         this.els.inspectorKind.textContent = item.asset_kind === "primitive"
             ? primitiveLabel(primitive?.kind)
             : item.asset_kind === "mesh"
-                ? `${String(item.source?.format || "3D").toUpperCase()} model`
-                : "Gaussian object";
+                ? t("{format} model", { format: String(item.source?.format || "3D").toUpperCase() })
+                : t("Gaussian object");
         this.els.inspector.innerHTML = `
             <div class="vnccs-i3s__inspector-title">${escapeHTML(item.name || "Object")}</div>
-            <div class="vnccs-i3s__inspector-group"><b>Position · m</b>
+            <div class="vnccs-i3s__inspector-group"><b>${t("Position · m")}</b>
                 ${["X", "Y", "Z"].map((axis, index) => this._descriptorControl(TRANSFORM_NUMERIC_PROPERTIES[`position.${index}`], `position.${index}`, transform.position?.[index], { disabled: editor.locked })).join("")}
             </div>
-            <div class="vnccs-i3s__inspector-group"><b>Rotation · degrees</b>
+            <div class="vnccs-i3s__inspector-group"><b>${t("Rotation · degrees")}</b>
                 ${["X", "Y", "Z"].map((axis, index) => this._descriptorControl(TRANSFORM_NUMERIC_PROPERTIES[`rotation.${index}`], `rotation.${index}`, transform.rotation?.[index], { disabled: editor.locked })).join("")}
             </div>
-            <div class="vnccs-i3s__inspector-group"><b>Uniform scale</b>
+            <div class="vnccs-i3s__inspector-group"><b>${t("Uniform scale")}</b>
                 ${this._descriptorControl(TRANSFORM_NUMERIC_PROPERTIES.scale, "scale", transform.scale, { disabled: editor.locked })}
             </div>
             ${primitive ? `
-                <div class="vnccs-i3s__inspector-group"><b>${primitiveLabel(primitive.kind)} geometry</b>
-                    ${primitiveControl("Width", "width", primitive.width, { minimum: 0.001, maximum: 100000, sliderMinimum: 0.01, sliderMaximum: Math.max(20, primitive.width), step: 0.01, disabled: editor.locked })}
+                <div class="vnccs-i3s__inspector-group"><b>${t("{kind} geometry", { kind: primitiveLabel(primitive.kind) })}</b>
+                    ${primitiveControl(t("Width"), "width", primitive.width, { minimum: 0.001, maximum: 100000, sliderMinimum: 0.01, sliderMaximum: Math.max(20, primitive.width), step: 0.01, disabled: editor.locked })}
                     ${primitive.kind === "image"
-                        ? primitiveControl("Height", "height", primitive.height, { minimum: 0.001, maximum: 100000, sliderMinimum: 0.01, sliderMaximum: Math.max(20, primitive.height), step: 0.01, disabled: editor.locked })
-                        : primitiveControl("Depth", "depth", primitive.depth, { minimum: 0.001, maximum: 100000, sliderMinimum: 0.01, sliderMaximum: Math.max(20, primitive.depth), step: 0.01, disabled: editor.locked })}
+                        ? primitiveControl(t("Height"), "height", primitive.height, { minimum: 0.001, maximum: 100000, sliderMinimum: 0.01, sliderMaximum: Math.max(20, primitive.height), step: 0.01, disabled: editor.locked })
+                        : primitiveControl(t("Depth"), "depth", primitive.depth, { minimum: 0.001, maximum: 100000, sliderMinimum: 0.01, sliderMaximum: Math.max(20, primitive.depth), step: 0.01, disabled: editor.locked })}
                     ${PARAMETRIC_PARTS[primitive.kind]
-                        ? primitiveControl("Height", "height", primitive.height)
-                        : primitiveControl("Extrusion", "extrusion", primitive.extrusion)}
-                    ${primitive.kind === "stairs" ? `${primitiveControl("Steps", "steps", primitive.steps)}<div class="vnccs-i3s__hint" data-stair-dimensions>Riser ${(primitive.height / primitive.steps).toFixed(3)} m · Tread ${(primitive.depth / primitive.steps).toFixed(3)} m</div>` : ""}
-                    ${["sphere", "cylinder", "cone"].includes(primitive.kind) ? primitiveControl("Radial segments", "radial_segments", primitive.radial_segments) : ""}
+                        ? primitiveControl(t("Height"), "height", primitive.height)
+                        : primitiveControl(t("Extrusion"), "extrusion", primitive.extrusion)}
+                    ${primitive.kind === "stairs" ? `${primitiveControl(t("Steps"), "steps", primitive.steps)}<div class="vnccs-i3s__hint" data-stair-dimensions>${t("Riser {riser} m · Tread {tread} m", { riser: (primitive.height / primitive.steps).toFixed(3), tread: (primitive.depth / primitive.steps).toFixed(3) })}</div>` : ""}
+                    ${["sphere", "cylinder", "cone"].includes(primitive.kind) ? primitiveControl(t("Radial segments"), "radial_segments", primitive.radial_segments) : ""}
                     ${primitive.kind === "terrain" && this.scene.schema_version >= 12 ? `
-                        ${primitiveControl("Relief height", "height_amplitude", primitive.height_amplitude)}
-                        ${primitiveControl("Noise frequency", "noise_frequency", primitive.noise_frequency)}
-                        ${primitiveControl("Seed", "noise_seed", primitive.noise_seed, { range: false })}
-                        ${primitiveControl("Detail octaves", "noise_octaves", primitive.noise_octaves)}
-                        <div class="vnccs-i3s__hint">Seeded relief · 128 × 128 cells maximum. Increase grid segments to resolve finer details. Zero relief keeps a flat slab.</div>` : ""}
-                    ${primitive.kind === "terrain" && this.scene.schema_version < 12 ? `<button type="button" class="vnccs-i3s__button" data-terrain-upgrade>Enable terrain relief in a scene copy</button>` : ""}
+                        ${primitiveControl(t("Relief height"), "height_amplitude", primitive.height_amplitude)}
+                        ${primitiveControl(t("Noise frequency"), "noise_frequency", primitive.noise_frequency)}
+                        ${primitiveControl(t("Seed"), "noise_seed", primitive.noise_seed, { range: false })}
+                        ${primitiveControl(t("Detail octaves"), "noise_octaves", primitive.noise_octaves)}
+                        <div class="vnccs-i3s__hint">${t("Seeded relief · 128 × 128 cells maximum. Increase grid segments to resolve finer details. Zero relief keeps a flat slab.")}</div>` : ""}
+                    ${primitive.kind === "terrain" && this.scene.schema_version < 12 ? `<button type="button" class="vnccs-i3s__button" data-terrain-upgrade>${t("Enable terrain relief in a scene copy")}</button>` : ""}
                     ${primitive.kind === "terrain" ? `
-                        ${primitiveControl("Segments X", "segments.0", primitive.segments[0], { minimum: 1, maximum: 128, step: 1, range: false, disabled: editor.locked })}
-                        ${primitiveControl("Segments Z", "segments.1", primitive.segments[1], { minimum: 1, maximum: 128, step: 1, range: false, disabled: editor.locked })}` : ""}
+                        ${primitiveControl(t("Segments X"), "segments.0", primitive.segments[0], { minimum: 1, maximum: 128, step: 1, range: false, disabled: editor.locked })}
+                        ${primitiveControl(t("Segments Z"), "segments.1", primitive.segments[1], { minimum: 1, maximum: 128, step: 1, range: false, disabled: editor.locked })}` : ""}
                 </div>
-                <div class="vnccs-i3s__inspector-group"><b>Surface texture</b>
+                <div class="vnccs-i3s__inspector-group"><b>${t("Surface texture")}</b>
                     <div class="vnccs-i3s__hint">${escapeHTML(textureName)}</div>
                     <div class="vnccs-i3s__inspector-actions">
                         <button class="vnccs-i3s__button" type="button" data-primitive-texture-pick>${primitive.texture_id ? "Replace texture" : "Load texture"}</button>
-                        ${primitive.kind !== "image" && primitive.texture_id ? `<button class="vnccs-i3s__button" type="button" data-primitive-texture-clear>Clear</button>` : ""}
+                        ${primitive.kind !== "image" && primitive.texture_id ? `<button class="vnccs-i3s__button" type="button" data-primitive-texture-clear>${t("Clear")}</button>` : ""}
                     </div>
                     <input class="vnccs-i3s__file-input" type="file" accept="image/png,image/jpeg,image/webp" data-primitive-texture-file />
-                    ${primitiveControl(primitive.kind === "terrain" ? "Tile density X" : "Texture scale X", "uv_scale.0", primitive.uv_scale[0], { minimum: 0.001, maximum: 1000, sliderMinimum: 0.01, sliderMaximum: 20, step: 0.01 })}
-                    ${primitiveControl(primitive.kind === "terrain" ? "Tile density Y" : "Texture scale Y", "uv_scale.1", primitive.uv_scale[1], { minimum: 0.001, maximum: 1000, sliderMinimum: 0.01, sliderMaximum: 20, step: 0.01 })}
-                    ${primitiveControl("Texture offset X", "uv_offset.0", primitive.uv_offset[0], { minimum: -1000, maximum: 1000, sliderMinimum: -2, sliderMaximum: 2, step: 0.01 })}
-                    ${primitiveControl("Texture offset Y", "uv_offset.1", primitive.uv_offset[1], { minimum: -1000, maximum: 1000, sliderMinimum: -2, sliderMaximum: 2, step: 0.01 })}
-                    ${primitiveControl("Texture rotation", "uv_rotation", primitive.uv_rotation, { minimum: -36000, maximum: 36000, sliderMinimum: -180, sliderMaximum: 180, step: 0.1 })}
-                    <label class="vnccs-i3s__lighting-color-row"><span><b>Base color</b></span><span class="vnccs-i3s__lighting-color-control"><input type="color" data-primitive-property="color" value="${primitive.color}" aria-label="Primitive base color" /><output>${primitive.color.toUpperCase()}</output></span></label>
-                    ${primitiveControl("Opacity", "opacity", primitive.opacity, { minimum: 0, maximum: 1, step: 0.01 })}
-                    <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-primitive-property="double_sided"${primitive.double_sided ? " checked" : ""} /> Double-sided surface</label>
+                    ${primitiveControl(primitive.kind === "terrain" ? t("Tile density X") : t("Texture scale X"), "uv_scale.0", primitive.uv_scale[0], { minimum: 0.001, maximum: 1000, sliderMinimum: 0.01, sliderMaximum: 20, step: 0.01 })}
+                    ${primitiveControl(primitive.kind === "terrain" ? t("Tile density Y") : t("Texture scale Y"), "uv_scale.1", primitive.uv_scale[1], { minimum: 0.001, maximum: 1000, sliderMinimum: 0.01, sliderMaximum: 20, step: 0.01 })}
+                    ${primitiveControl(t("Texture offset X"), "uv_offset.0", primitive.uv_offset[0], { minimum: -1000, maximum: 1000, sliderMinimum: -2, sliderMaximum: 2, step: 0.01 })}
+                    ${primitiveControl(t("Texture offset Y"), "uv_offset.1", primitive.uv_offset[1], { minimum: -1000, maximum: 1000, sliderMinimum: -2, sliderMaximum: 2, step: 0.01 })}
+                    ${primitiveControl(t("Texture rotation"), "uv_rotation", primitive.uv_rotation, { minimum: -36000, maximum: 36000, sliderMinimum: -180, sliderMaximum: 180, step: 0.1 })}
+                    <label class="vnccs-i3s__lighting-color-row"><span><b>${t("Base color")}</b></span><span class="vnccs-i3s__lighting-color-control"><input type="color" data-primitive-property="color" value="${primitive.color}" aria-label="${t("Primitive base color")}" /><output>${primitive.color.toUpperCase()}</output></span></label>
+                    ${primitiveControl(t("Opacity"), "opacity", primitive.opacity, { minimum: 0, maximum: 1, step: 0.01 })}
+                    <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-primitive-property="double_sided"${primitive.double_sided ? " checked" : ""} /> ${t("Double-sided surface")}</label>
                 </div>` : ""}
-            <div class="vnccs-i3s__inspector-group"><b>Surface emission</b>
-                <div class="vnccs-i3s__hint">Emits sampled object colors from distributed area lights across the object surface.</div>
-                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-emission-property="enabled"${editor.emission.enabled ? " checked" : ""} /> Emit light</label>
+            <div class="vnccs-i3s__inspector-group"><b>${t("Surface emission")}</b>
+                <div class="vnccs-i3s__hint">${t("Emits sampled object colors from distributed area lights across the object surface.")}</div>
+                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-emission-property="enabled"${editor.emission.enabled ? " checked" : ""} /> ${t("Emit light")}</label>
                 ${emissionControl("Intensity", "intensity", editor.emission.intensity, { minimum: 0, maximum: 1000, sliderMinimum: 0, sliderMaximum: 25, step: 0.1 })}
-                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Area sampling</span><select class="vnccs-i3s__select" data-emission-property="quality">
-                    <option value="low"${editor.emission.quality === "low" ? " selected" : ""}>Low</option>
-                    <option value="medium"${editor.emission.quality === "medium" ? " selected" : ""}>Medium</option>
-                    <option value="high"${editor.emission.quality === "high" ? " selected" : ""}>High</option>
+                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Area sampling")}</span><select class="vnccs-i3s__select" data-emission-property="quality">
+                    <option value="low"${editor.emission.quality === "low" ? " selected" : ""}>${t("Low")}</option>
+                    <option value="medium"${editor.emission.quality === "medium" ? " selected" : ""}>${t("Medium")}</option>
+                    <option value="high"${editor.emission.quality === "high" ? " selected" : ""}>${t("High")}</option>
                 </select></label>
-                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-emission-property="two_sided"${editor.emission.two_sided ? " checked" : ""} /> Emit from both sides</label>
+                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-emission-property="two_sided"${editor.emission.two_sided ? " checked" : ""} /> ${t("Emit from both sides")}</label>
             </div>
-            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Floor level</span><select class="vnccs-i3s__select" data-object-property="level_id"${editor.locked ? " disabled" : ""}>
+            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Floor level")}</span><select class="vnccs-i3s__select" data-object-property="level_id"${editor.locked ? " disabled" : ""}>
                 ${(this.scene?.levels || []).map(level => `<option value="${level.level_id}"${item.level_id === level.level_id ? " selected" : ""}>${escapeHTML(level.name)}</option>`).join("")}
             </select></label>
             <div class="vnccs-i3s__inspector-grid">
-                <label><span>Collision</span><select class="vnccs-i3s__select" data-object-property="collision_proxy.mode">
-                    <option value="auto_box"${editor.collision_proxy.mode === "auto_box" ? " selected" : ""}>Automatic box</option>
-                    <option value="box"${editor.collision_proxy.mode === "box" ? " selected" : ""}>Custom box</option>
-                    <option value="off"${editor.collision_proxy.mode === "off" ? " selected" : ""}>Disabled</option>
+                <label><span>${t("Collision")}</span><select class="vnccs-i3s__select" data-object-property="collision_proxy.mode">
+                    <option value="auto_box"${editor.collision_proxy.mode === "auto_box" ? " selected" : ""}>${t("Automatic box")}</option>
+                    <option value="box"${editor.collision_proxy.mode === "box" ? " selected" : ""}>${t("Custom box")}</option>
+                    <option value="off"${editor.collision_proxy.mode === "off" ? " selected" : ""}>${t("Disabled")}</option>
                 </select></label>
-                <label><span>Light behavior</span><select class="vnccs-i3s__select" data-object-property="light_transport">
-                    <option value="opaque"${editor.light_transport === "opaque" ? " selected" : ""}>Opaque</option>
-                    <option value="cutout"${editor.light_transport === "cutout" ? " selected" : ""}>Cutout</option>
-                    <option value="transmissive"${editor.light_transport === "transmissive" ? " selected" : ""}>Glass / transmissive</option>
+                <label><span>${t("Light behavior")}</span><select class="vnccs-i3s__select" data-object-property="light_transport">
+                    <option value="opaque"${editor.light_transport === "opaque" ? " selected" : ""}>${t("Opaque")}</option>
+                    <option value="cutout"${editor.light_transport === "cutout" ? " selected" : ""}>${t("Cutout")}</option>
+                    <option value="transmissive"${editor.light_transport === "transmissive" ? " selected" : ""}>${t("Glass / transmissive")}</option>
                 </select></label>
             </div>
             ${editor.collision_proxy.mode === "box" ? `
-                <div class="vnccs-i3s__inspector-group"><b>Custom collision box · local m</b>
-                    ${["X", "Y", "Z"].map((axis, index) => `<label class="vnccs-i3s__precision-row"><span>C${axis}</span><input class="vnccs-i3s__input" type="number" step="0.01" data-proxy-path="center.${index}" value="${editor.collision_proxy.center[index]}" /></label>`).join("")}
-                    ${["X", "Y", "Z"].map((axis, index) => `<label class="vnccs-i3s__precision-row"><span>S${axis}</span><input class="vnccs-i3s__input" type="number" min="0.001" step="0.01" data-proxy-path="size.${index}" value="${editor.collision_proxy.size[index]}" /></label>`).join("")}
+                <div class="vnccs-i3s__inspector-group"><b>${t("Custom collision box · local m")}</b>
+                    ${["X", "Y", "Z"].map((axis, index) => `<label class="vnccs-i3s__precision-row"><span>${t("C{axis}", { axis })}</span><input class="vnccs-i3s__input" type="number" step="0.01" data-proxy-path="center.${index}" value="${editor.collision_proxy.center[index]}" /></label>`).join("")}
+                    ${["X", "Y", "Z"].map((axis, index) => `<label class="vnccs-i3s__precision-row"><span>${t("S{axis}", { axis })}</span><input class="vnccs-i3s__input" type="number" min="0.001" step="0.01" data-proxy-path="size.${index}" value="${editor.collision_proxy.size[index]}" /></label>`).join("")}
                 </div>` : ""}
-            ${editor.light_transport === "transmissive" ? this._numericControl("Transmission", "object.transmission", editor.transmission, { minimum: 0, maximum: 1, step: 0.01 }) : ""}
-            <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-object-property="collision_proxy.supports_objects"${editor.collision_proxy.supports_objects ? " checked" : ""} /> Can support other objects</label>
-            <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-object-property="locked"${editor.locked ? " checked" : ""} /> Lock transform</label>
+            ${editor.light_transport === "transmissive" ? this._numericControl(t("Transmission"), "object.transmission", editor.transmission, { minimum: 0, maximum: 1, step: 0.01 }) : ""}
+            <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-object-property="collision_proxy.supports_objects"${editor.collision_proxy.supports_objects ? " checked" : ""} /> ${t("Can support other objects")}</label>
+            <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-object-property="locked"${editor.locked ? " checked" : ""} /> ${t("Lock transform")}</label>
             <div class="vnccs-i3s__inspector-actions">
-                <button class="vnccs-i3s__button" type="button" data-inspector-action="drop"${editor.locked ? " disabled" : ""}>Drop to surface</button>
-                <button class="vnccs-i3s__button" type="button" data-inspector-action="reset"${editor.locked ? " disabled" : ""}>Reset transform</button>
+                <button class="vnccs-i3s__button" type="button" data-inspector-action="drop"${editor.locked ? " disabled" : ""}>${t("Drop to surface")}</button>
+                <button class="vnccs-i3s__button" type="button" data-inspector-action="reset"${editor.locked ? " disabled" : ""}>${t("Reset transform")}</button>
             </div>`;
         this._bindObjectInspector(item);
     }
@@ -4714,7 +4717,7 @@ class Factory3DWidget {
     _bindObjectInspector(item) {
         this._bindEntityNumeric({ kind: "model", id: item.object_id, sceneId: this.sceneId }, MODEL_NUMERIC_PROPERTIES);
         this.els.inspector.querySelector("[data-terrain-upgrade]")?.addEventListener("click", () => {
-            void this._ensureProceduralScene().catch(error => this._showError("Terrain upgrade failed", error));
+            void this._ensureProceduralScene().catch(error => this._showError(t("Terrain upgrade failed"), error));
         });
         let before = null;
         const begin = () => { before ||= this._captureEditorSnapshot(); };
@@ -4790,7 +4793,7 @@ class Factory3DWidget {
                 this._scheduleScenePreview(120);
                 this._renderInspector();
             } catch (error) {
-                this._showError("Texture could not be applied", error);
+                this._showError(t("Texture could not be applied"), error);
             }
         });
         this.els.inspector.querySelector("[data-primitive-texture-clear]")?.addEventListener("click", () => {
@@ -4921,7 +4924,7 @@ class Factory3DWidget {
     _materialOptions(selectedId = "") {
         const materials = this.scene?.architecture?.materials || [];
         return [
-            `<option value=""${selectedId ? "" : " selected"}>Default material</option>`,
+            `<option value=""${selectedId ? "" : " selected"}>${t("Default material")}</option>`,
             ...materials.map(material => (
                 `<option value="${material.material_id}"${material.material_id === selectedId ? " selected" : ""}>${escapeHTML(material.name || "Material")}</option>`
             )),
@@ -4936,18 +4939,18 @@ class Factory3DWidget {
                     <select class="vnccs-i3s__select" data-architecture-property="${targetPath}">${this._materialOptions(selectedId)}</select>
                 </label>
                 ${material ? `
-                    <details class="vnccs-i3s__material-details"><summary>Edit ${escapeHTML(material.name || "material")}</summary>
+                    <details class="vnccs-i3s__material-details"><summary>${t("Edit {name}", { name: material.name || t("material") })}</summary>
                     <div class="vnccs-i3s__material-inline" data-material-id="${material.material_id}">
-                        <input type="color" data-material-property="color" value="${material.color || "#d7d2ca"}" aria-label="Material color" />
-                        <input class="vnccs-i3s__input" type="text" data-material-property="name" value="${escapeHTML(material.name || "Material")}" maxlength="80" aria-label="Material name" />
-                        <select class="vnccs-i3s__select" data-material-property="kind" aria-label="Material type"><option value="standard"${material.kind !== "glass" ? " selected" : ""}>Standard</option><option value="glass"${material.kind === "glass" ? " selected" : ""}>Glass</option></select>
-                        <label>Rough<input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-property="roughness" value="${material.roughness ?? 0.78}" /></label>
-                        <label>Metal<input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-property="metalness" value="${material.metalness ?? 0}" /></label>
-                        <label>Opacity<input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-property="opacity" value="${material.opacity ?? 1}" /></label>
-                        <label>UV X<input class="vnccs-i3s__input" type="number" min="0.001" max="1000" step="0.01" data-material-property="uv_scale.0" value="${material.uv_scale?.[0] ?? 1}" /></label>
-                        <label>UV Y<input class="vnccs-i3s__input" type="number" min="0.001" max="1000" step="0.01" data-material-property="uv_scale.1" value="${material.uv_scale?.[1] ?? 1}" /></label>
-                        <label>UV °<input class="vnccs-i3s__input" type="number" step="0.01" data-material-property="uv_rotation" value="${material.uv_rotation ?? 0}" /></label>
-                        ${material.kind === "glass" ? `<label>Transmit<input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-property="transmission" value="${material.transmission ?? 1}" /></label><label>IOR<input class="vnccs-i3s__input" type="number" min="1" max="2.5" step="0.01" data-material-property="ior" value="${material.ior ?? 1.5}" /></label>` : ""}
+                        <input type="color" data-material-property="color" value="${material.color || "#d7d2ca"}" aria-label="${t("Material color")}" />
+                        <input class="vnccs-i3s__input" type="text" data-material-property="name" value="${escapeHTML(material.name || "Material")}" maxlength="80" aria-label="${t("Material name")}" />
+                        <select class="vnccs-i3s__select" data-material-property="kind" aria-label="${t("Material type")}"><option value="standard"${material.kind !== "glass" ? " selected" : ""}>${t("Standard")}</option><option value="glass"${material.kind === "glass" ? " selected" : ""}>${t("Glass")}</option></select>
+                        <label>${t("Rough")}<input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-property="roughness" value="${material.roughness ?? 0.78}" /></label>
+                        <label>${t("Metal")}<input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-property="metalness" value="${material.metalness ?? 0}" /></label>
+                        <label>${t("Opacity")}<input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-property="opacity" value="${material.opacity ?? 1}" /></label>
+                        <label>${t("UV X")}<input class="vnccs-i3s__input" type="number" min="0.001" max="1000" step="0.01" data-material-property="uv_scale.0" value="${material.uv_scale?.[0] ?? 1}" /></label>
+                        <label>${t("UV Y")}<input class="vnccs-i3s__input" type="number" min="0.001" max="1000" step="0.01" data-material-property="uv_scale.1" value="${material.uv_scale?.[1] ?? 1}" /></label>
+                        <label>${t("UV °")}<input class="vnccs-i3s__input" type="number" step="0.01" data-material-property="uv_rotation" value="${material.uv_rotation ?? 0}" /></label>
+                        ${material.kind === "glass" ? `<label>${t("Transmit")}<input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-property="transmission" value="${material.transmission ?? 1}" /></label><label>${t("IOR")}<input class="vnccs-i3s__input" type="number" min="1" max="2.5" step="0.01" data-material-property="ior" value="${material.ior ?? 1.5}" /></label>` : ""}
                     </div></details>` : ""}
             </div>`;
     }
@@ -4956,8 +4959,8 @@ class Factory3DWidget {
         return `
             <input data-material-upload-input type="file" accept="image/jpeg,image/png,image/webp" hidden />
             <div class="vnccs-i3s__inspector-actions">
-                <button class="vnccs-i3s__button" type="button" data-material-action="solid" data-material-target="${defaultTarget}">New solid material</button>
-                <button class="vnccs-i3s__button" type="button" data-material-action="upload" data-material-target="${defaultTarget}">Upload texture</button>
+                <button class="vnccs-i3s__button" type="button" data-material-action="solid" data-material-target="${defaultTarget}">${t("New solid material")}</button>
+                <button class="vnccs-i3s__button" type="button" data-material-action="upload" data-material-target="${defaultTarget}">${t("Upload texture")}</button>
             </div>`;
     }
 
@@ -4986,13 +4989,13 @@ class Factory3DWidget {
             !["image/jpeg", "image/png", "image/webp"].includes(file.type)
             || file.size > MAX_TEXTURE_BYTES
         ) {
-            throw new Error("Texture must be a JPEG, PNG, or WebP image up to 32 MB.");
+            throw new Error(t("Texture must be a JPEG, PNG, or WebP image up to 32 MB."));
         }
         // Resolve any queued metadata edit before the texture mutation so the
         // following material update starts from the latest local scene state.
         if (flushScene) await this._saveSceneNow({ showError: false });
         if (!this.scene || this.sceneId !== sceneId) {
-            throw new Error("The active scene changed before the texture upload started.");
+            throw new Error(t("The active scene changed before the texture upload started."));
         }
         const form = new FormData();
         form.append("image", file, file.name);
@@ -5001,7 +5004,7 @@ class Factory3DWidget {
             body: form,
         });
         if (!this.scene || this.sceneId !== sceneId) {
-            throw new Error("The active scene changed while the texture was uploading.");
+            throw new Error(t("The active scene changed while the texture was uploading."));
         }
         this.scene.textures = result.scene?.textures || this.scene.textures || [];
         this.scene.edit_revision = result.scene?.edit_revision ?? this.scene.edit_revision;
@@ -5010,7 +5013,7 @@ class Factory3DWidget {
 
     async _uploadTextureMaterial(file) {
         if ((this.scene?.architecture?.materials?.length || 0) >= 512) {
-            throw new Error("The scene material limit has been reached.");
+            throw new Error(t("The scene material limit has been reached."));
         }
         const texture = await this._uploadSceneTexture(file);
         if (!texture) return null;
@@ -5040,8 +5043,8 @@ class Factory3DWidget {
             </div>`).join("");
         return `
             <div class="vnccs-i3s__inspector-group vnccs-i3s__room-materials-summary">
-                <b>Room surfaces</b>${summary}
-                <button class="vnccs-i3s__button" type="button" data-room-materials>Manage textures and mapping</button>
+                <b>${t("Room surfaces")}</b>${summary}
+                <button class="vnccs-i3s__button" type="button" data-room-materials>${t("Manage textures and mapping")}</button>
             </div>`;
     }
 
@@ -5061,8 +5064,8 @@ class Factory3DWidget {
         let advancedOpen = false;
         let committed = false;
         const body = element("div", "vnccs-i3s__material-manager");
-        const cancel = button("vnccs-i3s__button", "Cancel");
-        const apply = button("vnccs-i3s__button vnccs-i3s__button--primary", "Apply to room");
+        const cancel = button("vnccs-i3s__button", t("Cancel"));
+        const apply = button("vnccs-i3s__button vnccs-i3s__button--primary", t("Apply to room"));
 
         const activeMaterial = () => materials.find(
             material => material.material_id === assignments[activeSurface],
@@ -5094,75 +5097,75 @@ class Factory3DWidget {
             { persist: false },
         );
         const textureName = textureId => (
-            this.scene.textures?.find(texture => texture.texture_id === textureId)?.name || "Assigned texture"
+            this.scene.textures?.find(texture => texture.texture_id === textureId)?.name || t("Assigned texture")
         );
         const options = selectedId => [
-            `<option value=""${selectedId ? "" : " selected"}>Default material</option>`,
+            `<option value=""${selectedId ? "" : " selected"}>${t("Default material")}</option>`,
             ...materials.map(material => `
                 <option value="${material.material_id}"${material.material_id === selectedId ? " selected" : ""}>${escapeHTML(material.name || "Material")}</option>`),
         ].join("");
         const textureRow = (material, field, label, description) => {
             const pending = pendingFiles.get(`${material.material_id}:${field}`);
-            const current = pending?.name || (material[field] ? textureName(material[field]) : "Not assigned");
+            const current = pending?.name || (material[field] ? textureName(material[field]) : t("Not assigned"));
             return `
                 <div class="vnccs-i3s__material-map-row">
                     <div><b>${label}</b><span>${escapeHTML(current)}</span><small>${description}</small></div>
                     <input type="file" accept="image/jpeg,image/png,image/webp" data-material-map-file="${field}" hidden />
-                    <button class="vnccs-i3s__button" type="button" data-material-map-pick="${field}">Choose</button>
-                    <button class="vnccs-i3s__button vnccs-i3s__button--quiet" type="button" data-material-map-clear="${field}"${!pending && !material[field] ? " disabled" : ""}>Clear</button>
+                    <button class="vnccs-i3s__button" type="button" data-material-map-pick="${field}">${t("Choose")}</button>
+                    <button class="vnccs-i3s__button vnccs-i3s__button--quiet" type="button" data-material-map-clear="${field}"${!pending && !material[field] ? " disabled" : ""}>${t("Clear")}</button>
                 </div>`;
         };
 
         const render = () => {
             const material = activeMaterial();
             body.innerHTML = `
-                <div class="vnccs-i3s__material-surface-tabs" role="tablist" aria-label="Room surface">
+                <div class="vnccs-i3s__material-surface-tabs" role="tablist" aria-label="${t("Room surface")}">
                     ${Object.entries(surfaceLabels).map(([key, label]) => `
                         <button type="button" role="tab" data-material-surface="${key}" aria-selected="${key === activeSurface}">
-                            <span>${label}</span><small>${escapeHTML(materials.find(value => value.material_id === assignments[key])?.name || "Default")}</small>
+                            <span>${t(label)}</span><small>${escapeHTML(materials.find(value => value.material_id === assignments[key])?.name || t("Default"))}</small>
                         </button>`).join("")}
                 </div>
                 <div class="vnccs-i3s__material-toolbar">
-                    <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${surfaceLabels[activeSurface]} material</span>
+                    <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("{surface} material", { surface: t(surfaceLabels[activeSurface]) })}</span>
                         <select class="vnccs-i3s__select" data-material-assignment>${options(assignments[activeSurface])}</select>
                     </label>
-                    <button class="vnccs-i3s__button" type="button" data-material-create>New</button>
-                    <button class="vnccs-i3s__button" type="button" data-material-duplicate${material ? "" : " disabled"}>Duplicate</button>
+                    <button class="vnccs-i3s__button" type="button" data-material-create>${t("New")}</button>
+                    <button class="vnccs-i3s__button" type="button" data-material-duplicate${material ? "" : " disabled"}>${t("Duplicate")}</button>
                 </div>
                 ${material ? `
                     <div class="vnccs-i3s__material-section">
-                        <div class="vnccs-i3s__material-section-title"><b>Base surface</b><span>Changes to this material affect every surface that uses it.</span></div>
+                        <div class="vnccs-i3s__material-section-title"><b>${t("Base surface")}</b><span>${t("Changes to this material affect every surface that uses it.")}</span></div>
                         <div class="vnccs-i3s__material-fields">
-                            <label class="vnccs-i3s__field is-wide"><span class="vnccs-i3s__label">Name</span><input class="vnccs-i3s__input" data-material-draft="name" maxlength="80" value="${escapeHTML(material.name || "Material")}" /></label>
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Color</span><input class="vnccs-i3s__material-color" type="color" data-material-draft="color" value="${material.color || "#d7d2ca"}" /></label>
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Type</span><select class="vnccs-i3s__select" data-material-draft="kind"><option value="standard"${material.kind !== "glass" ? " selected" : ""}>Standard PBR</option><option value="glass"${material.kind === "glass" ? " selected" : ""}>Glass</option></select></label>
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Roughness</span><input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-draft="roughness" value="${material.roughness ?? 0.78}" /></label>
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Metalness</span><input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-draft="metalness" value="${material.metalness ?? 0}" /></label>
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Opacity</span><input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-draft="opacity" value="${material.opacity ?? 1}" /></label>
-                            ${material.kind === "glass" ? `<label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Transmission</span><input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-draft="transmission" value="${material.transmission ?? 1}" /></label><label class="vnccs-i3s__field"><span class="vnccs-i3s__label">IOR</span><input class="vnccs-i3s__input" type="number" min="1" max="2.5" step="0.01" data-material-draft="ior" value="${material.ior ?? 1.5}" /></label>` : ""}
+                            <label class="vnccs-i3s__field is-wide"><span class="vnccs-i3s__label">${t("Name")}</span><input class="vnccs-i3s__input" data-material-draft="name" maxlength="80" value="${escapeHTML(material.name || "Material")}" /></label>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Color")}</span><input class="vnccs-i3s__material-color" type="color" data-material-draft="color" value="${material.color || "#d7d2ca"}" /></label>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Type")}</span><select class="vnccs-i3s__select" data-material-draft="kind"><option value="standard"${material.kind !== "glass" ? " selected" : ""}>${t("Standard PBR")}</option><option value="glass"${material.kind === "glass" ? " selected" : ""}>${t("Glass")}</option></select></label>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Roughness")}</span><input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-draft="roughness" value="${material.roughness ?? 0.78}" /></label>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Metalness")}</span><input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-draft="metalness" value="${material.metalness ?? 0}" /></label>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Opacity")}</span><input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-draft="opacity" value="${material.opacity ?? 1}" /></label>
+                            ${material.kind === "glass" ? `<label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Transmission")}</span><input class="vnccs-i3s__input" type="number" min="0" max="1" step="0.01" data-material-draft="transmission" value="${material.transmission ?? 1}" /></label><label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("IOR")}</span><input class="vnccs-i3s__input" type="number" min="1" max="2.5" step="0.01" data-material-draft="ior" value="${material.ior ?? 1.5}" /></label>` : ""}
                         </div>
-                        ${textureRow(material, "texture_id", "Color / albedo map", "sRGB color texture")}
+                        ${textureRow(material, "texture_id", t("Color / albedo map"), t("sRGB color texture"))}
                     </div>
                     <div class="vnccs-i3s__material-section">
-                        <div class="vnccs-i3s__material-section-title"><b>Mapping</b><span>Shared by all maps in this material.</span></div>
+                        <div class="vnccs-i3s__material-section-title"><b>${t("Mapping")}</b><span>${t("Shared by all maps in this material.")}</span></div>
                         <div class="vnccs-i3s__material-fields">
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Scale X</span><input class="vnccs-i3s__input" type="number" min="0.001" max="1000" step="0.01" data-material-draft="uv_scale.0" value="${material.uv_scale?.[0] ?? 1}" /></label>
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Scale Y</span><input class="vnccs-i3s__input" type="number" min="0.001" max="1000" step="0.01" data-material-draft="uv_scale.1" value="${material.uv_scale?.[1] ?? 1}" /></label>
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Offset X</span><input class="vnccs-i3s__input" type="number" step="0.01" data-material-draft="uv_offset.0" value="${material.uv_offset?.[0] ?? 0}" /></label>
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Offset Y</span><input class="vnccs-i3s__input" type="number" step="0.01" data-material-draft="uv_offset.1" value="${material.uv_offset?.[1] ?? 0}" /></label>
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Rotation °</span><input class="vnccs-i3s__input" type="number" step="0.1" data-material-draft="uv_rotation" value="${material.uv_rotation ?? 0}" /></label>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Scale X")}</span><input class="vnccs-i3s__input" type="number" min="0.001" max="1000" step="0.01" data-material-draft="uv_scale.0" value="${material.uv_scale?.[0] ?? 1}" /></label>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Scale Y")}</span><input class="vnccs-i3s__input" type="number" min="0.001" max="1000" step="0.01" data-material-draft="uv_scale.1" value="${material.uv_scale?.[1] ?? 1}" /></label>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Offset X")}</span><input class="vnccs-i3s__input" type="number" step="0.01" data-material-draft="uv_offset.0" value="${material.uv_offset?.[0] ?? 0}" /></label>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Offset Y")}</span><input class="vnccs-i3s__input" type="number" step="0.01" data-material-draft="uv_offset.1" value="${material.uv_offset?.[1] ?? 0}" /></label>
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Rotation °")}</span><input class="vnccs-i3s__input" type="number" step="0.1" data-material-draft="uv_rotation" value="${material.uv_rotation ?? 0}" /></label>
                         </div>
                     </div>
                     <details class="vnccs-i3s__material-advanced"${advancedOpen ? " open" : ""}>
-                        <summary>Surface detail <span>optional · adds GPU texture samples</span></summary>
+                        <summary>${t("Surface detail")} <span>${t("optional · adds GPU texture samples")}</span></summary>
                         <div class="vnccs-i3s__material-advanced-body">
-                            ${textureRow(material, "normal_texture_id", "Normal map", "Adds lighting detail without extra geometry")}
-                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Normal strength</span><input class="vnccs-i3s__input" type="number" min="0" max="4" step="0.05" data-material-draft="normal_strength" value="${material.normal_strength ?? 1}" /></label>
-                            ${textureRow(material, "roughness_texture_id", "Roughness map", "Green channel controls local roughness")}
+                            ${textureRow(material, "normal_texture_id", t("Normal map"), t("Adds lighting detail without extra geometry"))}
+                            <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Normal strength")}</span><input class="vnccs-i3s__input" type="number" min="0" max="4" step="0.05" data-material-draft="normal_strength" value="${material.normal_strength ?? 1}" /></label>
+                            ${textureRow(material, "roughness_texture_id", t("Roughness map"), t("Green channel controls local roughness"))}
                         </div>
                     </details>` : `
-                    <div class="vnccs-i3s__modal-note">This surface uses the lightweight built-in material. Select an existing material or create a new one to assign textures.</div>`}
-                <div class="vnccs-i3s__material-budget-note">Only materials assigned to architecture are loaded. Identical texture and UV settings are reused; normal and roughness maps remain optional.</div>`;
+                    <div class="vnccs-i3s__modal-note">${t("This surface uses the lightweight built-in material. Select an existing material or create a new one to assign textures.")}</div>`}
+                <div class="vnccs-i3s__material-budget-note">${t("Only materials assigned to architecture are loaded. Identical texture and UV settings are reused; normal and roughness maps remain optional.")}</div>`;
 
             body.querySelectorAll("[data-material-surface]").forEach(control => {
                 control.addEventListener("click", () => {
@@ -5180,7 +5183,7 @@ class Factory3DWidget {
                 render();
             });
             body.querySelector("[data-material-create]")?.addEventListener("click", () => {
-                if (materials.length >= 512) return this.toast("The scene material limit has been reached.", "error");
+                if (materials.length >= 512) return this.toast(t("The scene material limit has been reached."), "error");
                 const created = this._newArchitectureMaterial(`${surfaceLabels[activeSurface]} material`);
                 materials.push(created);
                 assignments[activeSurface] = created.material_id;
@@ -5248,7 +5251,7 @@ class Factory3DWidget {
         apply.addEventListener("click", async () => {
             const before = this._captureEditorSnapshot();
             apply.disabled = true;
-            apply.querySelector("span").textContent = pendingFiles.size ? "Uploading…" : "Applying…";
+            apply.querySelector("span").textContent = pendingFiles.size ? t("Uploading…") : t("Applying…");
             try {
                 if (pendingFiles.size) await this._saveSceneNow({ showError: false });
                 for (const [key, file] of pendingFiles) {
@@ -5272,16 +5275,16 @@ class Factory3DWidget {
                 await this._commitArchitecture();
                 committed = true;
                 this.closeModal();
-                this.toast("Room materials updated.", "success");
+                this.toast(t("Room materials updated."), "success");
             } catch (error) {
                 apply.disabled = false;
-                apply.querySelector("span").textContent = "Apply to room";
-                this._showError("Room material update failed", error);
+                apply.querySelector("span").textContent = t("Apply to room");
+                this._showError(t("Room material update failed"), error);
             }
         });
         render();
         this.openModal({
-            title: `Room materials · ${room.name || "Room"}`,
+            title: t("Room materials · {room}", { room: room.name || t("Room") }),
             body,
             actions: [cancel, apply],
             wide: true,
@@ -5298,97 +5301,97 @@ class Factory3DWidget {
         const linkedRoom = type === "wall"
             ? this.scene.architecture.rooms.find(room => room.wall_ids?.includes(item.wall_id))
             : null;
-        this.els.inspectorKind.textContent = type[0].toUpperCase() + type.slice(1);
+        this.els.inspectorKind.textContent = t(type[0].toUpperCase() + type.slice(1));
         if (type === "building") {
             const onlyBuilding = this.scene.architecture.buildings.length <= 1;
             this.els.inspector.innerHTML = `
                 <div class="vnccs-i3s__inspector-title">${escapeHTML(item.name || "Building")}</div>
-                <div class="vnccs-i3s__hint">Moves and rotates the structure together with every assigned 3D object, saved camera, and local light.</div>
-                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Name</span><input class="vnccs-i3s__input" data-architecture-property="name" value="${escapeHTML(item.name || "Building")}" maxlength="80" /></label>
-                <div class="vnccs-i3s__inspector-group"><b>Building transform</b>
+                <div class="vnccs-i3s__hint">${t("Moves and rotates the structure together with every assigned 3D object, saved camera, and local light.")}</div>
+                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Name")}</span><input class="vnccs-i3s__input" data-architecture-property="name" value="${escapeHTML(item.name || "Building")}" maxlength="80" /></label>
+                <div class="vnccs-i3s__inspector-group"><b>${t("Building transform")}</b>
                     ${this._numericControl("X", "position.0", item.position?.[0], { minimum: -10000, maximum: 10000, step: 0.01 })}
                     ${this._numericControl("Y", "position.1", item.position?.[1], { minimum: -10000, maximum: 10000, step: 0.01 })}
                     ${this._numericControl("Z", "position.2", item.position?.[2], { minimum: -10000, maximum: 10000, step: 0.01 })}
-                    ${this._numericControl("Rotation Y", "rotation_y", item.rotation_y, { minimum: -36000, maximum: 36000, step: 0.01 })}
+                    ${this._numericControl(t("Rotation Y"), "rotation_y", item.rotation_y, { minimum: -36000, maximum: 36000, step: 0.01 })}
                 </div>
-                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="visible"${item.visible !== false ? " checked" : ""} /> Building visible</label>
-                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="locked"${item.locked ? " checked" : ""} /> Lock building transform</label>
+                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="visible"${item.visible !== false ? " checked" : ""} /> ${t("Building visible")}</label>
+                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="locked"${item.locked ? " checked" : ""} /> ${t("Lock building transform")}</label>
                 <div class="vnccs-i3s__hint">${onlyBuilding
-                    ? "Delete this Building and its architecture. Assigned models, cameras, paths, and lights will remain in the scene without a Building assignment."
-                    : "Delete this Building and its architecture. Assigned models, cameras, paths, and lights will move to another Building."}</div>
-                <button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-inspector-action="delete">Delete building</button>`;
+                    ? t("Delete this Building and its architecture. Assigned models, cameras, paths, and lights will remain in the scene without a Building assignment.")
+                    : t("Delete this Building and its architecture. Assigned models, cameras, paths, and lights will move to another Building.")}</div>
+                <button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-inspector-action="delete">${t("Delete building")}</button>`;
         } else if (type === "level") {
             this.els.inspector.innerHTML = `
                 <div class="vnccs-i3s__inspector-title">${escapeHTML(item.name || "Floor level")}</div>
-                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Name</span><input class="vnccs-i3s__input" data-architecture-property="name" value="${escapeHTML(item.name || "Floor level")}" maxlength="80" /></label>
-                <div class="vnccs-i3s__inspector-group"><b>Level geometry · m</b>
-                    ${this._numericControl("Elevation", "elevation", item.elevation, { minimum: -10000, maximum: 10000, step: 0.01 })}
-                    ${this._numericControl("Height", "height", item.height, { minimum: 0.1, maximum: 1000, step: 0.01 })}
-                    ${this._numericControl("Slab", "slab_thickness", item.slab_thickness, { minimum: 0, maximum: 100, step: 0.01 })}
+                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Name")}</span><input class="vnccs-i3s__input" data-architecture-property="name" value="${escapeHTML(item.name || "Floor level")}" maxlength="80" /></label>
+                <div class="vnccs-i3s__inspector-group"><b>${t("Level geometry · m")}</b>
+                    ${this._numericControl(t("Elevation"), "elevation", item.elevation, { minimum: -10000, maximum: 10000, step: 0.01 })}
+                    ${this._numericControl(t("Height"), "height", item.height, { minimum: 0.1, maximum: 1000, step: 0.01 })}
+                    ${this._numericControl(t("Slab"), "slab_thickness", item.slab_thickness, { minimum: 0, maximum: 100, step: 0.01 })}
                 </div>
-                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="visible"${item.visible !== false ? " checked" : ""} /> Level visible</label>
-                <button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-inspector-action="delete"${this.scene.levels.length <= 1 ? " disabled" : ""}>Delete level and its contents</button>`;
+                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="visible"${item.visible !== false ? " checked" : ""} /> ${t("Level visible")}</label>
+                <button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-inspector-action="delete"${this.scene.levels.length <= 1 ? " disabled" : ""}>${t("Delete level and its contents")}</button>`;
         } else if (type === "wall") {
             this.els.inspector.innerHTML = `
                 <div class="vnccs-i3s__inspector-title">${escapeHTML(item.name || "Wall")}</div>
-                <div class="vnccs-i3s__wall-openings" role="group" aria-label="Add wall opening">
-                    <button class="vnccs-i3s__button" type="button" data-wall-opening="door">Add door</button>
-                    <button class="vnccs-i3s__button" type="button" data-wall-opening="window">Add window</button>
-                    <button class="vnccs-i3s__button" type="button" data-wall-opening="empty">Add opening</button>
+                <div class="vnccs-i3s__wall-openings" role="group" aria-label="${t("Add wall opening")}">
+                    <button class="vnccs-i3s__button" type="button" data-wall-opening="door">${t("Add door")}</button>
+                    <button class="vnccs-i3s__button" type="button" data-wall-opening="window">${t("Add window")}</button>
+                    <button class="vnccs-i3s__button" type="button" data-wall-opening="empty">${t("Add opening")}</button>
                 </div>
-                <div class="vnccs-i3s__hint" data-wall-opening-status hidden>Click this wall to place; drag to set width. Escape cancels.</div>
-                <button class="vnccs-i3s__button" type="button" data-wall-opening-cancel hidden>Cancel placement</button>
-                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Name</span><input class="vnccs-i3s__input" data-architecture-property="name" value="${escapeHTML(item.name || "Wall")}" maxlength="80" /></label>
-                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Floor level${linkedRoom ? " · inherited from room" : ""}</span><select class="vnccs-i3s__select" data-architecture-property="level_id"${linkedRoom ? " disabled" : ""}>
+                <div class="vnccs-i3s__hint" data-wall-opening-status hidden>${t("Click this wall to place; drag to set width. Escape cancels.")}</div>
+                <button class="vnccs-i3s__button" type="button" data-wall-opening-cancel hidden>${t("Cancel placement")}</button>
+                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Name")}</span><input class="vnccs-i3s__input" data-architecture-property="name" value="${escapeHTML(item.name || "Wall")}" maxlength="80" /></label>
+                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Floor level")}${linkedRoom ? " · " + t("inherited from room") : ""}</span><select class="vnccs-i3s__select" data-architecture-property="level_id"${linkedRoom ? " disabled" : ""}>
                     ${(this.scene?.levels || []).map(level => `<option value="${level.level_id}"${item.level_id === level.level_id ? " selected" : ""}>${escapeHTML(level.name)}</option>`).join("")}
                 </select></label>
-                <div class="vnccs-i3s__inspector-group"><b>Geometry · building-local m</b>
-                    ${this._numericControl("Start X", "start.0", item.start[0], { minimum: -10000, maximum: 10000, step: 0.01, range: false })}
-                    ${this._numericControl("Start Z", "start.1", item.start[1], { minimum: -10000, maximum: 10000, step: 0.01, range: false })}
-                    ${this._numericControl("End X", "end.0", item.end[0], { minimum: -10000, maximum: 10000, step: 0.01, range: false })}
-                    ${this._numericControl("End Z", "end.1", item.end[1], { minimum: -10000, maximum: 10000, step: 0.01, range: false })}
+                <div class="vnccs-i3s__inspector-group"><b>${t("Geometry · building-local m")}</b>
+                    ${this._numericControl(t("Start X"), "start.0", item.start[0], { minimum: -10000, maximum: 10000, step: 0.01, range: false })}
+                    ${this._numericControl(t("Start Z"), "start.1", item.start[1], { minimum: -10000, maximum: 10000, step: 0.01, range: false })}
+                    ${this._numericControl(t("End X"), "end.0", item.end[0], { minimum: -10000, maximum: 10000, step: 0.01, range: false })}
+                    ${this._numericControl(t("End Z"), "end.1", item.end[1], { minimum: -10000, maximum: 10000, step: 0.01, range: false })}
                     ${this._descriptorControl(this._wallPropertyDescriptors(item).height, "height", item.height)}
                     ${this._descriptorControl(this._wallPropertyDescriptors(item).thickness, "thickness", item.thickness)}
                     ${this._descriptorControl(this._wallPropertyDescriptors(item).elevation_offset, "elevation_offset", item.elevation_offset)}
                 </div>
-                <div class="vnccs-i3s__inspector-group"><b>Surfaces</b>
-                    ${this._materialControls("material_left", item.material_left, "Left side")}
-                    ${this._materialControls("material_right", item.material_right, "Right side")}
-                    ${this._materialControls("material_caps", item.material_caps, "Edges")}
+                <div class="vnccs-i3s__inspector-group"><b>${t("Surfaces")}</b>
+                    ${this._materialControls("material_left", item.material_left, t("Left side"))}
+                    ${this._materialControls("material_right", item.material_right, t("Right side"))}
+                    ${this._materialControls("material_caps", item.material_caps, t("Edges"))}
                     ${this._materialActions("material_left")}
                 </div>
-                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="visible"${item.visible !== false ? " checked" : ""} /> Wall visible</label>
-                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="locked"${item.locked ? " checked" : ""} /> Lock wall</label>
-                <button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-inspector-action="delete">Delete wall</button>`;
+                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="visible"${item.visible !== false ? " checked" : ""} /> ${t("Wall visible")}</label>
+                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="locked"${item.locked ? " checked" : ""} /> ${t("Lock wall")}</label>
+                <button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-inspector-action="delete">${t("Delete wall")}</button>`;
         } else if (type === "opening") {
             const hostWall = this.scene.architecture.walls.find(wall => wall.wall_id === item.wall_id);
             const limits = this._openingControlLimits(item, hostWall);
             const hostLength = limits.wallLength;
             this.els.inspector.innerHTML = `
                 <div class="vnccs-i3s__inspector-title">${escapeHTML(item.name || "Opening")}</div>
-                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Name</span><input class="vnccs-i3s__input" data-architecture-property="name" value="${escapeHTML(item.name || "Opening")}" maxlength="80" /></label>
-                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Type</span><select class="vnccs-i3s__select" data-architecture-property="kind">
-                    <option value="empty"${item.kind === "empty" ? " selected" : ""}>Empty opening</option>
-                    <option value="door"${item.kind === "door" ? " selected" : ""}>Door</option>
-                    <option value="window"${item.kind === "window" ? " selected" : ""}>Window / glass</option>
+                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Name")}</span><input class="vnccs-i3s__input" data-architecture-property="name" value="${escapeHTML(item.name || "Opening")}" maxlength="80" /></label>
+                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Type")}</span><select class="vnccs-i3s__select" data-architecture-property="kind">
+                    <option value="empty"${item.kind === "empty" ? " selected" : ""}>${t("Empty opening")}</option>
+                    <option value="door"${item.kind === "door" ? " selected" : ""}>${t("Door")}</option>
+                    <option value="window"${item.kind === "window" ? " selected" : ""}>${t("Window / glass")}</option>
                 </select></label>
-                <div class="vnccs-i3s__hint">Host wall · ${this._formatControlNumber(limits.wallLength, 0.01)} m long · ${this._formatControlNumber(limits.wallHeight, 0.01)} m high</div>
-                ${this._numericControl("Center from wall start · m", "opening_offset_m", Number(item.offset) * hostLength, {
+                <div class="vnccs-i3s__hint">${t("Host wall · {length} m long · {height} m high", { length: this._formatControlNumber(limits.wallLength, 0.01), height: this._formatControlNumber(limits.wallHeight, 0.01) })}</div>
+                ${this._numericControl(t("Center from wall start · m"), "opening_offset_m", Number(item.offset) * hostLength, {
                     minimum: limits.centerMinimum,
                     maximum: limits.centerMaximum,
                     step: 0.01,
                     disabled: Math.abs(limits.centerMaximum - limits.centerMinimum) < 0.01,
                 })}
-                ${this._numericControl("Width", "width", item.width, { minimum: 0.05, maximum: limits.widthMaximum, step: 0.01 })}
-                ${this._numericControl("Height", "height", item.height, { minimum: 0.05, maximum: limits.wallHeight, step: 0.01 })}
+                ${this._numericControl(t("Width"), "width", item.width, { minimum: 0.05, maximum: limits.widthMaximum, step: 0.01 })}
+                ${this._numericControl(t("Height"), "height", item.height, { minimum: 0.05, maximum: limits.wallHeight, step: 0.01 })}
                 ${item.kind === "door"
-                    ? this._numericControl("Sill", "sill_height", 0, { minimum: 0, maximum: 0, step: 0.01, range: false, disabled: true })
-                    : this._numericControl("Sill", "sill_height", item.sill_height, { minimum: 0, maximum: limits.sillMaximum, step: 0.01 })}
-                ${this._materialControls("material_id", item.material_id, "Glass / frame")}
+                    ? this._numericControl(t("Sill"), "sill_height", 0, { minimum: 0, maximum: 0, step: 0.01, range: false, disabled: true })
+                    : this._numericControl(t("Sill"), "sill_height", item.sill_height, { minimum: 0, maximum: limits.sillMaximum, step: 0.01 })}
+                ${this._materialControls("material_id", item.material_id, t("Glass / frame"))}
                 ${this._materialActions("material_id")}
-                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="visible"${item.visible !== false ? " checked" : ""} /> Opening visible</label>
-                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="locked"${item.locked ? " checked" : ""} /> Lock opening</label>
-                <button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-inspector-action="delete">Delete opening</button>`;
+                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="visible"${item.visible !== false ? " checked" : ""} /> ${t("Opening visible")}</label>
+                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="locked"${item.locked ? " checked" : ""} /> ${t("Lock opening")}</label>
+                <button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-inspector-action="delete">${t("Delete opening")}</button>`;
         } else {
             const roomBounds = this._roomBounds(item);
             const linkedRoomWalls = (this.scene.architecture.walls || []).filter(
@@ -5403,25 +5406,25 @@ class Factory3DWidget {
             const wallMaterial = linkedRoomWalls[0]?.material_left || "";
             this.els.inspector.innerHTML = `
                 <div class="vnccs-i3s__inspector-title">${escapeHTML(item.name || "Room")}</div>
-                <div class="vnccs-i3s__hint">The room is one object. Walls, floor, and ceiling move and resize together.</div>
-                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Name</span><input class="vnccs-i3s__input" data-architecture-property="name" value="${escapeHTML(item.name || "Room")}" maxlength="80" /></label>
-                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">Floor level</span><select class="vnccs-i3s__select" data-architecture-property="level_id">
+                <div class="vnccs-i3s__hint">${t("The room is one object. Walls, floor, and ceiling move and resize together.")}</div>
+                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Name")}</span><input class="vnccs-i3s__input" data-architecture-property="name" value="${escapeHTML(item.name || "Room")}" maxlength="80" /></label>
+                <label class="vnccs-i3s__field"><span class="vnccs-i3s__label">${t("Floor level")}</span><select class="vnccs-i3s__select" data-architecture-property="level_id">
                     ${(this.scene?.levels || []).map(level => `<option value="${level.level_id}"${item.level_id === level.level_id ? " selected" : ""}>${escapeHTML(level.name)}</option>`).join("")}
                 </select></label>
-                <div class="vnccs-i3s__inspector-group"><b>Room envelope · building-local m</b>
-                    ${this._numericControl("Position X", "room_origin.0", roomBounds.center[0], { minimum: -10000, maximum: 10000, step: 0.01 })}
-                    ${this._numericControl("Position Z", "room_origin.1", roomBounds.center[1], { minimum: -10000, maximum: 10000, step: 0.01 })}
-                    ${this._numericControl("Width", "room_size.0", roomBounds.size[0], { minimum: 0.05, maximum: 10000, sliderMinimum: 0.05, sliderMaximum: Math.max(20, roomBounds.size[0]), step: 0.01 })}
-                    ${this._numericControl("Depth", "room_size.1", roomBounds.size[1], { minimum: 0.05, maximum: 10000, sliderMinimum: 0.05, sliderMaximum: Math.max(20, roomBounds.size[1]), step: 0.01 })}
-                    ${this._numericControl("Height", "ceiling.height", item.ceiling?.height, { minimum: 0.05, maximum: 1000, sliderMinimum: 0.05, sliderMaximum: 10, step: 0.01 })}
-                    ${this._numericControl("Wall thickness", "room_wall_thickness", wallThickness, { minimum: 0.01, maximum: 10, sliderMinimum: 0.01, sliderMaximum: 1, step: 0.01 })}
-                    ${this._numericControl("Floor slab", "floor.thickness", item.floor?.thickness, { minimum: 0, maximum: 10, sliderMinimum: 0, sliderMaximum: 1, step: 0.01 })}
-                    ${this._numericControl("Ceiling slab", "ceiling.thickness", item.ceiling?.thickness, { minimum: 0, maximum: 10, sliderMinimum: 0, sliderMaximum: 1, step: 0.01 })}
+                <div class="vnccs-i3s__inspector-group"><b>${t("Room envelope · building-local m")}</b>
+                    ${this._numericControl(t("Position X"), "room_origin.0", roomBounds.center[0], { minimum: -10000, maximum: 10000, step: 0.01 })}
+                    ${this._numericControl(t("Position Z"), "room_origin.1", roomBounds.center[1], { minimum: -10000, maximum: 10000, step: 0.01 })}
+                    ${this._numericControl(t("Width"), "room_size.0", roomBounds.size[0], { minimum: 0.05, maximum: 10000, sliderMinimum: 0.05, sliderMaximum: Math.max(20, roomBounds.size[0]), step: 0.01 })}
+                    ${this._numericControl(t("Depth"), "room_size.1", roomBounds.size[1], { minimum: 0.05, maximum: 10000, sliderMinimum: 0.05, sliderMaximum: Math.max(20, roomBounds.size[1]), step: 0.01 })}
+                    ${this._numericControl(t("Height"), "ceiling.height", item.ceiling?.height, { minimum: 0.05, maximum: 1000, sliderMinimum: 0.05, sliderMaximum: 10, step: 0.01 })}
+                    ${this._numericControl(t("Wall thickness"), "room_wall_thickness", wallThickness, { minimum: 0.01, maximum: 10, sliderMinimum: 0.01, sliderMaximum: 1, step: 0.01 })}
+                    ${this._numericControl(t("Floor slab"), "floor.thickness", item.floor?.thickness, { minimum: 0, maximum: 10, sliderMinimum: 0, sliderMaximum: 1, step: 0.01 })}
+                    ${this._numericControl(t("Ceiling slab"), "ceiling.thickness", item.ceiling?.thickness, { minimum: 0, maximum: 10, sliderMinimum: 0, sliderMaximum: 1, step: 0.01 })}
                 </div>
                 ${this._roomMaterialSummary(item, wallMaterial)}
-                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="visible"${item.visible !== false ? " checked" : ""} /> Room visible</label>
-                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="locked"${item.locked ? " checked" : ""} /> Lock room</label>
-                <button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-inspector-action="delete" title="Delete room (Delete/Backspace)">Delete room and perimeter walls</button>`;
+                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="visible"${item.visible !== false ? " checked" : ""} /> ${t("Room visible")}</label>
+                <label class="vnccs-i3s__inspector-check"><input type="checkbox" data-architecture-property="locked"${item.locked ? " checked" : ""} /> ${t("Lock room")}</label>
+                <button class="vnccs-i3s__button vnccs-i3s__button--danger" type="button" data-inspector-action="delete" title="${t("Delete room (Delete/Backspace)")}">${t("Delete room and perimeter walls")}</button>`;
         }
         const ownerBuilding = type === "opening"
             ? this._buildingForItem(this.scene.architecture.walls.find(wall => wall.wall_id === item.wall_id))
@@ -5694,7 +5697,7 @@ class Factory3DWidget {
                 }
                 this._recordEditorCommand("Add material", () => {
                     if (this.scene.architecture.materials.length >= 512) {
-                        this.toast("The scene material limit has been reached.", "error");
+                        this.toast(t("The scene material limit has been reached."), "error");
                         return;
                     }
                     const material = this._newArchitectureMaterial(
@@ -5719,9 +5722,9 @@ class Factory3DWidget {
                 this.history.push("Add textured material", beforeUpload, this._captureEditorSnapshot());
                 await this._commitArchitecture();
                 this._renderInspector();
-                this.toast("Texture material added.", "success");
+                this.toast(t("Texture material added."), "success");
             } catch (error) {
-                this._showError("Texture upload failed", error);
+                this._showError(t("Texture upload failed"), error);
             }
         });
         this.els.inspector.querySelector('[data-inspector-action="delete"]')?.addEventListener("click", () => {
@@ -5826,35 +5829,39 @@ class Factory3DWidget {
             element(
                 "div",
                 "vnccs-i3s__failure-summary",
-                `Delete “${building.name || "Building"}”?`,
+                t("Delete “{name}”?", { name: building.name || t("Building") }),
             ),
             element(
                 "div",
                 "vnccs-i3s__hint",
-                `${wallCount} wall${wallCount === 1 ? "" : "s"}, ${roomCount} room${roomCount === 1 ? "" : "s"}, and ${openingCount} opening${openingCount === 1 ? "" : "s"} will be removed.`,
+                t("{walls}, {rooms}, and {openings} will be removed.", {
+                    walls: wallCount === 1 ? t("{count} wall", { count: wallCount }) : t("{count} walls", { count: wallCount }),
+                    rooms: roomCount === 1 ? t("{count} room", { count: roomCount }) : t("{count} rooms", { count: roomCount }),
+                    openings: openingCount === 1 ? t("{count} opening", { count: openingCount }) : t("{count} openings", { count: openingCount }),
+                }),
             ),
             element(
                 "div",
                 "vnccs-i3s__hint",
                 onlyBuilding
-                    ? "Assigned models, cameras, paths, and lights will remain in the scene without a Building assignment. No replacement Building will be created. You can undo this action."
-                    : `Assigned models, cameras, paths, and lights will move to “${fallback?.name || "another Building"}”. You can undo this action.`,
+                    ? t("Assigned models, cameras, paths, and lights will remain in the scene without a Building assignment. No replacement Building will be created. You can undo this action.")
+                    : t("Assigned models, cameras, paths, and lights will move to “{name}”. You can undo this action.", { name: fallback?.name || t("another Building") }),
             ),
         );
-        const cancel = button("vnccs-i3s__button", "Cancel");
+        const cancel = button("vnccs-i3s__button", t("Cancel"));
         const remove = button(
             "vnccs-i3s__button vnccs-i3s__button--danger",
-            "Delete building",
+            t("Delete building"),
             "trash",
         );
         cancel.addEventListener("click", () => this.closeModal());
         remove.addEventListener("click", () => {
             this.closeModal();
             onConfirm();
-            this.toast("Building deleted.", "success");
+            this.toast(t("Building deleted."), "success");
         });
         this.openModal({
-            title: "Delete building",
+            title: t("Delete building"),
             body,
             actions: [cancel, remove],
             initialFocus: cancel,
@@ -5870,7 +5877,7 @@ class Factory3DWidget {
     _addCameraTrack() {
         if (!this.scene) return;
         if ((this.scene.camera_tracks?.length || 0) >= 16) {
-            this.toast("A scene can contain up to 16 camera paths.", "error");
+            this.toast(t("A scene can contain up to 16 camera paths."), "error");
             return;
         }
         this._recordEditorCommand("Add camera path", () => {
@@ -5917,7 +5924,7 @@ class Factory3DWidget {
             0,
         );
         if (total >= 1000) {
-            this.toast("The scene camera-point limit has been reached.", "error");
+            this.toast(t("The scene camera-point limit has been reached."), "error");
             return;
         }
         this._recordEditorCommand("Add camera point", () => {
@@ -5946,12 +5953,12 @@ class Factory3DWidget {
         }
         this.els.cameraTrackSelect.replaceChildren();
         if (!tracks.length) {
-            const option = element("option", "", "No paths");
+            const option = element("option", "", t("No paths"));
             option.value = "";
             this.els.cameraTrackSelect.appendChild(option);
         } else {
             for (const track of tracks) {
-                const option = element("option", "", track.name || "Camera path");
+                const option = element("option", "", track.name || t("Camera path"));
                 option.value = track.track_id;
                 option.selected = track.track_id === this.activeCameraTrackId;
                 this.els.cameraTrackSelect.appendChild(option);
@@ -5965,11 +5972,11 @@ class Factory3DWidget {
         this.els.cameraTrackPlay.disabled = !active || active.keyframes.length < 2;
         this.els.cameraTrackTime.max = String(active?.duration || 5);
         this.els.cameraTrackMeta.textContent = active
-            ? `${active.keyframes.length} points · ${active.duration}s · ${active.fps} fps`
-            : "No camera path";
+            ? t("{points} points · {duration}s · {fps} fps", { points: active.keyframes.length, duration: active.duration, fps: active.fps })
+            : t("No camera path");
         this.els.cameraKeyframes.replaceChildren();
         if (!active?.keyframes?.length) {
-            this.els.cameraKeyframes.appendChild(element("div", "vnccs-i3s__camera-keyframe-empty", "Add at least two points."));
+            this.els.cameraKeyframes.appendChild(element("div", "vnccs-i3s__camera-keyframe-empty", t("Add at least two points.")));
             return;
         }
         if (!active.keyframes.some(frame => frame.keyframe_id === this.selectedCameraKeyframeId)) {
@@ -5981,7 +5988,7 @@ class Factory3DWidget {
                 `vnccs-i3s__camera-keyframe${frame.keyframe_id === this.selectedCameraKeyframeId ? " is-selected" : ""}`,
             );
             row.type = "button";
-            row.innerHTML = `<span>${index + 1}</span><b>Point ${index + 1}</b><time>${Number(frame.time).toFixed(2)}s</time>`;
+            row.innerHTML = `<span>${index + 1}</span><b>${t("Point {index}", { index: index + 1 })}</b><time>${Number(frame.time).toFixed(2)}s</time>`;
             row.addEventListener("click", () => {
                 this.editorView.active_building_id = this._validBuildingId(active.building_id);
                 this.selectedCameraKeyframeId = frame.keyframe_id;
@@ -6011,7 +6018,7 @@ class Factory3DWidget {
         const pose = (evaluator || new FactoryCameraPath(track)).evaluate(time);
         this.viewer.setCameraState(legacyCameraFromPose(pose), { emit: false });
         this.els.cameraTrackTime.value = String(time);
-        this.els.cameraTrackMeta.textContent = `${Number(time).toFixed(2)}s · ${track.keyframes.length} points`;
+        this.els.cameraTrackMeta.textContent = t("{time}s · {count} points", { time: Number(time).toFixed(2), count: track.keyframes.length });
     }
 
     _toggleCameraPlayback() {
@@ -6019,7 +6026,7 @@ class Factory3DWidget {
             cancelAnimationFrame(this.cameraPlayback.frame);
             this.cameraPlayback = null;
             this.viewer.setCameraPlayback(false);
-            this.els.cameraTrackPlay.textContent = "Play";
+            this.els.cameraTrackPlay.textContent = t("Play");
             this._syncCameraPanelControls();
             return;
         }
@@ -6030,7 +6037,7 @@ class Factory3DWidget {
         if (!track.loop && startTime >= track.duration) startTime = 0;
         const started = performance.now() - startTime * 1000;
         const path = new FactoryCameraPath(track);
-        this.els.cameraTrackPlay.textContent = "Pause";
+        this.els.cameraTrackPlay.textContent = t("Pause");
         this.viewer.setCameraPlayback(true);
         this.cameraPlayback = { frame: 0, started };
         this._syncCameraPanelControls();
@@ -6160,7 +6167,7 @@ class Factory3DWidget {
         if (!this.scene) return;
         this.scene.cameras = this._normalizeSceneCameras(this.scene.cameras);
         if (this.scene.cameras.length >= 32) {
-            this.toast("A scene can contain up to 32 cameras.", "error");
+            this.toast(t("A scene can contain up to 32 cameras."), "error");
             return;
         }
         const before = this._captureEditorSnapshot();
@@ -6305,7 +6312,7 @@ class Factory3DWidget {
         this.els.cameraList.replaceChildren();
         if (!cameras.length) {
             this.els.cameraList.appendChild(
-                element("div", "vnccs-i3s__camera-empty", "No saved cameras"),
+                element("div", "vnccs-i3s__camera-empty", t("No saved cameras")),
             );
             return;
         }
@@ -6318,7 +6325,7 @@ class Factory3DWidget {
                 }${camera.camera_id === this.previewCameraId ? " is-previewing" : ""}`,
             );
             card.dataset.cameraId = camera.camera_id;
-            card.title = `${camera.name} · ${this.scene?.levels?.find(level => level.level_id === camera.level_id)?.name || "Unassigned floor"}`;
+            card.title = t("{camera} · {level}", { camera: camera.name, level: this.scene?.levels?.find(level => level.level_id === camera.level_id)?.name || t("Unassigned floor") });
             card.tabIndex = 0;
             card.setAttribute("role", "button");
             card.setAttribute("aria-pressed", String(this.selectedCameraIds.has(camera.camera_id)));
@@ -6327,15 +6334,15 @@ class Factory3DWidget {
                 <span class="vnccs-i3s__camera-item-icon">${ICONS.camera}</span>
                 <span class="vnccs-i3s__camera-item-name"></span>
                 <button class="vnccs-i3s__camera-preview" type="button"
-                    title="${camera.camera_id === this.previewCameraId ? "Exit camera view" : "Enter camera view"}"
-                    aria-label="${camera.camera_id === this.previewCameraId ? "Exit camera view" : "Enter camera view"}">${ICONS.eye}</button>
+                    title="${camera.camera_id === this.previewCameraId ? t("Exit camera view") : t("Enter camera view")}"
+                    aria-label="${camera.camera_id === this.previewCameraId ? t("Exit camera view") : t("Enter camera view")}">${ICONS.eye}</button>
                 <button class="vnccs-i3s__camera-delete" type="button"
-                    title="Delete camera" aria-label="Delete camera">${ICONS.trash}</button>
+                    title="${t("Delete camera")}" aria-label="${t("Delete camera")}">${ICONS.trash}</button>
             `;
             card.querySelector(".vnccs-i3s__camera-item-name").textContent = camera.name;
             card.querySelector(".vnccs-i3s__camera-delete").setAttribute(
                 "aria-label",
-                `Delete ${camera.name}`,
+                t("Delete {name}", { name: camera.name }),
             );
             this._listen(card, "click", event => {
                 if (event.target.closest(".vnccs-i3s__camera-delete, .vnccs-i3s__camera-preview")) return;
@@ -6455,12 +6462,12 @@ class Factory3DWidget {
         if (skydome) this.scene.skydome = skydome;
         this.els.skydomeSettings.hidden = !skydome;
         this.els.skydomeUpload.querySelector("span:last-child").textContent = skydome
-            ? "Replace"
-            : "Load";
-        this.els.skydomeName.textContent = skydome?.name || "No skydome loaded";
+            ? t("Replace")
+            : t("Load");
+        this.els.skydomeName.textContent = skydome?.name || t("No skydome loaded");
         this.els.skydomeMeta.textContent = skydome
-            ? `${Number(skydome.width || 0).toLocaleString()} × ${Number(skydome.height || 0).toLocaleString()} · ${formatBytes(skydome.size)} · equirectangular`
-            : "JPEG, PNG or WebP · equirectangular";
+            ? t("{width} × {height} · {size} · equirectangular", { width: Number(skydome.width || 0).toLocaleString(), height: Number(skydome.height || 0).toLocaleString(), size: formatBytes(skydome.size) })
+            : t("JPEG, PNG or WebP · equirectangular");
         const previewURL = skydome?.url ? apiUrl(skydome.url) : "";
         if (this.els.skydomePreview.dataset.url !== previewURL) {
             this.els.skydomePreview.dataset.url = previewURL;
@@ -6521,11 +6528,11 @@ class Factory3DWidget {
             !["image/jpeg", "image/png", "image/webp"].includes(file.type)
             || file.size > MAX_SKYDOME_BYTES
         ) {
-            this.toast("Skydome must be a JPEG, PNG or WebP image smaller than 64 MB.", "error");
+            this.toast(t("Skydome must be a JPEG, PNG or WebP image smaller than 64 MB."), "error");
             return;
         }
         this.els.skydomeUpload.disabled = true;
-        this._setStatus("Uploading skydome", "working");
+        this._setStatus(t("Uploading skydome"), "working");
         try {
             const body = new FormData();
             body.append("image", file, file.name || "skydome");
@@ -6540,10 +6547,10 @@ class Factory3DWidget {
             await this._applyScene(scene, { preserveSource: true });
             this._selectSkydome();
             this._setSkydomePanelOpen(true);
-            this.toast("Skydome loaded.", "success");
+            this.toast(t("Skydome loaded."), "success");
         } catch (error) {
-            this._setStatus("Skydome upload failed", "error");
-            this._showError("Skydome could not be loaded", error);
+            this._setStatus(t("Skydome upload failed"), "error");
+            this._showError(t("Skydome could not be loaded"), error);
         } finally {
             this.els.skydomeUpload.disabled = false;
         }
@@ -6556,24 +6563,24 @@ class Factory3DWidget {
             element(
                 "div",
                 "vnccs-i3s__failure-summary",
-                `Remove skydome “${this.scene.skydome.name || "Skydome"}” from this scene?`,
+                t("Remove skydome “{name}” from this scene?", { name: this.scene.skydome.name || t("Skydome") }),
             ),
             element(
                 "div",
                 "vnccs-i3s__hint",
-                "The source image and its scene-specific settings will be deleted. Library copies are not affected.",
+                t("The source image and its scene-specific settings will be deleted. Library copies are not affected."),
             ),
         );
-        const cancel = button("vnccs-i3s__button", "Cancel");
+        const cancel = button("vnccs-i3s__button", t("Cancel"));
         const remove = button(
             "vnccs-i3s__button vnccs-i3s__button--danger",
-            "Remove skydome",
+            t("Remove skydome"),
             "trash",
         );
         cancel.addEventListener("click", () => this.closeModal());
         remove.addEventListener("click", () => void this._deleteSkydomeNow(remove));
         this.openModal({
-            title: "Remove skydome",
+            title: t("Remove skydome"),
             body,
             actions: [cancel, remove],
             initialFocus: cancel,
@@ -6593,10 +6600,10 @@ class Factory3DWidget {
             this.selectedSkydome = false;
             await this._applyScene(scene, { preserveSource: true });
             this._setSkydomePanelOpen(true);
-            this.toast("Skydome removed.", "success");
+            this.toast(t("Skydome removed."), "success");
         } catch (error) {
             if (control?.isConnected) control.disabled = false;
-            this._showError("Skydome could not be removed", error);
+            this._showError(t("Skydome could not be removed"), error);
         } finally {
             this.els.skydomeRemove.disabled = false;
         }
@@ -6936,8 +6943,8 @@ class Factory3DWidget {
         context.fillStyle = "rgba(201, 196, 215, .48)";
         context.font = "700 8px ui-monospace, monospace";
         context.textAlign = "center";
-        context.fillText("BACK", centerX, 13);
-        context.fillText("FRONT", centerX, height - 7);
+        context.fillText(t("BACK"), centerX, 13);
+        context.fillText(t("FRONT"), centerX, height - 7);
     }
 
     _showSource({ url, name }) {
@@ -6989,11 +6996,11 @@ class Factory3DWidget {
 
     async _acceptSource(file) {
         if (!file.type.startsWith("image/")) {
-            this.toast("Choose a PNG, JPEG, or WebP image.", "error");
+            this.toast(t("Choose a PNG, JPEG, or WebP image."), "error");
             return;
         }
         if (file.size > MAX_IMAGE_BYTES) {
-            this.toast("The image is larger than 32 MB.", "error");
+            this.toast(t("The image is larger than 32 MB."), "error");
             return;
         }
         this.sourceFile = file;
@@ -7005,7 +7012,7 @@ class Factory3DWidget {
         this.settings.name = objectNameFromFileName(file.name);
         this.els.objectName.value = this.settings.name;
         this._scheduleStateSave();
-        this._setStatus("Reference ready", "idle");
+        this._setStatus(t("Reference ready"), "idle");
         try {
             if (!this.sceneId) await this.ensureScene(null, { preserveSource: true });
             const form = new FormData();
@@ -7025,11 +7032,11 @@ class Factory3DWidget {
                     name: asset.name || file.name,
                 });
                 this._scheduleStateSave(0);
-                this._setStatus("Reference saved", "success");
+                this._setStatus(t("Reference saved"), "success");
             }
         } catch (error) {
             console.error("[VNCCS 3D Factory] Reference persistence failed", error);
-            this._showError("Reference save failed", error);
+            this._showError(t("Reference save failed"), error);
         }
     }
 
@@ -7055,7 +7062,7 @@ class Factory3DWidget {
             this._syncGeneratorUI();
             return this.capabilities;
         } catch (error) {
-            this.els.weightsSummary.textContent = "Backend unavailable";
+            this.els.weightsSummary.textContent = t("Backend unavailable");
             console.error("[VNCCS 3D Factory] Capability check failed", error);
             return null;
         }
@@ -7079,7 +7086,7 @@ class Factory3DWidget {
             ? {
                 key,
                 name: "TripoSplat",
-                output_label: "Gaussian PLY",
+                output_label: t("Gaussian PLY"),
                 description: "Gaussian splat generation with adjustable density.",
                 weights: safeObject(this.capabilities?.weights),
                 runtime: { ready: true },
@@ -7094,17 +7101,17 @@ class Factory3DWidget {
         this.settings.generator = provider;
         const generator = this._generatorCapability(provider);
         const ready = Boolean(generator.weights?.ready) && generator.runtime?.ready !== false;
-        const tripoNativeCap = this.settings.prevent_upscale ? "native cap" : "";
+        const tripoNativeCap = this.settings.prevent_upscale ? t("native cap") : "";
         this.els.weightsDot.classList.toggle("is-ready", ready);
         this.els.weightsDot.classList.toggle("is-unavailable", generator.runtime?.ready === false);
         this.els.generatorName.textContent = generator.name || provider;
         const summary = generator.runtime?.ready === false
-            ? "ComfyUI update required"
+            ? t("ComfyUI update required")
             : ready
-                ? `${generator.output_label || "3D model"} · Ready`
-                : `${generator.output_label || "3D model"} · Setup required`;
+                ? t("{output} · Ready", { output: generator.output_label || t("3D model") })
+                : t("{output} · Setup required", { output: generator.output_label || t("3D model") });
         const details = generator.runtime?.ready === false
-            ? "This generator requires a newer ComfyUI version"
+            ? t("This generator requires a newer ComfyUI version")
             : ready
                 ? [
                     generator.output_label,
@@ -7112,19 +7119,19 @@ class Factory3DWidget {
                     provider === "triposplat" ? `${Number(this.settings.conditioning_resolution) || 1024}²` : "",
                     provider === "triposplat" ? tripoNativeCap : "",
                 ].filter(Boolean).join(" · ")
-                : "Required model weights are not installed";
+                : t("Required model weights are not installed");
         this.els.weightsSummary.textContent = summary;
         this.els.weightsSummary.title = details;
         this.els.generatorSelect.setAttribute(
             "aria-label",
-            `Choose 3D generator. Current: ${generator.name || provider}. ${details}`,
+            t("Choose 3D generator. Current: {name}. {details}", { name: generator.name || provider, details }),
         );
         for (const panel of this.els.generatorPanels) {
             const active = panel.dataset.generatorSettings === (provider === "triposplat" ? "triposplat" : "mesh");
             panel.hidden = !active;
         }
         const generateLabel = this.els.generate?.querySelector("span:last-child");
-        if (generateLabel) generateLabel.textContent = provider === "triposplat" ? "Generate Gaussian" : "Generate mesh";
+        if (generateLabel) generateLabel.textContent = provider === "triposplat" ? t("Generate Gaussian") : t("Generate mesh");
         this._syncMeshQuality();
         this._customSelects?.refresh?.();
     }
@@ -7136,7 +7143,7 @@ class Factory3DWidget {
             balanced: "Textured GLB · 350K face target · 2K material",
             high: "Textured GLB · 700K face target · 2K material",
         };
-        this.els.meshQualitySummary.textContent = summaries[this.settings.mesh_quality] || summaries.high;
+        this.els.meshQualitySummary.textContent = t(summaries[this.settings.mesh_quality] || summaries.high);
     }
 
     _setGenerator(provider, { save = true } = {}) {
@@ -7163,12 +7170,12 @@ class Factory3DWidget {
             const status = element(
                 "span",
                 `vnccs-i3s__generator-option-status${ready ? " is-ready" : ""}${unavailable ? " is-unavailable" : ""}`,
-                unavailable ? "Update required" : ready ? "Ready" : "Weights missing",
+                unavailable ? t("Update required") : ready ? t("Ready") : t("Weights missing"),
             );
             option.replaceChildren(
                 element("span", "vnccs-i3s__generator-option-name", generator.name || provider),
-                element("span", "vnccs-i3s__generator-option-output", generator.output_label || "3D model"),
-                element("span", "vnccs-i3s__generator-option-description", generator.description || ""),
+                element("span", "vnccs-i3s__generator-option-output", generator.output_label || t("3D model")),
+                element("span", "vnccs-i3s__generator-option-description", generator.description || t("Gaussian splat generation with adjustable density.")),
                 status,
             );
             option.addEventListener("click", () => {
@@ -7177,14 +7184,14 @@ class Factory3DWidget {
             });
             body.appendChild(option);
         }
-        const close = button("vnccs-i3s__button", "Close");
+        const close = button("vnccs-i3s__button", t("Close"));
         close.addEventListener("click", () => this.closeModal());
-        this.openModal({ title: "Choose 3D generator", body, actions: [close], wide: true });
+        this.openModal({ title: t("Choose 3D generator"), body, actions: [close], wide: true });
     }
 
     async ensureScene(snapshot = null, { preserveSource = false } = {}) {
         if (this._restoreFailed && !this._isRestoring) {
-            throw new Error("Restore the saved Factory scene before editing it.");
+            throw new Error(t("Restore the saved Factory scene before editing it."));
         }
         if (this.sceneId) {
             if (snapshot && Array.isArray(snapshot.objects)) {
@@ -7224,7 +7231,7 @@ class Factory3DWidget {
         });
         this.closeModal();
         await this._applyScene(scene, { preserveSource });
-        this.toast("New scene created.", "success");
+        this.toast(t("New scene created."), "success");
     }
 
     async loadScene(sceneId, { preserveSource = false } = {}) {
@@ -7340,7 +7347,7 @@ class Factory3DWidget {
         this._updateSceneSummary();
         this.viewportFailures.clear();
         this._renderObjects();
-        this._setStatus(incremental ? "Updating scene" : "Loading viewport", "working");
+        this._setStatus(incremental ? t("Updating scene") : t("Loading viewport"), "working");
         this._suppressViewerStatePersistence = true;
         let viewportResult;
         try {
@@ -7483,9 +7490,9 @@ class Factory3DWidget {
                 loaded,
                 failures: failureDetails,
             });
-            this._setStatus(loaded ? "Scene partially loaded" : "Viewport failed", "error");
+            this._setStatus(loaded ? t("Scene partially loaded") : t("Viewport failed"), "error");
         } else {
-            this._setStatus("Scene ready", "success");
+            this._setStatus(t("Scene ready"), "success");
         }
     }
 
@@ -7626,11 +7633,11 @@ class Factory3DWidget {
             "aria-checked",
             String(settings.show_camera_frame),
         );
-        this.els.sceneRenderSummary.textContent = (
-            `${settings.width} × ${settings.height} px`
-            + ` · ${settings.aspect === "custom" ? "Custom ratio" : settings.aspect}`
-            + " · Camera follows the current 3D view"
-        );
+        this.els.sceneRenderSummary.textContent = t("{width} × {height} px · {aspect} · Camera follows the current 3D view", {
+            width: settings.width,
+            height: settings.height,
+            aspect: settings.aspect === "custom" ? t("Custom ratio") : settings.aspect,
+        });
         this.viewer?.setCaptureSettings(settings);
         this._syncPanoramaExportControls();
         this._customSelects?.refresh?.();
@@ -7651,13 +7658,13 @@ class Factory3DWidget {
                     ? cameras.map(camera => {
                         const option = document.createElement("option");
                         option.value = camera.camera_id;
-                        option.textContent = camera.name || "Camera";
+                        option.textContent = camera.name || t("Camera");
                         return option;
                     })
                     : [(() => {
                         const option = document.createElement("option");
                         option.value = "";
-                        option.textContent = "No saved cameras";
+                        option.textContent = t("No saved cameras");
                         return option;
                     })()]
             ));
@@ -7676,10 +7683,10 @@ class Factory3DWidget {
         this.els.sceneExport.disabled = this.exportingPanorama;
         this.els.panoramaExport.setAttribute("aria-busy", String(this.exportingPanorama));
         const label = this.els.panoramaExport.querySelector("span:last-child");
-        if (label) label.textContent = this.exportingPanorama ? "Rendering panorama…" : "Export 360° PNG";
+        if (label) label.textContent = this.exportingPanorama ? t("Rendering panorama…") : t("Export 360° PNG");
         this.els.panoramaSummary.textContent = camera
-            ? `${camera.name || "Camera"} · ${this.panoramaWidth} × ${this.panoramaWidth / 2} px · 2:1 equirectangular`
-            : "Add a saved camera before exporting.";
+            ? t("{camera} · {width} × {height} px · 2:1 equirectangular", { camera: camera.name || t("Camera"), width: this.panoramaWidth, height: this.panoramaWidth / 2 })
+            : t("Add a saved camera before exporting.");
         this._customSelects?.refresh?.();
     }
 
@@ -7711,26 +7718,26 @@ class Factory3DWidget {
         const primitiveCount = objects.filter(item => item.asset_kind === "primitive").length;
         const gaussianCount = objects.length - meshCount - primitiveCount;
         const gaussianSummary = objects.length
-            ? `${visibleIds.size}/${objects.length} models visible`
-                + `${gaussianCount ? ` · ${objects.reduce(
+            ? t("{visible}/{total} models visible", { visible: visibleIds.size, total: objects.length })
+                + `${gaussianCount ? " · " + t("{count} Gaussians", { count: objects.reduce(
                 (sum, item) => sum + (visibleIds.has(item.object_id) ? Number(item.gaussians) || 0 : 0),
                 0,
-                ).toLocaleString()} Gaussians` : ""}`
-                + `${meshCount ? ` · ${meshCount} mesh${meshCount === 1 ? "" : "es"}` : ""}`
-                + `${primitiveCount ? ` · ${primitiveCount} surface${primitiveCount === 1 ? "" : "s"}` : ""}`
-            : "No 3D models";
+                ).toLocaleString() }) : ""}`
+                + `${meshCount ? " · " + (meshCount === 1 ? t("{count} mesh", { count: meshCount }) : t("{count} meshes", { count: meshCount })) : ""}`
+                + `${primitiveCount ? " · " + (primitiveCount === 1 ? t("{count} surface", { count: primitiveCount }) : t("{count} surfaces", { count: primitiveCount })) : ""}`
+            : t("No 3D models");
         const contentSummary = skydome
-            ? `${gaussianSummary} · Skydome ${skydome.visible === false ? "hidden" : "visible"}`
+            ? gaussianSummary + " · " + t("Skydome {state}", { state: skydome.visible === false ? t("hidden") : t("visible") })
             : objects.length
                 ? gaussianSummary
-                : "No objects in this scene.";
+                : t("No objects in this scene.");
         const architectureSummary = wallCount || roomCount
-            ? `${contentSummary} · ${wallCount} standalone walls · ${roomCount} rooms`
+            ? contentSummary + " · " + t("{walls} standalone walls · {rooms} rooms", { walls: wallCount, rooms: roomCount })
             : contentSummary;
         this.els.sceneSummary.textContent = [
             architectureSummary,
-            cameraCount ? `${cameraCount} camera${cameraCount === 1 ? "" : "s"}` : "",
-            lightCount ? `${lightCount} light${lightCount === 1 ? "" : "s"}` : "",
+            cameraCount ? (cameraCount === 1 ? t("{count} camera", { count: cameraCount }) : t("{count} cameras", { count: cameraCount })) : "",
+            lightCount ? (lightCount === 1 ? t("{count} light", { count: lightCount }) : t("{count} lights", { count: lightCount })) : "",
         ].filter(Boolean).join(" · ");
     }
 
@@ -7861,14 +7868,14 @@ class Factory3DWidget {
             + (this.selectedLightId ? 1 : 0);
         this.els.groupSelected.disabled = modelCount < 2 || count !== modelCount;
         this.els.selectionCount.textContent = count
-            ? `${count} selected`
+            ? t("{count} selected", { count })
             : this.selectedSkydome
-                ? "Skydome selected"
+                ? t("Skydome selected")
             : this.selectedGroupId
-                ? "Group selected"
+                ? t("Group selected")
                 : this.selectedLightId
-                    ? "Light selected"
-                    : "Shift-click to select multiple";
+                    ? t("Light selected")
+                    : t("Shift-click to select multiple");
     }
 
     _syncSelectionPresentation() {
@@ -7936,7 +7943,7 @@ class Factory3DWidget {
         for (const camera of cameras) {
             const levelName = this.scene?.levels?.find(
                 level => level.level_id === camera.level_id,
-            )?.name || "Unassigned floor";
+            )?.name || t("Unassigned floor");
             const buildingName = this.scene?.architecture?.buildings?.find(
                 building => building.building_id === camera.building_id,
             )?.name || "";
@@ -7956,7 +7963,7 @@ class Factory3DWidget {
             rendered += 1;
         }
         if (!objects.size && !cameras.length && !lights.length && !skydome && !rendered) {
-            fragment.appendChild(element("div", "vnccs-i3s__tree-empty", query ? "No matching objects." : "Generated objects will appear here."));
+            fragment.appendChild(element("div", "vnccs-i3s__tree-empty", query ? t("No matching objects.") : t("Generated objects will appear here.")));
             this.els.objectList.appendChild(fragment);
             return;
         }
@@ -7987,14 +7994,14 @@ class Factory3DWidget {
                 childList.appendChild(this._createObjectCard(item, layer.group_id));
             }
             if (!children.length) {
-                childList.appendChild(element("div", "vnccs-i3s__group-empty", "Drop objects here"));
+                childList.appendChild(element("div", "vnccs-i3s__group-empty", t("Drop objects here")));
             }
             wrapper.append(groupCard, childList);
             fragment.appendChild(wrapper);
             rendered += 1;
         }
         if (!rendered) {
-            fragment.appendChild(element("div", "vnccs-i3s__tree-empty", "No matching objects."));
+            fragment.appendChild(element("div", "vnccs-i3s__tree-empty", t("No matching objects.")));
         }
         this.els.objectList.appendChild(fragment);
         this.els.objectList.scrollTop = previousScrollTop;
@@ -8045,27 +8052,27 @@ class Factory3DWidget {
                 type: "room",
                 id: item.room_id,
                 name: item.name || "Room",
-                meta: `Complete room · walls, floor and ceiling${item.locked ? " · Locked" : ""}${item.visible === false ? " · Hidden" : ""}`,
+                meta: t("Complete room · walls, floor and ceiling") + (item.locked ? " · " + t("Locked") : "") + (item.visible === false ? " · " + t("Hidden") : ""),
             })),
             ...rootStandaloneWalls.map(item => ({
                 type: "wall",
                 id: item.wall_id,
                 name: item.name || "Wall",
-                meta: `${Math.hypot(item.end[0] - item.start[0], item.end[1] - item.start[1]).toFixed(2)} m${item.locked ? " · Locked" : ""}${item.visible === false ? " · Hidden" : ""}`,
+                meta: t("{length} m", { length: Math.hypot(item.end[0] - item.start[0], item.end[1] - item.start[1]).toFixed(2) }) + (item.locked ? " · " + t("Locked") : "") + (item.visible === false ? " · " + t("Hidden") : ""),
             })),
             ...rootWalls.flatMap(wall => openingsByWall.get(wall.wall_id) || []).map(item => ({
                 type: "opening",
                 id: item.opening_id,
                 name: item.name || "Opening",
-                meta: `${item.kind} · ${Number(item.width).toFixed(2)} m${item.locked ? " · Locked" : ""}${item.visible === false ? " · Hidden" : ""}`,
+                meta: t(item.kind) + " · " + t("{length} m", { length: Number(item.width).toFixed(2) }) + (item.locked ? " · " + t("Locked") : "") + (item.visible === false ? " · " + t("Hidden") : ""),
             })),
         ].filter(item => !query || `${item.name} ${item.type} ${item.meta}`.toLowerCase().includes(query));
         if (rootEntries.length) {
             const wrapper = element("section", "vnccs-i3s__architecture-group");
             const heading = element("div", "vnccs-i3s__architecture-row is-building is-root");
             heading.innerHTML = `<span class="vnccs-i3s__architecture-kind">A</span><span class="vnccs-i3s__architecture-copy"><b></b><small></small></span>`;
-            heading.querySelector("b").textContent = "Architecture";
-            heading.querySelector("small").textContent = `${rootRooms.length} rooms · ${rootStandaloneWalls.length} standalone walls`;
+            heading.querySelector("b").textContent = t("Architecture");
+            heading.querySelector("small").textContent = t("{rooms} rooms · {walls} standalone walls", { rooms: rootRooms.length, walls: rootStandaloneWalls.length });
             const children = element("div", "vnccs-i3s__architecture-children");
             for (const entry of rootEntries) {
                 children.appendChild(createRow(entry.type, entry.id, entry.name, entry.meta));
@@ -8096,9 +8103,9 @@ class Factory3DWidget {
                 item => item.building_id === building.building_id,
             ).length;
             const entries = [
-                ...rooms.map(item => ({ type: "room", id: item.room_id, name: item.name || "Room", meta: `Complete room · walls, floor and ceiling${item.locked ? " · Locked" : ""}${item.visible === false ? " · Hidden" : ""}` })),
-                ...standaloneWalls.map(item => ({ type: "wall", id: item.wall_id, name: item.name || "Wall", meta: `${Math.hypot(item.end[0] - item.start[0], item.end[1] - item.start[1]).toFixed(2)} m${item.locked ? " · Locked" : ""}${item.visible === false ? " · Hidden" : ""}` })),
-                ...openings.map(item => ({ type: "opening", id: item.opening_id, name: item.name || "Opening", meta: `${item.kind} · ${Number(item.width).toFixed(2)} m${item.locked ? " · Locked" : ""}${item.visible === false ? " · Hidden" : ""}` })),
+                ...rooms.map(item => ({ type: "room", id: item.room_id, name: item.name || "Room", meta: t("Complete room · walls, floor and ceiling") + (item.locked ? " · " + t("Locked") : "") + (item.visible === false ? " · " + t("Hidden") : "") })),
+                ...standaloneWalls.map(item => ({ type: "wall", id: item.wall_id, name: item.name || "Wall", meta: t("{length} m", { length: Math.hypot(item.end[0] - item.start[0], item.end[1] - item.start[1]).toFixed(2) }) + (item.locked ? " · " + t("Locked") : "") + (item.visible === false ? " · " + t("Hidden") : "") })),
+                ...openings.map(item => ({ type: "opening", id: item.opening_id, name: item.name || "Opening", meta: t(item.kind) + " · " + t("{length} m", { length: Number(item.width).toFixed(2) }) + (item.locked ? " · " + t("Locked") : "") + (item.visible === false ? " · " + t("Hidden") : "") })),
             ].filter(item => !query || `${item.name} ${item.type} ${item.meta}`.toLowerCase().includes(query));
             if (query && !building.name.toLowerCase().includes(query) && !entries.length) continue;
             const wrapper = element("section", "vnccs-i3s__architecture-group");
@@ -8106,7 +8113,7 @@ class Factory3DWidget {
                 "building",
                 building.building_id,
                 building.name || "Building",
-                `${standaloneWalls.length} standalone walls · ${rooms.length} rooms · ${assignedObjects} objects · ${assignedCameras} cameras · ${assignedPaths} paths · ${assignedLights} lights${building.locked ? " · Locked" : ""}${building.visible === false ? " · Hidden" : ""}`,
+                t("{walls} standalone walls · {rooms} rooms · {objects} objects · {cameras} cameras · {paths} paths · {lights} lights", { walls: standaloneWalls.length, rooms: rooms.length, objects: assignedObjects, cameras: assignedCameras, paths: assignedPaths, lights: assignedLights }) + (building.locked ? " · " + t("Locked") : "") + (building.visible === false ? " · " + t("Hidden") : ""),
             );
             heading.classList.add("is-building");
             const children = element("div", "vnccs-i3s__architecture-children");
@@ -8114,7 +8121,7 @@ class Factory3DWidget {
                 children.appendChild(createRow(entry.type, entry.id, entry.name, entry.meta));
             }
             if (!entries.length && !query) {
-                children.appendChild(element("div", "vnccs-i3s__group-empty", "Draw walls or a room in Plan view"));
+                children.appendChild(element("div", "vnccs-i3s__group-empty", t("Draw walls or a room in Plan view")));
             }
             wrapper.append(heading, children);
             output.push(wrapper);
@@ -8136,7 +8143,7 @@ class Factory3DWidget {
         thumbnail.innerHTML = ICONS.camera;
         const levelName = this.scene?.levels?.find(
             level => level.level_id === camera.level_id,
-        )?.name || "Unassigned floor";
+        )?.name || t("Unassigned floor");
         const buildingName = this.scene?.architecture?.buildings?.find(
             building => building.building_id === camera.building_id,
         )?.name || "";
@@ -8146,7 +8153,7 @@ class Factory3DWidget {
             element(
                 "div",
                 "vnccs-i3s__object-meta",
-                `Saved camera · ${levelName}${buildingName ? ` · ${buildingName}` : ""}`,
+                t("Saved camera · {level}", { level: levelName }) + (buildingName ? ` · ${buildingName}` : ""),
             ),
         );
         const actions = element("div", "vnccs-i3s__object-actions");
@@ -8156,8 +8163,8 @@ class Factory3DWidget {
             "eye",
         );
         preview.title = camera.camera_id === this.previewCameraId
-            ? "Exit camera view"
-            : "Enter camera view";
+            ? t("Exit camera view")
+            : t("Enter camera view");
         preview.setAttribute("aria-label", preview.title);
         preview.addEventListener("click", event => {
             event.stopPropagation();
@@ -8170,7 +8177,7 @@ class Factory3DWidget {
             "",
             "trash",
         );
-        remove.title = "Delete camera";
+        remove.title = t("Delete camera");
         remove.setAttribute("aria-label", remove.title);
         remove.addEventListener("click", event => {
             event.stopPropagation();
@@ -8210,8 +8217,8 @@ class Factory3DWidget {
             element(
                 "div",
                 "vnccs-i3s__object-meta",
-                `${{ point: "Point", spot: "Spot", directional: "Directional" }[light.kind] || "Point"} light · ${Number(light.intensity).toFixed(2)} strength`
-                    + `${light.visible === false ? " · Hidden" : ""}`,
+                t("{kind} light · {strength} strength", { kind: t({ point: "Point", spot: "Spot", directional: "Directional" }[light.kind] || "Point"), strength: Number(light.intensity).toFixed(2) })
+                    + (light.visible === false ? " · " + t("Hidden") : ""),
             ),
         );
         const shadowStatus = element("span", "", localLightStatusLabel(
@@ -8226,7 +8233,7 @@ class Factory3DWidget {
             "",
             light.visible === false ? "eyeOff" : "eye",
         );
-        visibility.title = light.visible === false ? "Show light" : "Hide light";
+        visibility.title = light.visible === false ? t("Show light") : t("Hide light");
         visibility.addEventListener("click", event => {
             event.stopPropagation();
             const before = this._captureEditorSnapshot();
@@ -8242,7 +8249,7 @@ class Factory3DWidget {
             "",
             "duplicate",
         );
-        duplicate.title = "Duplicate light";
+        duplicate.title = t("Duplicate light");
         duplicate.addEventListener("click", event => {
             event.stopPropagation();
             this._duplicateLight(light.light_id);
@@ -8252,7 +8259,7 @@ class Factory3DWidget {
             "",
             "trash",
         );
-        remove.title = "Delete light";
+        remove.title = t("Delete light");
         remove.addEventListener("click", event => {
             event.stopPropagation();
             this._deleteLight(light.light_id);
@@ -8294,7 +8301,7 @@ class Factory3DWidget {
         thumbnail.height = 36;
         const copy = element("div", "vnccs-i3s__object-copy");
         const name = element("div", "vnccs-i3s__object-name", skydome.name || "Skydome");
-        name.title = "Double-click to rename";
+        name.title = t("Double-click to rename");
         name.tabIndex = 0;
         name.setAttribute("role", "button");
         const beginRename = event => {
@@ -8321,7 +8328,7 @@ class Factory3DWidget {
             element(
                 "div",
                 "vnccs-i3s__object-meta",
-                `Skydome · ${Number(skydome.width || 0).toLocaleString()} × ${Number(skydome.height || 0).toLocaleString()}`,
+                t("Skydome · {width} × {height}", { width: Number(skydome.width || 0).toLocaleString(), height: Number(skydome.height || 0).toLocaleString() }),
             ),
         );
         const actions = element("div", "vnccs-i3s__object-actions");
@@ -8330,7 +8337,7 @@ class Factory3DWidget {
             "",
             skydome.visible === false ? "eyeOff" : "eye",
         );
-        visibility.title = skydome.visible === false ? "Show skydome" : "Hide skydome";
+        visibility.title = skydome.visible === false ? t("Show skydome") : t("Hide skydome");
         visibility.addEventListener("click", event => {
             event.stopPropagation();
             const before = this._captureEditorSnapshot();
@@ -8347,7 +8354,7 @@ class Factory3DWidget {
             "",
             "library",
         );
-        save.title = "Save skydome to library";
+        save.title = t("Save skydome to library");
         save.addEventListener("click", event => {
             event.stopPropagation();
             this.openSaveLibraryModal("skydome", "");
@@ -8357,7 +8364,7 @@ class Factory3DWidget {
             "",
             "trash",
         );
-        remove.title = "Remove skydome";
+        remove.title = t("Remove skydome");
         remove.addEventListener("click", event => {
             event.stopPropagation();
             void this.removeSkydome();
@@ -8398,7 +8405,7 @@ class Factory3DWidget {
         card.draggable = true;
         card.dataset.objectId = item.object_id;
         card.dataset.groupId = groupId;
-        if (viewportFailure) card.title = `Viewport failed: ${viewportFailure}`;
+        if (viewportFailure) card.title = t("Viewport failed: {reason}", { reason: viewportFailure });
         const thumbnail = element("img", "vnccs-i3s__object-thumb");
         thumbnail.src = apiUrl(item.urls.thumbnail);
         thumbnail.alt = "";
@@ -8408,10 +8415,10 @@ class Factory3DWidget {
         thumbnail.height = 36;
         const copy = element("div", "vnccs-i3s__object-copy");
         const name = element("div", "vnccs-i3s__object-name", item.name);
-        name.title = "Double-click to rename";
+        name.title = t("Double-click to rename");
         name.tabIndex = 0;
         name.setAttribute("role", "button");
-        name.setAttribute("aria-label", `Rename ${item.name}`);
+        name.setAttribute("aria-label", t("Rename {name}", { name: item.name }));
         const beginRename = event => {
             event.stopPropagation();
             this._beginInlineRename(name, item.name, next => {
@@ -8449,19 +8456,19 @@ class Factory3DWidget {
                 "div",
                 "vnccs-i3s__object-meta",
                 [
-                    viewportFailure ? "Viewport failed" : "",
+                    viewportFailure ? t("Viewport failed") : "",
                     primitiveObject
-                        ? `${item.primitive?.kind === "image" ? "Image plane" : item.primitive?.kind === "terrain" ? "Terrain" : "Plane"}`
+                        ? (item.primitive?.kind === "image" ? t("Image plane") : item.primitive?.kind === "terrain" ? t("Terrain") : t("Plane"))
                         : importedModel
-                        ? `${String(item.source?.format || "3D").toUpperCase()} model`
-                        : `${Number(item.gaussians || 0).toLocaleString()} splats`,
-                    item.emission?.enabled ? "Emissive" : "",
-                    importedPly ? "Imported PLY" : "",
+                        ? t("{format} model", { format: String(item.source?.format || "3D").toUpperCase() })
+                        : t("{count} splats", { count: Number(item.gaussians || 0).toLocaleString() }),
+                    item.emission?.enabled ? t("Emissive") : "",
+                    importedPly ? t("Imported PLY") : "",
                     buildingName,
                     levelName,
-                    item.locked ? "Locked" : "",
-                    conditioning ? `${conditioning}² input` : "",
-                    !importedPly && item.seed !== undefined ? `seed ${item.seed}` : "",
+                    item.locked ? t("Locked") : "",
+                    conditioning ? t("{count}² input", { count: conditioning }) : "",
+                    !importedPly && item.seed !== undefined ? t("seed {seed}", { seed: item.seed }) : "",
                 ].filter(Boolean).join(" · "),
             ),
         );
@@ -8471,7 +8478,7 @@ class Factory3DWidget {
             "",
             item.visible === false ? "eyeOff" : "eye",
         );
-        visibility.title = item.visible === false ? "Show object" : "Hide object";
+        visibility.title = item.visible === false ? t("Show object") : t("Hide object");
         visibility.addEventListener("click", event => {
             event.stopPropagation();
             const before = this._captureEditorSnapshot();
@@ -8489,7 +8496,7 @@ class Factory3DWidget {
             "",
             "download",
         );
-        exportObject.title = importedModel ? "Download source model" : "Export transformed PLY";
+        exportObject.title = importedModel ? t("Download source model") : t("Export transformed PLY");
         exportObject.addEventListener("click", event => {
             event.stopPropagation();
             if (importedModel) download(item.urls.model);
@@ -8500,13 +8507,13 @@ class Factory3DWidget {
             "",
             "library",
         );
-        saveModel.title = "Save model to library";
+        saveModel.title = t("Save model to library");
         saveModel.addEventListener("click", event => {
             event.stopPropagation();
             this.openSaveLibraryModal("object", item.object_id);
         });
         const duplicate = button("vnccs-i3s__button vnccs-i3s__button--quiet vnccs-i3s__icon-button", "", "duplicate");
-        duplicate.title = "Duplicate object";
+        duplicate.title = t("Duplicate object");
         duplicate.addEventListener("click", event => {
             event.stopPropagation();
             void this.duplicateObject(item.object_id, duplicate);
@@ -8516,7 +8523,7 @@ class Factory3DWidget {
             "",
             "trash",
         );
-        remove.title = "Remove object";
+        remove.title = t("Remove object");
         remove.addEventListener("click", event => {
             event.stopPropagation();
             this.confirmDeleteObject(item.object_id);
@@ -8560,7 +8567,7 @@ class Factory3DWidget {
         card.dataset.groupId = group.group_id;
         const chevron = button("vnccs-i3s__group-toggle", "", "chevron");
         const collapsed = this.collapsedGroupIds.has(group.group_id);
-        chevron.title = collapsed ? "Expand group" : "Collapse group";
+        chevron.title = collapsed ? t("Expand group") : t("Collapse group");
         chevron.setAttribute("aria-expanded", String(!collapsed));
         chevron.addEventListener("click", event => {
             event.stopPropagation();
@@ -8573,10 +8580,10 @@ class Factory3DWidget {
         folder.innerHTML = ICONS.folder;
         const copy = element("div", "vnccs-i3s__object-copy");
         const name = element("div", "vnccs-i3s__object-name", group.name);
-        name.title = "Double-click to rename";
+        name.title = t("Double-click to rename");
         name.tabIndex = 0;
         name.setAttribute("role", "button");
-        name.setAttribute("aria-label", `Rename ${group.name}`);
+        name.setAttribute("aria-label", t("Rename {name}", { name: group.name }));
         const beginRename = event => {
             event.stopPropagation();
             this._beginInlineRename(name, group.name, next => {
@@ -8600,7 +8607,7 @@ class Factory3DWidget {
             element(
                 "div",
                 "vnccs-i3s__object-meta",
-                `${group.children.length} object${group.children.length === 1 ? "" : "s"}`,
+                group.children.length === 1 ? t("{count} object", { count: group.children.length }) : t("{count} objects", { count: group.children.length }),
             ),
         );
         const actions = element("div", "vnccs-i3s__object-actions");
@@ -8609,7 +8616,7 @@ class Factory3DWidget {
             "",
             group.visible === false ? "eyeOff" : "eye",
         );
-        visibility.title = group.visible === false ? "Show group" : "Hide group";
+        visibility.title = group.visible === false ? t("Show group") : t("Hide group");
         visibility.addEventListener("click", event => {
             event.stopPropagation();
             const before = this._captureEditorSnapshot();
@@ -8633,7 +8640,7 @@ class Factory3DWidget {
             "",
             "ungroup",
         );
-        ungroup.title = "Ungroup objects";
+        ungroup.title = t("Ungroup objects");
         ungroup.addEventListener("click", event => {
             event.stopPropagation();
             this.ungroupObjects(group.group_id);
@@ -8861,7 +8868,7 @@ class Factory3DWidget {
                 .map(item => this._validBuildingId(item.building_id)),
         );
         if (selectedBuildings.size > 1) {
-            this.toast("Assign selected objects to one building before grouping them.", "info");
+            this.toast(t("Assign selected objects to one building before grouping them."), "info");
             return;
         }
         const before = this._captureEditorSnapshot();
@@ -9058,7 +9065,7 @@ class Factory3DWidget {
         const requestedScene = this.scene;
         await this._historyRestoreSerial;
         if (this._isRestoring || this._restoreFailed) {
-            throw new Error("Restore the saved Factory scene before saving it.");
+            throw new Error(t("Restore the saved Factory scene before saving it."));
         }
         if (this.scene !== requestedScene) return null;
         this._activeNumericGesture?.commit();
@@ -9101,7 +9108,7 @@ class Factory3DWidget {
         try {
             return await operation;
         } catch (error) {
-            if (showError) this._showError("Scene save failed", error);
+            if (showError) this._showError(t("Scene save failed"), error);
             throw error;
         }
     }
@@ -9231,7 +9238,7 @@ class Factory3DWidget {
                 ...dimensions,
                 cameraState: savedScene.camera,
             });
-            if (!current) throw new Error("The current 3D view could not be captured.");
+            if (!current) throw new Error(t("The current 3D view could not be captured."));
             const form = new FormData();
             form.append("current", current, "current.png");
             form.append(
@@ -9246,7 +9253,7 @@ class Factory3DWidget {
                     ...dimensions,
                     cameraState: camera,
                 });
-                if (!blob) throw new Error(`${camera.name} could not be captured.`);
+                if (!blob) throw new Error(t("{name} could not be captured.", { name: camera.name }));
                 form.append(`camera_${camera.camera_id}`, blob, `${camera.camera_id}.png`);
             }
             form.append("revision", String(savedScene.revision));
@@ -9274,33 +9281,33 @@ class Factory3DWidget {
             this._conditioningJobURL = url;
             this.els.conditioningCancel.hidden = false;
             this.els.conditioningCancel.disabled = false;
-            this.els.conditioningStatus.textContent = "Checking saved scene and capture settings…";
+            this.els.conditioningStatus.textContent = t("Checking saved scene and capture settings…");
             try {
                 await this._restoreSerial;
                 await this._sceneSaveSerial;
-                if (this.destroyed || this.sceneId !== sceneId) throw new Error("Open the requested scene in 3D Factory and execute again.");
-                if (this.viewer.viewMode !== "3d") throw new Error("Switch 3D Factory to the 3D view before conditioning capture.");
-                if (this._activeNumericGesture?.pending) throw new Error("Finish the active edit before conditioning capture.");
+                if (this.destroyed || this.sceneId !== sceneId) throw new Error(t("Open the requested scene in 3D Factory and execute again."));
+                if (this.viewer.viewMode !== "3d") throw new Error(t("Switch 3D Factory to the 3D view before conditioning capture."));
+                if (this._activeNumericGesture?.pending) throw new Error(t("Finish the active edit before conditioning capture."));
                 const baseline = JSON.stringify(this._scenePayload());
                 const epoch = this._conditioningEditEpoch || 0;
                 const check = () => {
-                    if (this._conditioningCancelled) throw new Error("Capture cancelled by the user.");
+                    if (this._conditioningCancelled) throw new Error(t("Capture cancelled by the user."));
                     if (this.destroyed || this.sceneId !== sceneId || (this._conditioningEditEpoch || 0) !== epoch
                         || JSON.stringify(this._scenePayload()) !== baseline) {
-                        throw new Error("Scene changed during conditioning capture; execute again.");
+                        throw new Error(t("Scene changed during conditioning capture; execute again."));
                     }
                 };
                 await this._saveSceneNow({ showError: false });
                 check();
                 const job = await this._fetchJSON(url);
                 check();
-                this.toast(`Capturing ${job.shots.length} conditioning view(s)…`, "info");
+                this.toast(t("Capturing {count} conditioning view(s)…", { count: job.shots.length }), "info");
                 for (const [index, shot] of job.shots.entries()) {
                     check();
-                    this.els.conditioningStatus.textContent = `Rendering view ${index + 1} of ${job.shots.length}: ${shot.camera.name || "Current view"}…`;
+                    this.els.conditioningStatus.textContent = t("Rendering view {index} of {total}: {camera}…", { index: index + 1, total: job.shots.length, camera: shot.camera.name || t("Current view") });
                     const result = await this.viewer.captureConditioningShot(job, shot);
                     check();
-                    this.els.conditioningStatus.textContent = `Saving view ${index + 1} of ${job.shots.length}…`;
+                    this.els.conditioningStatus.textContent = t("Saving view {index} of {total}…", { index: index + 1, total: job.shots.length });
                     const form = new FormData();
                     for (const [name, blob] of Object.entries(result.parts)) form.append(name, blob, `${name}.png`);
                     form.append("metadata", JSON.stringify(result.metadata));
@@ -9308,15 +9315,15 @@ class Factory3DWidget {
                 }
                 check();
                 this.els.conditioningCancel.disabled = true;
-                this.els.conditioningStatus.textContent = "Validating and publishing the complete capture…";
+                this.els.conditioningStatus.textContent = t("Validating and publishing the complete capture…");
                 await this._fetchJSON(`${url}/publish`, { method: "POST" });
-                this.els.conditioningStatus.textContent = `${job.shots.length} view(s) saved at ${job.settings.width} × ${job.settings.height}. Geometry profile: ${job.settings.profile}.`;
-                this.toast("Conditioning capture saved.", "success");
+                this.els.conditioningStatus.textContent = t("{count} view(s) saved at {width} × {height}. Geometry profile: {profile}.", { count: job.shots.length, width: job.settings.width, height: job.settings.height, profile: job.settings.profile });
+                this.toast(t("Conditioning capture saved."), "success");
             } catch (error) {
-                this.els.conditioningStatus.textContent = errorText(error, "Conditioning capture failed");
-                this._showError("Conditioning capture failed", error);
+                this.els.conditioningStatus.textContent = errorText(error, t("Conditioning capture failed"));
+                this._showError(t("Conditioning capture failed"), error);
                 await this._fetchJSON(`${url}/error`, { method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ error: errorText(error, "Conditioning capture failed") }) }).catch(() => {});
+                    body: JSON.stringify({ error: errorText(error, t("Conditioning capture failed")) }) }).catch(() => {});
             } finally {
                 this._conditioningJobURL = null;
                 this.els.conditioningCancel.hidden = true;
@@ -9347,13 +9354,13 @@ class Factory3DWidget {
         const captureToken = String(detail.capture_token || "");
         try {
             if (!/^[a-f0-9]{32}$/.test(sceneId) || !/^[a-f0-9]{32}$/.test(captureToken)) {
-                throw new Error("Execution preview request has invalid identifiers.");
+                throw new Error(t("Execution preview request has invalid identifiers."));
             }
             await this._restoreSerial;
-            if (this.destroyed) throw new Error("3D Factory widget was disposed before capture.");
+            if (this.destroyed) throw new Error(t("3D Factory widget was disposed before capture."));
             if (this.sceneId !== sceneId) {
                 throw new Error(
-                    `The widget has scene ${this.sceneId || "none"} open; execution requested ${sceneId}.`,
+                    t("The widget has scene {current} open; execution requested {requested}.", { current: this.sceneId || "none", requested: sceneId }),
                 );
             }
             console.info("[VNCCS 3D Factory][viewport] Execution preview requested", {
@@ -9376,7 +9383,7 @@ class Factory3DWidget {
                 this.scene.render_revision = Math.max(0, Number(detail.render_revision));
             }
             const captureSet = await this._saveExecutionCaptureSet(captureToken, detail);
-            if (!captureSet) throw new Error("The 3D viewport returned no execution captures.");
+            if (!captureSet) throw new Error(t("The 3D viewport returned no execution captures."));
             console.info("[VNCCS 3D Factory][viewport] Execution preview completed", {
                 sceneId,
                 captureToken,
@@ -9398,7 +9405,7 @@ class Factory3DWidget {
     async generate() {
         if (this.currentJobId) return;
         if (!this.sourceFile && !this.sourceAsset) {
-            this.toast("Choose a reference image first.", "error");
+            this.toast(t("Choose a reference image first."), "error");
             return;
         }
         const capabilities = this.capabilities || await this.loadCapabilities();
@@ -9445,7 +9452,7 @@ class Factory3DWidget {
             const job = await this._fetchJSON(ENDPOINTS.generate(this.sceneId), { method: "POST", body: form });
             await this._monitorJob(job.job_id);
         } catch (error) {
-            if (!error?.factoryErrorShown) this._showError("Generation failed", error);
+            if (!error?.factoryErrorShown) this._showError(t("Generation failed"), error);
         }
     }
 
@@ -9460,7 +9467,7 @@ class Factory3DWidget {
             const upgraded = await this._fetchJSON(ENDPOINTS.upgradeScene(sceneId), { method: "POST" });
             if (this.scene !== owner) return false;
             await this._applyScene(upgraded, { preserveSource: false });
-            this.toast("Editable geometry enabled in a new scene copy. The original remains in Scenes.", "success");
+            this.toast(t("Editable geometry enabled in a new scene copy. The original remains in Scenes."), "success");
             return true;
         })();
         try { return await this._sceneUpgradePromise; }
@@ -9469,14 +9476,14 @@ class Factory3DWidget {
 
     _openPrimitivePicker() {
         const body = element("div", "vnccs-i3s__primitive-picker");
-        body.append(element("p", "vnccs-i3s__hint", "Choose a shape, then adjust its dimensions in Inspector. All sizes are in meters; geometry stays editable."));
+        body.append(element("p", "vnccs-i3s__hint", t("Choose a shape, then adjust its dimensions in Inspector. All sizes are in meters; geometry stays editable.")));
         for (const [kind, recipe] of Object.entries(PARAMETRIC_PARTS)) {
-            const control = button("vnccs-i3s__button", recipe.label);
+            const control = button("vnccs-i3s__button", t(recipe.label));
             control.addEventListener("click", () => { this.closeModal(); void this.createPrimitive(kind); });
             body.append(control);
         }
-        body.append(element("p", "vnccs-i3s__hint", "Older scenes are preserved: the first parametric shape creates an upgraded scene copy."));
-        this.openModal({ title: "Add shape", body });
+        body.append(element("p", "vnccs-i3s__hint", t("Older scenes are preserved: the first parametric shape creates an upgraded scene copy.")));
+        this.openModal({ title: t("Add shape"), body });
     }
 
     async createPrimitive(kind, options = {}) {
@@ -9527,7 +9534,7 @@ class Factory3DWidget {
             this.toast(`${primitiveLabel(primitiveKind)} added.`, "success");
             return result;
         } catch (error) {
-            this._showError("Primitive could not be created", error);
+            this._showError(t("Primitive could not be created"), error);
             return null;
         } finally {
             this._creatingPrimitive = false;
@@ -9537,12 +9544,12 @@ class Factory3DWidget {
     async importImagePlane(file) {
         if (!file || this.currentJobId || this.importingPly) return;
         if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || !file.size || file.size > MAX_TEXTURE_BYTES) {
-            this.toast("Choose a JPEG, PNG, or WebP image up to 32 MB.", "error");
+            this.toast(t("Choose a JPEG, PNG, or WebP image up to 32 MB."), "error");
             return;
         }
         this.importingPly = true;
         this.els.imageImport.disabled = true;
-        this._setStatus("Importing image", "working");
+        this._setStatus(t("Importing image"), "working");
         try {
             if (!this.sceneId) await this.ensureScene();
             const dimensions = await imageFileDimensions(file);
@@ -9556,10 +9563,10 @@ class Factory3DWidget {
                 primitive: { width, height },
                 allowWhileImporting: true,
             });
-            if (result) this._setStatus("Image imported", "success");
+            if (result) this._setStatus(t("Image imported"), "success");
         } catch (error) {
-            this._setStatus("Image import failed", "error");
-            this._showError("Image could not be imported", error);
+            this._setStatus(t("Image import failed"), "error");
+            this._showError(t("Image could not be imported"), error);
         } finally {
             this.importingPly = false;
             if (this.els.imageImport.isConnected) this.els.imageImport.disabled = false;
@@ -9569,16 +9576,16 @@ class Factory3DWidget {
     async importPly(file) {
         if (!file || this.currentJobId || this.importingPly) return;
         if (!/\.ply$/i.test(String(file.name || ""))) {
-            this.toast("Choose a .ply Gaussian file.", "error");
+            this.toast(t("Choose a .ply Gaussian file."), "error");
             return;
         }
         if (!file.size || file.size > MAX_PLY_BYTES) {
-            this.toast(`PLY files must be between 1 byte and ${formatBytes(MAX_PLY_BYTES)}.`, "error");
+            this.toast(t("PLY files must be between 1 byte and {limit}.", { limit: formatBytes(MAX_PLY_BYTES) }), "error");
             return;
         }
         this.importingPly = true;
         this.els.plyImport.disabled = true;
-        this._setStatus("Importing PLY", "working");
+        this._setStatus(t("Importing PLY"), "working");
         try {
             if (!this.sceneId) await this.ensureScene();
             const sceneOwner = this.scene;
@@ -9594,8 +9601,8 @@ class Factory3DWidget {
             });
             if (this.destroyed || this._restoreFailed) return;
             if (this.sceneId !== sceneId || this.scene !== sceneOwner) {
-                this._setStatus("PLY imported", "success");
-                this.toast("PLY was added to the scene where the import started.", "success");
+                this._setStatus(t("PLY imported"), "success");
+                this.toast(t("PLY was added to the scene where the import started."), "success");
                 return;
             }
             this._activeNumericGesture?.commit();
@@ -9612,18 +9619,18 @@ class Factory3DWidget {
             this._scheduleSceneSave(0);
             this._selectObject(result.object_id);
             if (this.viewportFailures.has(result.object_id)) {
-                this._setStatus("Imported; preview failed", "error");
-                this.toast("PLY was added, but the viewport could not render it.", "error");
+                this._setStatus(t("Imported; preview failed"), "error");
+                this.toast(t("PLY was added, but the viewport could not render it."), "error");
                 return;
             }
             this.viewer.fit(result.object_id);
             this._scheduleScenePreview(120);
             this._scheduleStateSave(0);
-            this._setStatus("PLY imported", "success");
-            this.toast("PLY added to the active scene.", "success");
+            this._setStatus(t("PLY imported"), "success");
+            this.toast(t("PLY added to the active scene."), "success");
         } catch (error) {
-            this._setStatus("PLY import failed", "error");
-            this._showError("PLY could not be imported", error);
+            this._setStatus(t("PLY import failed"), "error");
+            this._showError(t("PLY could not be imported"), error);
         } finally {
             this.importingPly = false;
             if (this.els.plyImport.isConnected) this.els.plyImport.disabled = false;
@@ -9638,20 +9645,20 @@ class Factory3DWidget {
         const modelFiles = files.filter(file => modelPattern.test(String(file.name || "")));
         if (archives.length) {
             if (files.length !== 1) {
-                this.toast("Import a ZIP model package by itself.", "error");
+                this.toast(t("Import a ZIP model package by itself."), "error");
                 return;
             }
         } else if (!modelFiles.length) {
-            this.toast("Choose a GLB, glTF, FBX, OBJ, or STL model.", "error");
+            this.toast(t("Choose a GLB, glTF, FBX, OBJ, or STL model."), "error");
             return;
         }
         if (!archives.length && files.some(file => !modelPattern.test(file.name || "") && !resourcePattern.test(file.name || ""))) {
-            this.toast("The selection contains an unsupported model resource.", "error");
+            this.toast(t("The selection contains an unsupported model resource."), "error");
             return;
         }
         const totalBytes = files.reduce((sum, file) => sum + Number(file.size || 0), 0);
         if (!totalBytes || totalBytes > MAX_MODEL_TOTAL_BYTES || files.some(file => file.size > MAX_PLY_BYTES)) {
-            this.toast(`Model packages must be smaller than ${formatBytes(MAX_MODEL_TOTAL_BYTES)}.`, "error");
+            this.toast(t("Model packages must be smaller than {limit}.", { limit: formatBytes(MAX_MODEL_TOTAL_BYTES) }), "error");
             return;
         }
         const priority = ["glb", "gltf", "fbx", "obj", "stl"];
@@ -9662,7 +9669,7 @@ class Factory3DWidget {
         })[0] || archives[0];
         this.importingPly = true;
         this.els.plyImport.disabled = true;
-        this._setStatus("Importing 3D model", "working");
+        this._setStatus(t("Importing 3D model"), "working");
         try {
             if (!this.sceneId) await this.ensureScene();
             const sceneOwner = this.scene;
@@ -9685,8 +9692,8 @@ class Factory3DWidget {
             });
             if (this.destroyed || this._restoreFailed) return;
             if (this.sceneId !== sceneId || this.scene !== sceneOwner) {
-                this._setStatus("3D model imported", "success");
-                this.toast("The model was added to the scene where the import started.", "success");
+                this._setStatus(t("3D model imported"), "success");
+                this.toast(t("The model was added to the scene where the import started."), "success");
                 return;
             }
             this._activeNumericGesture?.commit();
@@ -9703,18 +9710,18 @@ class Factory3DWidget {
             this._scheduleSceneSave(0);
             this._selectObject(result.object_id);
             if (this.viewportFailures.has(result.object_id)) {
-                this._setStatus("Imported; preview failed", "error");
-                this.toast("The model was saved, but the viewport could not render it.", "error");
+                this._setStatus(t("Imported; preview failed"), "error");
+                this.toast(t("The model was saved, but the viewport could not render it."), "error");
                 return;
             }
             this.viewer.fit(result.object_id);
             this._scheduleScenePreview(120);
             this._scheduleStateSave(0);
-            this._setStatus("3D model imported", "success");
-            this.toast("Model and textures added to the active scene.", "success");
+            this._setStatus(t("3D model imported"), "success");
+            this.toast(t("Model and textures added to the active scene."), "success");
         } catch (error) {
-            this._setStatus("3D model import failed", "error");
-            this._showError("3D model could not be imported", error);
+            this._setStatus(t("3D model import failed"), "error");
+            this._showError(t("3D model could not be imported"), error);
         } finally {
             this.importingPly = false;
             if (this.els.plyImport.isConnected) this.els.plyImport.disabled = false;
@@ -9727,7 +9734,7 @@ class Factory3DWidget {
         this.viewer.clearGenerationPreview();
         this._renderTexturingViews(null);
         this._setProgress(true, 0, "Queued", "");
-        this._setStatus("Working", "working");
+        this._setStatus(t("Working"), "working");
         let previous = "";
         try {
             while (!this.destroyed && token === this.currentJobToken) {
@@ -9748,7 +9755,7 @@ class Factory3DWidget {
                 if (job.texturing && !TERMINAL.has(job.status)) {
                     this.viewer.updateGenerationPreview(job.texturing).catch(error => {
                         if (!this.destroyed && token === this.currentJobToken) {
-                            this.els.jobDetail.textContent = `Preview unavailable: ${error.message}`;
+                            this.els.jobDetail.textContent = t("Preview unavailable: {message}", { message: error.message });
                         }
                     });
                 }
@@ -9766,14 +9773,14 @@ class Factory3DWidget {
                             );
                             this.selectedGroupId = "";
                             this.selectedSkydome = false;
-                            this._setStatus("Loading result", "working");
+                            this._setStatus(t("Loading result"), "working");
                             this._setProgress(
                                 true,
                                 100,
-                                "Loading generated object",
+                                t("Loading generated object"),
                                 job.provider === "triposplat"
-                                    ? "Backend generation completed · decoding SPLAT for the viewport"
-                                    : "Backend generation completed · loading textured GLB in the viewport",
+                                    ? t("Backend generation completed · decoding SPLAT for the viewport")
+                                    : t("Backend generation completed · loading textured GLB in the viewport"),
                             );
                             const scene = generatedScene.scene_id
                                 ? generatedScene
@@ -9781,29 +9788,29 @@ class Factory3DWidget {
                             await this._applyScene(scene, { preserveSource: true });
                             this._placeNewObjectOnActiveFloor(generatedObjectId);
                             this._scheduleStateSave(0);
-                            this.toast("Object added to the scene.", "success");
+                            this.toast(t("Object added to the scene."), "success");
                         } else if (job.kind === "weights") {
-                            this._setStatus("Complete", "success");
+                            this._setStatus(t("Complete"), "success");
                             await this.loadCapabilities();
                             this.closeModal();
                             const generator = this._generatorCapability(job.provider || this.settings.generator);
-                            this.toast(`${generator.name || "Generator"} weights installed.`, "success");
+                            this.toast(t("{name} weights installed.", { name: generator.name || t("Generator") }), "success");
                         }
                         return job;
                     }
                     if (job.status === "cancelled") {
-                        this._setStatus("Cancelled", "idle");
+                        this._setStatus(t("Cancelled"), "idle");
                         return job;
                     }
-                    const error = new Error(job.error || "Factory job failed");
+                    const error = new Error(job.error || t("Factory job failed"));
                     error.job = job;
                     throw error;
                 }
                 await sleep(600);
             }
         } catch (error) {
-            this._setStatus("Failed", "error");
-            this._showError(modal ? "Model installation failed" : "Generation failed", error, jobId);
+            this._setStatus(t("Failed"), "error");
+            this._showError(modal ? t("Model installation failed") : t("Generation failed"), error, jobId);
             if (error && typeof error === "object") error.factoryErrorShown = true;
             throw error;
         } finally {
@@ -9820,9 +9827,9 @@ class Factory3DWidget {
         if (!this.currentJobId) return;
         try {
             await this._fetchJSON(ENDPOINTS.cancelJob(this.currentJobId), { method: "POST" });
-            this._setStatus("Cancelling", "working");
+            this._setStatus(t("Cancelling"), "working");
         } catch (error) {
-            this._showError("Cancellation failed", error);
+            this._showError(t("Cancellation failed"), error);
         }
     }
 
@@ -9834,47 +9841,47 @@ class Factory3DWidget {
                 && visibleIds.has(item.object_id),
         );
         if (!hasGaussian) {
-            this.toast("Show at least one Gaussian object before exporting PLY.", "error");
+            this.toast(t("Show at least one Gaussian object before exporting PLY."), "error");
             return;
         }
         try {
             await this._saveSceneNow({ showError: false });
         } catch (error) {
-            this._setStatus("Export failed", "error");
-            this._showError("Scene export failed", error);
+            this._setStatus(t("Export failed"), "error");
+            this._showError(t("Scene export failed"), error);
             return;
         }
-        this._setStatus("Exporting scene", "working");
+        this._setStatus(t("Exporting scene"), "working");
         try {
             const scene = await this._fetchJSON(ENDPOINTS.exportScene(this.sceneId), {
                 method: "POST",
             });
             this.scene.exports = scene.exports;
             download(scene.exports.urls.ply);
-            this._setStatus("Scene exported", "success");
+            this._setStatus(t("Scene exported"), "success");
         } catch (error) {
-            this._setStatus("Export failed", "error");
-            this._showError("Scene export failed", error);
+            this._setStatus(t("Export failed"), "error");
+            this._showError(t("Scene export failed"), error);
         }
     }
 
     async exportPanorama() {
         if (this.exportingPanorama) return;
         if (this.currentJobId) {
-            this.toast("Wait for the current 3D Factory job before exporting a panorama.", "info");
+            this.toast(t("Wait for the current 3D Factory job before exporting a panorama."), "info");
             return;
         }
         const camera = this.scene?.cameras?.find(
             value => value.camera_id === this.panoramaCameraId,
         );
         if (!camera) {
-            this.toast("Choose a saved camera for the 360° panorama.", "error");
+            this.toast(t("Choose a saved camera for the 360° panorama."), "error");
             return;
         }
         this.exportingPanorama = true;
         this._syncPanoramaExportControls();
-        this._setStatus("Rendering 360° panorama", "working");
-        this._setProgress(true, 2, "Preparing panorama", camera.name || "Saved camera");
+        this._setStatus(t("Rendering 360° panorama"), "working");
+        this._setProgress(true, 2, t("Preparing panorama"), camera.name || t("Saved camera"));
         try {
             const blob = await this.viewer.capturePanorama({
                 width: this.panoramaWidth,
@@ -9890,11 +9897,11 @@ class Factory3DWidget {
                 .slice(0, 140)
                 || "vnccs-3d-factory-360";
             downloadBlob(blob, `${baseName}.png`);
-            this._setStatus("360° panorama exported", "success");
-            this.toast(`360° panorama exported from ${camera.name || "saved camera"}.`, "success");
+            this._setStatus(t("360° panorama exported"), "success");
+            this.toast(t("360° panorama exported from {camera}.", { camera: camera.name || t("saved camera") }), "success");
         } catch (error) {
-            this._setStatus("Panorama export failed", "error");
-            this._showError("360° panorama export failed", error);
+            this._setStatus(t("Panorama export failed"), "error");
+            this._showError(t("360° panorama export failed"), error);
         } finally {
             this.exportingPanorama = false;
             this._setProgress(false);
@@ -9905,11 +9912,11 @@ class Factory3DWidget {
     async exportObject(item, control = null) {
         const url = item?.urls?.export_ply;
         if (!url) {
-            this.toast("PLY export is not available.", "error");
+            this.toast(t("PLY export is not available."), "error");
             return;
         }
         if (control) control.disabled = true;
-        this._setStatus("Exporting PLY", "working");
+        this._setStatus(t("Exporting PLY"), "working");
         try {
             const response = await fetch(apiUrl(url), { credentials: "same-origin" });
             if (!response.ok) {
@@ -9927,10 +9934,10 @@ class Factory3DWidget {
                 ? decodeURIComponent(encodedName)
                 : plainName || `${item.name || "object"}.ply`;
             downloadBlob(await response.blob(), filename);
-            this._setStatus("Object exported", "success");
+            this._setStatus(t("Object exported"), "success");
         } catch (error) {
-            this._setStatus("Export failed", "error");
-            this._showError("Object export failed", error);
+            this._setStatus(t("Export failed"), "error");
+            this._showError(t("Object export failed"), error);
         } finally {
             if (control) control.disabled = false;
         }
@@ -10006,7 +10013,7 @@ class Factory3DWidget {
             .map(clone);
         const total = objects.length + architectureSelection.length + cameras.length + lights.length;
         if (!total) {
-            this.toast("Select at least one scene object to copy.", "info");
+            this.toast(t("Select at least one scene object to copy."), "info");
             return;
         }
         this.selectionClipboard = {
@@ -10022,14 +10029,14 @@ class Factory3DWidget {
             architecture_selection: clone(architectureSelection),
         };
         this._syncToolbar();
-        this.toast(`${total} scene object${total === 1 ? "" : "s"} copied.`, "success");
+        this.toast(total === 1 ? t("{count} scene object copied.", { count: total }) : t("{count} scene objects copied.", { count: total }), "success");
     }
 
     async _pasteSelection() {
         const clipboard = this.selectionClipboard;
         if (!this.scene || !clipboard) return;
         if (clipboard.scene_id !== this.sceneId) {
-            this.toast("The Factory clipboard currently belongs to another scene.", "error");
+            this.toast(t("The Factory clipboard currently belongs to another scene."), "error");
             return;
         }
         const plannedWalls = clipboard.walls?.length || 0;
@@ -10038,23 +10045,23 @@ class Factory3DWidget {
         const plannedCameras = clipboard.cameras?.length || 0;
         const plannedLights = clipboard.lights?.length || 0;
         if ((this.scene.architecture?.walls?.length || 0) + plannedWalls > 4096) {
-            this.toast("There is not enough room in the scene wall limit for this paste.", "error");
+            this.toast(t("There is not enough room in the scene wall limit for this paste."), "error");
             return;
         }
         if ((this.scene.architecture?.rooms?.length || 0) + plannedRooms > 1024) {
-            this.toast("There is not enough room in the scene room limit for this paste.", "error");
+            this.toast(t("There is not enough room in the scene room limit for this paste."), "error");
             return;
         }
         if ((this.scene.architecture?.openings?.length || 0) + plannedOpenings > 4096) {
-            this.toast("There is not enough room in the scene opening limit for this paste.", "error");
+            this.toast(t("There is not enough room in the scene opening limit for this paste."), "error");
             return;
         }
         if ((this.scene.cameras?.length || 0) + plannedCameras > 32) {
-            this.toast("There is not enough room in the 32-camera limit for this paste.", "error");
+            this.toast(t("There is not enough room in the 32-camera limit for this paste."), "error");
             return;
         }
         if ((this.lighting?.lights?.length || 0) + plannedLights > 32) {
-            this.toast("There is not enough room in the 32-light limit for this paste.", "error");
+            this.toast(t("There is not enough room in the 32-light limit for this paste."), "error");
             return;
         }
         const pasteIndex = Math.max(1, Number(clipboard.paste_count) + 1);
@@ -10064,7 +10071,7 @@ class Factory3DWidget {
         const pastedObjectIds = [];
         const pastedObjectSources = [];
         this.els.selectionPaste.disabled = true;
-        this._setStatus("Pasting selection", "working");
+        this._setStatus(t("Pasting selection"), "working");
         try {
             for (const source of clipboard.objects || []) {
                 const result = await this._fetchJSON(
@@ -10210,8 +10217,8 @@ class Factory3DWidget {
                 + wallIds.size
                 + openingIds.size;
             if (!architectureAdded && !pastedCameraIds.length && !pastedLightIds.length && !pastedObjectIds.length) {
-                this._setStatus("Nothing pasted", "idle");
-                this.toast("The copied selection could not be placed in the current scene.", "info");
+                this._setStatus(t("Nothing pasted"), "idle");
+                this.toast(t("The copied selection could not be placed in the current scene."), "info");
                 return;
             }
             if (pastedLightIds.length) this._commitLighting({ final: true });
@@ -10252,11 +10259,11 @@ class Factory3DWidget {
             this._scheduleSceneSave(0);
             this._scheduleStateSave(0);
             const pastedCount = pastedObjectIds.length + pastedArchitecture.length + pastedCameraIds.length + pastedLightIds.length;
-            this._setStatus("Selection pasted", "success");
-            this.toast(`${pastedCount} object${pastedCount === 1 ? "" : "s"} pasted.`, "success");
+            this._setStatus(t("Selection pasted"), "success");
+            this.toast(pastedCount === 1 ? t("{count} object pasted.", { count: pastedCount }) : t("{count} objects pasted.", { count: pastedCount }), "success");
         } catch (error) {
-            this._setStatus("Paste failed", "error");
-            this._showError("Selection paste failed", error);
+            this._setStatus(t("Paste failed"), "error");
+            this._showError(t("Selection paste failed"), error);
         } finally {
             this._syncToolbar();
         }
@@ -10265,7 +10272,7 @@ class Factory3DWidget {
     async duplicateObject(objectId, control = null) {
         if (!this.sceneId || !objectId) return;
         if (control) control.disabled = true;
-        this._setStatus("Duplicating object", "working");
+        this._setStatus(t("Duplicating object"), "working");
         try {
             const result = await this._fetchJSON(
                 `${ENDPOINTS.scene(this.sceneId)}/objects/${encodeURIComponent(objectId)}/duplicate`,
@@ -10273,12 +10280,12 @@ class Factory3DWidget {
             );
             await this._applyScene(result.scene, { preserveSource: true });
             this._placeNewObjectOnActiveFloor(result.object_id);
-            this._setStatus("Object duplicated", "success");
-            this.toast("Object duplicated.", "success");
+            this._setStatus(t("Object duplicated"), "success");
+            this.toast(t("Object duplicated."), "success");
         } catch (error) {
             if (control?.isConnected) control.disabled = false;
-            this._setStatus("Duplicate failed", "error");
-            this._showError("Object duplication failed", error);
+            this._setStatus(t("Duplicate failed"), "error");
+            this._showError(t("Object duplication failed"), error);
         }
     }
 
@@ -10287,11 +10294,11 @@ class Factory3DWidget {
         if (!item) return;
         const body = element("div");
         body.append(
-            element("div", "vnccs-i3s__failure-summary", `Remove “${item.name}” from this scene?`),
-            element("div", "vnccs-i3s__hint", "Its generated PLY, reference, and scene-specific exports will be deleted from the Factory scene."),
+            element("div", "vnccs-i3s__failure-summary", t("Remove “{name}” from this scene?", { name: item.name })),
+            element("div", "vnccs-i3s__hint", t("Its generated PLY, reference, and scene-specific exports will be deleted from the Factory scene.")),
         );
-        const cancel = button("vnccs-i3s__button", "Cancel");
-        const remove = button("vnccs-i3s__button vnccs-i3s__button--danger", "Remove", "trash");
+        const cancel = button("vnccs-i3s__button", t("Cancel"));
+        const remove = button("vnccs-i3s__button vnccs-i3s__button--danger", t("Remove"), "trash");
         cancel.addEventListener("click", () => this.closeModal());
         remove.addEventListener("click", async () => {
             remove.disabled = true;
@@ -10304,10 +10311,10 @@ class Factory3DWidget {
                 await this._applyScene(scene);
             } catch (error) {
                 remove.disabled = false;
-                this._showError("Object removal failed", error);
+                this._showError(t("Object removal failed"), error);
             }
         });
-        this.openModal({ title: "Remove object", body, actions: [cancel, remove], initialFocus: cancel });
+        this.openModal({ title: t("Remove object"), body, actions: [cancel, remove], initialFocus: cancel });
     }
 
     async _deleteSelectedObjects(objectIds = this.selectedObjectIds) {
@@ -10317,7 +10324,7 @@ class Factory3DWidget {
         ));
         if (!ids.length) return false;
         this._deletingSelectedObjects = true;
-        this._setStatus("Removing selection", "working");
+        this._setStatus(t("Removing selection"), "working");
         let updatedScene = null;
         try {
             for (const objectId of ids) {
@@ -10327,13 +10334,13 @@ class Factory3DWidget {
                 );
             }
             await this._applyScene(updatedScene, { preserveSource: true });
-            this._setStatus("Selection removed", "success");
-            this.toast(`${ids.length} object${ids.length === 1 ? "" : "s"} removed.`, "success");
+            this._setStatus(t("Selection removed"), "success");
+            this.toast(ids.length === 1 ? t("{count} object removed.", { count: ids.length }) : t("{count} objects removed.", { count: ids.length }), "success");
             return true;
         } catch (error) {
             if (updatedScene) await this._applyScene(updatedScene, { preserveSource: true });
-            this._setStatus("Removal failed", "error");
-            this._showError("Selected objects could not be removed", error);
+            this._setStatus(t("Removal failed"), "error");
+            this._showError(t("Selected objects could not be removed"), error);
             return false;
         } finally {
             this._deletingSelectedObjects = false;
@@ -10343,15 +10350,15 @@ class Factory3DWidget {
     async openSceneManager() {
         const body = element("div");
         const note = element("div", "vnccs-i3s__modal-note");
-        note.innerHTML = `${ICONS.scenes}<span>Each scene keeps its own generated objects, transforms, and combined exports.</span>`;
+        note.innerHTML = `${ICONS.scenes}<span>${t("Each scene keeps its own generated objects, transforms, and combined exports.")}</span>`;
         const cards = element("div", "vnccs-i3s__scene-cards");
-        cards.appendChild(element("div", "vnccs-i3s__tree-empty", "Loading scenes…"));
+        cards.appendChild(element("div", "vnccs-i3s__tree-empty", t("Loading scenes…")));
         body.append(note, cards);
-        const close = button("vnccs-i3s__button", "Close");
-        const create = button("vnccs-i3s__button vnccs-i3s__button--primary", "New scene", "cube");
+        const close = button("vnccs-i3s__button", t("Close"));
+        const create = button("vnccs-i3s__button vnccs-i3s__button--primary", t("New scene"), "cube");
         close.addEventListener("click", () => this.closeModal());
         create.addEventListener("click", () => this.promptNewScene());
-        this.openModal({ title: "Scene manager", body, actions: [close, create], wide: true });
+        this.openModal({ title: t("Scene manager"), body, actions: [close, create], wide: true });
         try {
             const data = await this._fetchJSON(ENDPOINTS.scenes);
             cards.replaceChildren();
@@ -10360,9 +10367,9 @@ class Factory3DWidget {
                 const copy = element("div");
                 copy.append(
                     element("div", "vnccs-i3s__scene-card-name", scene.name),
-                    element("div", "vnccs-i3s__scene-card-meta", `${scene.object_count} objects · #${scene.scene_id.slice(0, 8)}`),
+                    element("div", "vnccs-i3s__scene-card-meta", t("{count} objects · #{id}", { count: scene.object_count, id: scene.scene_id.slice(0, 8) })),
                 );
-                const open = button("vnccs-i3s__button", scene.scene_id === this.sceneId ? "Current" : "Open");
+                const open = button("vnccs-i3s__button", scene.scene_id === this.sceneId ? t("Current") : t("Open"));
                 open.disabled = scene.scene_id === this.sceneId;
                 open.addEventListener("click", async () => {
                     open.disabled = true;
@@ -10371,7 +10378,7 @@ class Factory3DWidget {
                         this.closeModal();
                     } catch (error) {
                         open.disabled = false;
-                        this._showError("Scene could not be opened", error);
+                        this._showError(t("Scene could not be opened"), error);
                     }
                 });
                 const remove = button(
@@ -10379,8 +10386,8 @@ class Factory3DWidget {
                     "",
                     "trash",
                 );
-                remove.title = `Delete ${scene.name}`;
-                remove.setAttribute("aria-label", `Delete ${scene.name}`);
+                remove.title = t("Delete {name}", { name: scene.name });
+            remove.setAttribute("aria-label", t("Delete {name}", { name: scene.name }));
                 remove.addEventListener("click", () => {
                     if (this.skipSceneDeleteConfirmation) {
                         void this.deleteScene(scene, remove);
@@ -10393,7 +10400,7 @@ class Factory3DWidget {
                 card.append(copy, actions);
                 cards.appendChild(card);
             }
-            if (!cards.children.length) cards.appendChild(element("div", "vnccs-i3s__tree-empty", "No saved scenes."));
+            if (!cards.children.length) cards.appendChild(element("div", "vnccs-i3s__tree-empty", t("No saved scenes.")));
         } catch (error) {
             cards.replaceChildren(element("div", "vnccs-i3s__tree-empty", errorText(error)));
         }
@@ -10406,12 +10413,12 @@ class Factory3DWidget {
             element(
                 "div",
                 "vnccs-i3s__failure-summary",
-                `Permanently delete “${scene.name || "Untitled scene"}”?`,
+                t("Permanently delete “{name}”?", { name: scene.name || t("Untitled scene") }),
             ),
             element(
                 "div",
                 "vnccs-i3s__hint",
-                `${scene.object_count || 0} objects and all scene-specific references and exports will be deleted.`,
+                t("{count} objects and all scene-specific references and exports will be deleted.", { count: scene.object_count || 0 }),
             ),
         );
         const option = element("label", "vnccs-i3s__delete-confirm-option");
@@ -10419,13 +10426,13 @@ class Factory3DWidget {
         skip.type = "checkbox";
         option.append(
             skip,
-            element("span", "", "Don’t ask again for scene deletions during this session"),
+            element("span", "", t("Don’t ask again for scene deletions during this session")),
         );
         body.appendChild(option);
-        const cancel = button("vnccs-i3s__button", "Cancel");
+        const cancel = button("vnccs-i3s__button", t("Cancel"));
         const remove = button(
             "vnccs-i3s__button vnccs-i3s__button--danger",
-            "Delete scene",
+            t("Delete scene"),
             "trash",
         );
         cancel.addEventListener("click", () => void this.openSceneManager());
@@ -10435,7 +10442,7 @@ class Factory3DWidget {
             await this.deleteScene(scene, remove);
         });
         this.openModal({
-            title: "Delete scene",
+            title: t("Delete scene"),
             body,
             actions: [cancel, remove],
             initialFocus: cancel,
@@ -10458,11 +10465,11 @@ class Factory3DWidget {
             await this._fetchJSON(ENDPOINTS.scene(sceneId), { method: "DELETE" });
         } catch (error) {
             if (control?.isConnected) control.disabled = false;
-            this._showError("Scene deletion failed", error);
+            this._showError(t("Scene deletion failed"), error);
             return;
         }
 
-        this.toast(`Scene “${scene?.name || "Untitled scene"}” deleted.`, "success");
+        this.toast(t("Scene “{name}” deleted.", { name: scene?.name || t("Untitled scene") }), "success");
         if (deletingCurrent) {
             clearTimeout(this._saveTimer);
             this._saveTimer = 0;
@@ -10489,7 +10496,7 @@ class Factory3DWidget {
                 this._updateSceneSummary();
                 this._renderObjects();
                 this.syncToNode();
-                this._showError("Scene deleted, but a replacement scene could not be opened", error);
+                this._showError(t("Scene deleted, but a replacement scene could not be opened"), error);
                 return;
             }
         }
@@ -10538,22 +10545,22 @@ class Factory3DWidget {
         const modal = element("div", "vnccs-ps-library-modal");
         modal.innerHTML = `
             <div class="vnccs-ps-library-modal-header">
-                <div class="vnccs-ps-library-modal-title">📚 Model Library</div>
+                <div class="vnccs-ps-library-modal-title">${t("📚 Model Library")}</div>
                 <div class="vnccs-ps-library-header-actions">
                     <button class="vnccs-ps-btn primary vnccs-ps-library-save-current">
                         <span class="vnccs-ps-btn-icon">💾</span> Save Current Asset
                     </button>
                 </div>
-                <button class="vnccs-ps-modal-close" aria-label="Close">✕</button>
+                <button class="vnccs-ps-modal-close" aria-label="${t("Close")}">✕</button>
             </div>
             <div class="vnccs-ps-library-toolbar">
-                <input class="vnccs-ps-library-search" type="search" placeholder="Search models, scenes, and tags...">
-                <label class="vnccs-ps-library-size-control" title="Preview size">
-                    <span>Preview</span>
+                <input class="vnccs-ps-library-search" type="search" placeholder="${t("Search models, scenes, and tags...")}">
+                <label class="vnccs-ps-library-size-control" title="${t("Preview size")}">
+                    <span>${t("Preview")}</span>
                     <input class="vnccs-ps-library-size-slider" type="range" min="160" max="520" step="10">
                     <span class="vnccs-ps-library-size-value"></span>
                 </label>
-                <button class="vnccs-ps-library-menu-btn" title="Model library settings">⚙️</button>
+                <button class="vnccs-ps-library-menu-btn" title="${t("Model library settings")}">⚙️</button>
             </div>
             <div class="vnccs-ps-library-categories"></div>
             <div class="vnccs-ps-library-workspace">
@@ -10594,7 +10601,7 @@ class Factory3DWidget {
         this.container.appendChild(overlay);
         this.applyLibraryThumbnailSize();
         this.startLibraryResizeObserver();
-        this.libraryGrid.innerHTML = '<div class="vnccs-ps-library-empty">Loading library...</div>';
+        this.libraryGrid.innerHTML = `<div class="vnccs-ps-library-empty">${t("Loading library...")}</div>`;
         await this.refreshLibrary();
     }
 
@@ -10632,7 +10639,7 @@ class Factory3DWidget {
             const result = await this._fetchJSON(ENDPOINTS.libraryItems);
             if (result.schema !== MODEL_LIBRARY_SCHEMA) {
                 throw new Error(
-                    "The server returned an incompatible model library. Restart ComfyUI to load the 3D Factory library routes.",
+                    t("The server returned an incompatible model library. Restart ComfyUI to load the 3D Factory library routes."),
                 );
             }
             const received = Array.isArray(result.items) ? result.items : [];
@@ -10657,7 +10664,7 @@ class Factory3DWidget {
             this.renderLibrary();
             this.autoRefreshLibraryRepositories();
         } catch (error) {
-            if (this.libraryGrid) this.libraryGrid.innerHTML = `<div class="vnccs-ps-library-empty">Failed to load library.<br>${escapeHTML(errorText(error))}</div>`;
+            if (this.libraryGrid) this.libraryGrid.innerHTML = `<div class="vnccs-ps-library-empty">${t("Failed to load library.")}<br>${escapeHTML(errorText(error))}</div>`;
         }
     }
 
@@ -10695,7 +10702,7 @@ class Factory3DWidget {
         const categories = Array.from(new Set(this.libraryItems.map(item => item.category || "Uncategorized"))).sort();
         const fragment = document.createDocumentFragment();
         for (const category of ["All", ...categories]) {
-            const chip = element("button", `vnccs-ps-library-category-chip${category === this.libraryActiveCategory ? " active" : ""}`, category);
+            const chip = element("button", `vnccs-ps-library-category-chip${category === this.libraryActiveCategory ? " active" : ""}`, t(category));
             chip.onclick = () => {
                 this.libraryActiveCategory = category;
                 this.renderLibrary();
@@ -10711,7 +10718,7 @@ class Factory3DWidget {
         const items = this.getFilteredLibraryItems();
         this.libraryGrid.replaceChildren();
         if (!items.length) {
-            this.libraryGrid.innerHTML = `<div class="vnccs-ps-library-empty">${this.libraryItems.length ? "No library items match this search." : "No saved assets.<br>Use Save Current Asset to add one."}</div>`;
+            this.libraryGrid.innerHTML = `<div class="vnccs-ps-library-empty">${this.libraryItems.length ? t("No library items match this search.") : t("No saved assets.") + "<br>" + t("Use Save Current Asset to add one.")}</div>`;
             this.renderLibraryInspector(null);
             return;
         }
@@ -10761,7 +10768,7 @@ class Factory3DWidget {
         if (!item) {
             this.libraryInspector.classList.remove("visible");
             this.libraryWorkspace.classList.remove("has-inspector");
-            this.libraryInspector.innerHTML = '<div class="vnccs-ps-library-inspector-empty">Select an asset to inspect and load it.</div>';
+            this.libraryInspector.innerHTML = `<div class="vnccs-ps-library-inspector-empty">${t("Select an asset to inspect and load it.")}</div>`;
             return;
         }
         this.libraryInspector.classList.add("visible");
@@ -10776,22 +10783,22 @@ class Factory3DWidget {
                         : "<span>🧊</span>"
             );
         const applyLabel = item.asset_type === "scene"
-            ? "Open Scene"
+            ? t("Open Scene")
             : item.asset_type === "skydome"
-                ? "Use Skydome"
-                : "Add Model";
+                ? t("Use Skydome")
+                : t("Add Model");
         const assetLabel = item.asset_type === "scene"
-            ? "Scene"
+            ? t("Scene")
             : item.asset_type === "skydome"
-                ? "Skydome"
+                ? t("Skydome")
                 : item.model_kind === "mesh"
-                    ? `${String(item.model_format || "3D").toUpperCase()} model`
-                    : "Gaussian model";
+                    ? t("{format} model", { format: String(item.model_format || "3D").toUpperCase() })
+                    : t("Gaussian model");
         const modelStats = item.asset_type === "skydome"
             ? ""
             : item.model_kind === "mesh"
                 ? ""
-                : ` · ${Number(item.gaussians || 0).toLocaleString()} splats`;
+                : " · " + t("{count} splats", { count: Number(item.gaussians || 0).toLocaleString() });
         const local = item.repository === "local_user_models";
         const disabled = local ? "" : "disabled";
         this.libraryInspector.innerHTML = `
@@ -10799,18 +10806,18 @@ class Factory3DWidget {
                 <div class="vnccs-ps-library-inspector-preview">${preview}</div>
                 <div class="vnccs-ps-library-inspector-actions">
                     <button class="vnccs-ps-btn primary vnccs-ps-library-apply">${applyLabel}</button>
-                    <button class="vnccs-ps-btn vnccs-ps-library-download">Download</button>
+                    <button class="vnccs-ps-btn vnccs-ps-library-download">${t("Download")}</button>
                 </div>
-                <label class="vnccs-ps-library-field"><span>Name</span><input class="vnccs-ps-input vnccs-ps-library-edit-name" type="text" value="${escapeHTML(item.name)}" ${disabled}></label>
-                <label class="vnccs-ps-library-field"><span>Category</span><input class="vnccs-ps-input vnccs-ps-library-edit-category" type="text" value="${escapeHTML(item.category || "Uncategorized")}" ${disabled}></label>
-                <label class="vnccs-ps-library-field"><span>Repository</span><input class="vnccs-ps-input" type="text" value="${escapeHTML(item.repository)}" disabled></label>
-                <label class="vnccs-ps-library-field"><span>Tags</span><input class="vnccs-ps-input vnccs-ps-library-edit-tags" type="text" value="${escapeHTML((item.tags || []).join(", "))}" ${disabled}></label>
-                <label class="vnccs-ps-library-field"><span>Description</span><textarea class="vnccs-ps-textarea vnccs-ps-library-edit-description" ${disabled}>${escapeHTML(item.description || "")}</textarea></label>
+                <label class="vnccs-ps-library-field"><span>${t("Name")}</span><input class="vnccs-ps-input vnccs-ps-library-edit-name" type="text" value="${escapeHTML(item.name)}" ${disabled}></label>
+                <label class="vnccs-ps-library-field"><span>${t("Category")}</span><input class="vnccs-ps-input vnccs-ps-library-edit-category" type="text" value="${escapeHTML(item.category || t("Uncategorized"))}" ${disabled}></label>
+                <label class="vnccs-ps-library-field"><span>${t("Repository")}</span><input class="vnccs-ps-input" type="text" value="${escapeHTML(item.repository)}" disabled></label>
+                <label class="vnccs-ps-library-field"><span>${t("Tags")}</span><input class="vnccs-ps-input vnccs-ps-library-edit-tags" type="text" value="${escapeHTML((item.tags || []).join(", "))}" ${disabled}></label>
+                <label class="vnccs-ps-library-field"><span>${t("Description")}</span><textarea class="vnccs-ps-textarea vnccs-ps-library-edit-description" ${disabled}>${escapeHTML(item.description || "")}</textarea></label>
                 <div class="vnccs-ps-library-system-tag">${assetLabel}${modelStats} · ${formatBytes(item.bytes)}</div>
                 ${local ? `
-                    <label class="vnccs-ps-library-field"><span>Custom Image</span><input class="vnccs-ps-library-preview-input" type="file" accept="image/*"></label>
-                    <button class="vnccs-ps-btn primary vnccs-ps-library-save-edit">Save Changes</button>
-                    <button class="vnccs-ps-btn danger vnccs-ps-library-delete">Delete</button>
+                    <label class="vnccs-ps-library-field"><span>${t("Custom Image")}</span><input class="vnccs-ps-library-preview-input" type="file" accept="image/*"></label>
+                    <button class="vnccs-ps-btn primary vnccs-ps-library-save-edit">${t("Save Changes")}</button>
+                    <button class="vnccs-ps-btn danger vnccs-ps-library-delete">${t("Delete")}</button>
                 ` : ""}
             </div>
         `;
@@ -10824,7 +10831,7 @@ class Factory3DWidget {
                 const file = event.target.files?.[0];
                 if (!file) return;
                 if (!file.type.startsWith("image/") || file.size > 16 * 1024 * 1024) {
-                    this.toast("Preview must be an image smaller than 16 MB.", "error");
+                    this.toast(t("Preview must be an image smaller than 16 MB."), "error");
                     event.target.value = "";
                     return;
                 }
@@ -10858,10 +10865,10 @@ class Factory3DWidget {
                     this.libraryItems = this.libraryItems.map(value => value.asset_id === item.asset_id ? result.item : value);
                     this.librarySelectedId = result.item.asset_id;
                     this.renderLibrary();
-                    this.toast("Library asset updated.", "success");
+                    this.toast(t("Library asset updated."), "success");
                 } catch (error) {
                     control.disabled = false;
-                    this._showError("Library asset could not be updated", error);
+                    this._showError(t("Library asset could not be updated"), error);
                 }
             };
         }
@@ -10875,8 +10882,8 @@ class Factory3DWidget {
         if (this.librarySearchInput) {
             this.librarySearchInput.disabled = this.librarySettingsMode;
             this.librarySearchInput.placeholder = this.librarySettingsMode
-                ? "Repository settings"
-                : "Search models, scenes, and tags...";
+                ? t("Repository settings")
+                : t("Search models, scenes, and tags...");
         }
         if (this.librarySettingsMode) await this.renderLibraryRepositorySettings();
         else this.renderLibrary();
@@ -10884,23 +10891,23 @@ class Factory3DWidget {
 
     async renderLibraryRepositorySettings() {
         if (!this.librarySettingsEl) return;
-        this.librarySettingsEl.innerHTML = '<div class="vnccs-ps-library-empty">Loading repositories...</div>';
+        this.librarySettingsEl.innerHTML = `<div class="vnccs-ps-library-empty">${t("Loading repositories...")}</div>`;
         try {
             const data = await this._fetchJSON(ENDPOINTS.libraryRepositories);
             const repos = Array.isArray(data.repositories) ? data.repositories : [];
             this.librarySettingsEl.innerHTML = `
                 <div class="vnccs-ps-library-settings-head">
                     <div>
-                        <div class="vnccs-ps-library-settings-title">Library Repositories</div>
-                        <div class="vnccs-ps-library-settings-subtitle">3D model and scene libraries on Hugging Face can be enabled, disabled, refreshed, or removed.</div>
+                        <div class="vnccs-ps-library-settings-title">${t("Library Repositories")}</div>
+                        <div class="vnccs-ps-library-settings-subtitle">${t("3D model and scene libraries on Hugging Face can be enabled, disabled, refreshed, or removed.")}</div>
                     </div>
-                    <button class="vnccs-ps-btn vnccs-ps-library-settings-back">Back to library</button>
+                    <button class="vnccs-ps-btn vnccs-ps-library-settings-back">${t("Back to library")}</button>
                 </div>
                 <div class="vnccs-ps-library-local-repo"></div>
                 <div class="vnccs-ps-library-repo-notice"></div>
                 <div class="vnccs-ps-library-repo-add">
-                    <input class="vnccs-ps-input vnccs-ps-library-repo-input" type="text" placeholder="owner/repository">
-                    <button class="vnccs-ps-btn primary vnccs-ps-library-repo-add-btn">Add Repository</button>
+                    <input class="vnccs-ps-input vnccs-ps-library-repo-input" type="text" placeholder="${t("owner/repository")}">
+                    <button class="vnccs-ps-btn primary vnccs-ps-library-repo-add-btn">${t("Add Repository")}</button>
                 </div>
                 <div class="vnccs-ps-library-repo-list"></div>
             `;
@@ -10916,12 +10923,12 @@ class Factory3DWidget {
             localHolder.innerHTML = `
                 <div class="vnccs-ps-library-repo-card">
                     <div>
-                        <div class="vnccs-ps-library-repo-title">Local Model Library</div>
-                        <div class="vnccs-ps-library-repo-id">local_user_models → ${escapeHTML(local.publish_repo_id || "Not linked")}</div>
-                        <div class="vnccs-ps-library-repo-meta">${Number(local.asset_count || 0)} models and scenes</div>
+                        <div class="vnccs-ps-library-repo-title">${t("Local Model Library")}</div>
+                        <div class="vnccs-ps-library-repo-id">local_user_models → ${escapeHTML(local.publish_repo_id || t("Not linked"))}</div>
+                        <div class="vnccs-ps-library-repo-meta">${t("{count} models and scenes", { count: Number(local.asset_count || 0) })}</div>
                     </div>
                     <div class="vnccs-ps-library-repo-actions">
-                        <button class="vnccs-ps-library-repo-action primary publish">Publish</button>
+                        <button class="vnccs-ps-library-repo-action primary publish">${t("Publish")}</button>
                     </div>
                     ${this.libraryRepositoryProgressMarkup()}
                 </div>
@@ -10937,7 +10944,7 @@ class Factory3DWidget {
                         body: JSON.stringify(publishConfig),
                     });
                     await this._waitLibraryRepositoryTask(result.task_id, localHolder.querySelector(".vnccs-ps-library-repo-progress"));
-                    showNotice(`Published local library to ${publishConfig.repo_id}.`);
+                    showNotice(t("Published local library to {repo}.", { repo: publishConfig.repo_id }));
                     await this.renderLibraryRepositorySettings();
                 } catch (error) {
                     event.currentTarget.disabled = false;
@@ -10945,19 +10952,19 @@ class Factory3DWidget {
                 }
             };
             const list = this.librarySettingsEl.querySelector(".vnccs-ps-library-repo-list");
-            if (!repos.length) list.innerHTML = '<div class="vnccs-ps-library-empty">No repositories configured.</div>';
+            if (!repos.length) list.innerHTML = `<div class="vnccs-ps-library-empty">${t("No repositories configured.")}</div>`;
             for (const repo of repos) {
                 const card = element("div", "vnccs-ps-library-repo-card");
                 card.innerHTML = `
                     <div>
                         <div class="vnccs-ps-library-repo-title">${escapeHTML(repo.title || repo.repo_id)}</div>
                         <div class="vnccs-ps-library-repo-id">${escapeHTML(repo.repo_id)}</div>
-                        <div class="vnccs-ps-library-repo-meta">${Number(repo.asset_count || 0)} models and scenes · ${repo.enabled ? "enabled" : "disabled"}</div>
+                        <div class="vnccs-ps-library-repo-meta">${t("{count} models and scenes · {status}", { count: Number(repo.asset_count || 0), status: repo.enabled ? t("enabled") : t("disabled") })}</div>
                     </div>
                     <div class="vnccs-ps-library-repo-actions">
-                        <button class="vnccs-ps-library-repo-action toggle">${repo.enabled ? "Disable" : "Enable"}</button>
-                        <button class="vnccs-ps-library-repo-action refresh">Refresh</button>
-                        <button class="vnccs-ps-library-repo-action danger remove" ${repo.builtin ? "disabled" : ""}>Remove</button>
+                        <button class="vnccs-ps-library-repo-action toggle">${repo.enabled ? t("Disable") : t("Enable")}</button>
+                        <button class="vnccs-ps-library-repo-action refresh">${t("Refresh")}</button>
+                        <button class="vnccs-ps-library-repo-action danger remove" ${repo.builtin ? "disabled" : ""}>${t("Remove")}</button>
                     </div>
                     ${this.libraryRepositoryProgressMarkup()}
                 `;
@@ -11006,7 +11013,7 @@ class Factory3DWidget {
             this.librarySettingsEl.querySelector(".vnccs-ps-library-repo-add-btn").onclick = addRepository;
             addInput.onkeydown = event => { if (event.key === "Enter") void addRepository(); };
         } catch (error) {
-            this.librarySettingsEl.innerHTML = `<div class="vnccs-ps-library-empty">Failed to load repositories.<br>${escapeHTML(errorText(error))}</div>`;
+            this.librarySettingsEl.innerHTML = `<div class="vnccs-ps-library-empty">${t("Failed to load repositories.")}<br>${escapeHTML(errorText(error))}</div>`;
         }
     }
 
@@ -11014,7 +11021,7 @@ class Factory3DWidget {
         return `
             <div class="vnccs-ps-library-repo-progress">
                 <div class="vnccs-ps-library-repo-progress-head">
-                    <span class="vnccs-ps-library-repo-progress-message">Preparing...</span>
+                    <span class="vnccs-ps-library-repo-progress-message">${t("Preparing...")}</span>
                     <span class="vnccs-ps-library-repo-progress-percent">0%</span>
                 </div>
                 <div class="vnccs-ps-library-repo-progress-track">
@@ -11030,29 +11037,29 @@ class Factory3DWidget {
             const modal = element("div", "vnccs-ps-modal");
             modal.style.maxWidth = "420px";
             modal.innerHTML = `
-                <div class="vnccs-ps-modal-title">Publish Local Model Repository</div>
+                <div class="vnccs-ps-modal-title">${t("Publish Local Model Repository")}</div>
                 <div class="vnccs-ps-modal-content">
                     <label class="vnccs-ps-library-field">
-                        <span>Target</span>
+                        <span>${t("Target")}</span>
                         <select class="vnccs-ps-input vnccs-ps-publish-mode">
-                            <option value="create">Create new repository</option>
-                            <option value="existing">Use existing repository</option>
+                            <option value="create">${t("Create new repository")}</option>
+                            <option value="existing">${t("Use existing repository")}</option>
                         </select>
                     </label>
                     <label class="vnccs-ps-library-field">
-                        <span>Hugging Face repository</span>
-                        <input class="vnccs-ps-input vnccs-ps-publish-repo" type="text" placeholder="owner/repository" value="${escapeHTML(current.publish_repo_id || "")}">
+                        <span>${t("Hugging Face repository")}</span>
+                        <input class="vnccs-ps-input vnccs-ps-publish-repo" type="text" placeholder="${t("owner/repository")}" value="${escapeHTML(current.publish_repo_id || "")}">
                     </label>
                     <label class="vnccs-ps-library-field vnccs-ps-publish-private-row">
-                        <span>Visibility</span>
+                        <span>${t("Visibility")}</span>
                         <label style="display:flex;align-items:center;gap:8px;color:var(--ps-text-muted);font-size:12px;">
                             <input class="vnccs-ps-publish-private" type="checkbox"> Private repository
                         </label>
                     </label>
-                    <p class="vnccs-ps-library-field">Remote publishing is disabled by the VNCCS security policy.</p>
+                    <p class="vnccs-ps-library-field">${t("Remote publishing is disabled by the VNCCS security policy.")}</p>
                 </div>
-                <button class="vnccs-ps-modal-btn primary" style="justify-content:center;">Publish</button>
-                <button class="vnccs-ps-modal-btn cancel">Cancel</button>
+                <button class="vnccs-ps-modal-btn primary" style="justify-content:center;">${t("Publish")}</button>
+                <button class="vnccs-ps-modal-btn cancel">${t("Cancel")}</button>
             `;
             const mode = modal.querySelector(".vnccs-ps-publish-mode");
             const input = modal.querySelector(".vnccs-ps-publish-repo");
@@ -11089,7 +11096,7 @@ class Factory3DWidget {
     async loadLibraryItem(item, control) {
         if (!this.sceneId) return;
         control.disabled = true;
-        this._setStatus("Loading library asset", "working");
+        this._setStatus(t("Loading library asset"), "working");
         try {
             const result = await this._fetchJSON(ENDPOINTS.libraryLoad(item.asset_id), {
                 method: "POST",
@@ -11111,16 +11118,16 @@ class Factory3DWidget {
             }
             this.toast(
                 result.created_scene
-                    ? "Library scene opened."
+                    ? t("Library scene opened.")
                     : result.skydome_id
-                        ? "Library skydome applied to scene."
-                        : "3D object added to scene.",
+                        ? t("Library skydome applied to scene.")
+                        : t("3D object added to scene."),
                 "success",
             );
         } catch (error) {
             control.disabled = false;
-            this._setStatus("Library load failed", "error");
-            this._showError("Library asset could not be loaded", error);
+            this._setStatus(t("Library load failed"), "error");
+            this._showError(t("Library asset could not be loaded"), error);
         }
     }
 
@@ -11128,13 +11135,13 @@ class Factory3DWidget {
         const overlay = element("div", "vnccs-ps-modal-overlay");
         const modal = element("div", "vnccs-ps-modal");
         modal.innerHTML = `
-            <div class="vnccs-ps-modal-title">Delete Library Asset</div>
+            <div class="vnccs-ps-modal-title">${t("Delete Library Asset")}</div>
             <div class="vnccs-ps-modal-content">
-                <div>Delete “${escapeHTML(item.name)}” from the local model library?</div>
-                <div style="color:var(--ps-text-muted)">The stored package and preview will be removed. Copies already loaded into scenes are not affected.</div>
+                <div>${t("Delete “{name}” from the local model library?", { name: escapeHTML(item.name) })}</div>
+                <div style="color:var(--ps-text-muted)">${t("The stored package and preview will be removed. Copies already loaded into scenes are not affected.")}</div>
             </div>
-            <button class="vnccs-ps-modal-btn danger">Delete Asset</button>
-            <button class="vnccs-ps-modal-btn cancel">Cancel</button>
+            <button class="vnccs-ps-modal-btn danger">${t("Delete Asset")}</button>
+            <button class="vnccs-ps-modal-btn cancel">${t("Cancel")}</button>
         `;
         const cancel = modal.querySelector(".cancel");
         const remove = modal.querySelector(".danger");
@@ -11150,14 +11157,14 @@ class Factory3DWidget {
                     { method: "DELETE" },
                 );
                 close();
-                this.toast("Library asset deleted.", "success");
+                this.toast(t("Library asset deleted."), "success");
                 this.libraryItems = this.libraryItems.filter(value => value.asset_id !== item.asset_id);
                 this.librarySelectedId = "";
                 this.renderLibrary();
             } catch (error) {
                 remove.disabled = false;
                 cancel.disabled = false;
-                this._showError("Library asset could not be deleted", error);
+                this._showError(t("Library asset could not be deleted"), error);
             }
         });
         overlay.appendChild(modal);
@@ -11166,7 +11173,7 @@ class Factory3DWidget {
 
     openSaveLibraryModal(preferredType = "", requestedObjectId = this.selectedObjectId) {
         if (!this.scene?.objects?.length && !this.scene?.skydome) {
-            this.toast("The current scene has no assets to save.", "error");
+            this.toast(t("The current scene has no assets to save."), "error");
             return;
         }
         const selectedObjectId = String(requestedObjectId || "");
@@ -11181,42 +11188,42 @@ class Factory3DWidget {
         const overlay = element("div", "vnccs-ps-modal-overlay");
         const modal = element("div", "vnccs-ps-modal vnccs-ps-save-library-modal");
         modal.innerHTML = `
-            <div class="vnccs-ps-modal-title">Save Model Library Asset</div>
+            <div class="vnccs-ps-modal-title">${t("Save Model Library Asset")}</div>
             <div class="vnccs-ps-modal-content">
                 <label class="vnccs-ps-save-library-field">
-                    <span>Asset type</span>
+                    <span>${t("Asset type")}</span>
                     <select data-role="type" class="vnccs-ps-input">
-                        <option value="object" ${selected ? "" : "disabled"}>Selected model</option>
-                        <option value="skydome" ${this.scene?.skydome ? "" : "disabled"}>Skydome</option>
-                        <option value="scene">Complete scene</option>
+                        <option value="object" ${selected ? "" : "disabled"}>${t("Selected model")}</option>
+                        <option value="skydome" ${this.scene?.skydome ? "" : "disabled"}>${t("Skydome")}</option>
+                        <option value="scene">${t("Complete scene")}</option>
                     </select>
                 </label>
                 <label class="vnccs-ps-save-library-field vnccs-ps-save-library-name-field">
-                    <span>Name</span>
+                    <span>${t("Name")}</span>
                     <input data-role="name" type="text" class="vnccs-ps-input" maxlength="96" autocomplete="off">
-                    <span class="vnccs-ps-save-library-error" hidden>Name is required.</span>
+                    <span class="vnccs-ps-save-library-error" hidden>${t("Name is required.")}</span>
                 </label>
                 <div class="vnccs-ps-save-library-meta">
                     <label class="vnccs-ps-save-library-field">
-                        <span>Category</span>
+                        <span>${t("Category")}</span>
                         <input data-role="category" type="text" class="vnccs-ps-input" value="Uncategorized" autocomplete="off">
                     </label>
                     <label class="vnccs-ps-save-library-field">
-                        <span>Tags</span>
-                        <input data-role="tags" type="text" placeholder="Comma separated" class="vnccs-ps-input" autocomplete="off">
+                        <span>${t("Tags")}</span>
+                        <input data-role="tags" type="text" placeholder="${t("Comma separated")}" class="vnccs-ps-input" autocomplete="off">
                     </label>
                 </div>
                 <label class="vnccs-ps-save-library-field">
-                    <span>Description</span>
-                    <textarea data-role="description" class="vnccs-ps-textarea vnccs-ps-save-prompt" placeholder="Optional notes about this library asset"></textarea>
+                    <span>${t("Description")}</span>
+                    <textarea data-role="description" class="vnccs-ps-textarea vnccs-ps-save-prompt" placeholder="${t("Optional notes about this library asset")}"></textarea>
                 </label>
                 <label class="vnccs-ps-save-library-check">
                     <input data-role="preview" type="checkbox" checked> Include automatically rendered preview
                 </label>
             </div>
             <div class="vnccs-ps-save-library-actions">
-                <button type="button" class="vnccs-ps-modal-btn cancel">Cancel</button>
-                <button type="button" class="vnccs-ps-modal-btn primary">Save to Library</button>
+                <button type="button" class="vnccs-ps-modal-btn cancel">${t("Cancel")}</button>
+                <button type="button" class="vnccs-ps-modal-btn primary">${t("Save to Library")}</button>
             </div>
         `;
         const type = modal.querySelector('[data-role="type"]');
@@ -11234,10 +11241,10 @@ class Factory3DWidget {
                     ? (this.scene?.skydome?.name || "Skydome")
                     : (this.scene?.name || "Untitled scene");
             modal.querySelector(".vnccs-ps-modal-title").textContent = type.value === "object"
-                ? "Save Model"
+                ? t("Save Model")
                 : type.value === "skydome"
-                    ? "Save Skydome"
-                    : "Save Scene";
+                    ? t("Save Skydome")
+                    : t("Save Scene");
         };
         type.value = initialType;
         type.onchange = syncType;
@@ -11257,7 +11264,7 @@ class Factory3DWidget {
             }
             save.disabled = true;
             cancel.disabled = true;
-            this._setStatus("Rendering library preview", "working");
+            this._setStatus(t("Rendering library preview"), "working");
             try {
                 let preview = "";
                 if (includePreview.checked) {
@@ -11287,15 +11294,15 @@ class Factory3DWidget {
                 this.librarySelectedId = result.item.asset_id;
                 this.renderLibrary();
                 this.toast(
-                    `${isObject ? "Model" : isSkydome ? "Skydome" : "Scene"} saved to library.`,
+                    t("{kind} saved to library.", { kind: isObject ? t("Model") : isSkydome ? t("Skydome") : t("Scene") }),
                     "success",
                 );
-                this._setStatus("Scene ready", "success");
+                this._setStatus(t("Scene ready"), "success");
             } catch (error) {
                 save.disabled = false;
                 cancel.disabled = false;
-                this._setStatus("Library save failed", "error");
-                this._showError("Could not save library asset", error);
+                this._setStatus(t("Library save failed"), "error");
+                this._showError(t("Could not save library asset"), error);
             }
         };
         save.onclick = () => void submit();
@@ -11319,29 +11326,29 @@ class Factory3DWidget {
                 const message = progressEl.querySelector(".vnccs-ps-library-repo-progress-message");
                 const percentEl = progressEl.querySelector(".vnccs-ps-library-repo-progress-percent");
                 const fill = progressEl.querySelector(".vnccs-ps-library-repo-progress-fill");
-                if (message) message.textContent = status.message || "Working...";
+                if (message) message.textContent = status.message || t("Working...");
                 if (percentEl) percentEl.textContent = `${percent}%`;
                 if (fill) fill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
             }
             if (status.status === "success") return status;
-            if (status.status === "error") throw new Error(status.message || "Repository operation failed");
+            if (status.status === "error") throw new Error(status.message || t("Repository operation failed"));
             await new Promise(resolve => setTimeout(resolve, 700));
         }
-        throw new Error("Widget was closed");
+        throw new Error(t("Widget was closed"));
     }
 
     async openLibraryRepositories() {
         return this.toggleLibrarySettings(true);
         /* Legacy implementation retained below only for workflow source compatibility. */
         const body = element("div", "vnccs-i3s__library-repositories");
-        const progress = element("div", "vnccs-i3s__library-repo-progress", "Loading repositories…");
+        const progress = element("div", "vnccs-i3s__library-repo-progress", t("Loading repositories…"));
         body.appendChild(progress);
-        const back = button("vnccs-i3s__button", "Back to library", "library");
-        const close = button("vnccs-i3s__button", "Close");
+        const back = button("vnccs-i3s__button", t("Back to library"), "library");
+        const close = button("vnccs-i3s__button", t("Close"));
         back.addEventListener("click", () => void this.openLibrary());
         close.addEventListener("click", () => this.closeModal());
         this.openModal({
-            title: "3D model library repositories",
+            title: t("3D model library repositories"),
             body,
             actions: [back, close],
             wide: true,
@@ -11352,16 +11359,16 @@ class Factory3DWidget {
             const local = element("section", "vnccs-i3s__library-repo is-local");
             const localCopy = element("div", "vnccs-i3s__library-repo-copy");
             localCopy.append(
-                element("strong", "", "Local 3D Model Library"),
-                element("span", "", `${Number(data.local?.asset_count || 0)} saved assets`),
+                element("strong", "", t("Local 3D Model Library")),
+                element("span", "", t("{count} saved assets", { count: Number(data.local?.asset_count || 0) })),
             );
             const publishRow = element("div", "vnccs-i3s__library-repo-publish");
             const publishId = element("input", "vnccs-i3s__input");
-            publishId.placeholder = "HuggingFace owner/repository";
+            publishId.placeholder = t("HuggingFace owner/repository");
             publishId.value = data.local?.publish_repo_id || "";
-            const publish = button("vnccs-i3s__button vnccs-i3s__button--primary", "Publish", "upload");
+            const publish = button("vnccs-i3s__button vnccs-i3s__button--primary", t("Publish"), "upload");
             publish.disabled = true;
-            publish.title = "Remote publishing is disabled by the VNCCS security policy";
+            publish.title = t("Remote publishing is disabled by the VNCCS security policy");
             publish.addEventListener("click", async () => {
                 publish.disabled = true;
                 try {
@@ -11371,11 +11378,11 @@ class Factory3DWidget {
                         body: JSON.stringify({ repo_id: publishId.value.trim() }),
                     });
                     await this._waitLibraryRepositoryTask(result.task_id, progress);
-                    this.toast("3D model library published to Hugging Face.", "success");
+                    this.toast(t("3D model library published to Hugging Face."), "success");
                     await this.openLibraryRepositories();
                 } catch (error) {
                     publish.disabled = false;
-                    this._showError("Library publish failed", error);
+                    this._showError(t("Library publish failed"), error);
                 }
             });
             publishRow.append(publishId, publish);
@@ -11388,16 +11395,16 @@ class Factory3DWidget {
                 const copy = element("div", "vnccs-i3s__library-repo-copy");
                 copy.append(
                     element("strong", "", repo.title || repo.repo_id),
-                    element("span", "", `${repo.repo_id} · ${Number(repo.asset_count || 0)} assets`),
-                    element("small", "", repo.description || "Hugging Face 3D asset repository"),
+                    element("span", "", t("{repo} · {count} assets", { repo: repo.repo_id, count: Number(repo.asset_count || 0) })),
+                    element("small", "", repo.description || t("Hugging Face 3D asset repository")),
                 );
                 const actions = element("div", "vnccs-i3s__library-repo-actions");
                 const toggle = button(
                     "vnccs-i3s__button",
-                    repo.enabled ? "Enabled" : "Disabled",
+                    repo.enabled ? t("Enabled") : t("Disabled"),
                     repo.enabled ? "check" : "",
                 );
-                const refresh = button("vnccs-i3s__button", "Sync", "download");
+                const refresh = button("vnccs-i3s__button", t("Sync"), "download");
                 toggle.addEventListener("click", async () => {
                     await this._fetchJSON(ENDPOINTS.libraryRepositoryToggle, {
                         method: "POST",
@@ -11418,13 +11425,13 @@ class Factory3DWidget {
                         await this.openLibraryRepositories();
                     } catch (error) {
                         refresh.disabled = false;
-                        this._showError("Repository sync failed", error);
+                        this._showError(t("Repository sync failed"), error);
                     }
                 });
                 actions.append(toggle, refresh);
                 if (!repo.builtin) {
                     const remove = button("vnccs-i3s__button vnccs-i3s__button--danger", "", "trash");
-                    remove.title = "Remove repository and downloaded assets";
+                    remove.title = t("Remove repository and downloaded assets");
                     remove.addEventListener("click", async () => {
                         await this._fetchJSON(
                             `${ENDPOINTS.libraryRepositories}/${encodeURIComponent(repo.repo_id)}`,
@@ -11440,8 +11447,8 @@ class Factory3DWidget {
             body.appendChild(list);
             const add = element("section", "vnccs-i3s__library-repo-add");
             const addId = element("input", "vnccs-i3s__input");
-            addId.placeholder = "owner/repository";
-            const addButton = button("vnccs-i3s__button", "Add repository", "library");
+            addId.placeholder = t("owner/repository");
+            const addButton = button("vnccs-i3s__button", t("Add repository"), "library");
             addButton.addEventListener("click", async () => {
                 addButton.disabled = true;
                 try {
@@ -11454,12 +11461,12 @@ class Factory3DWidget {
                     await this.openLibraryRepositories();
                 } catch (error) {
                     addButton.disabled = false;
-                    this._showError("Repository could not be added", error);
+                    this._showError(t("Repository could not be added"), error);
                 }
             });
             add.append(addId, addButton);
             body.append(progress, add);
-            progress.textContent = "Repository packages are synchronized by manifest and SHA256.";
+            progress.textContent = t("Repository packages are synchronized by manifest and SHA256.");
         } catch (error) {
             body.replaceChildren(element("div", "vnccs-i3s__library-empty", errorText(error)));
         }
@@ -11467,27 +11474,27 @@ class Factory3DWidget {
 
     promptNewScene() {
         const body = element("label", "vnccs-i3s__field");
-        body.appendChild(element("span", "vnccs-i3s__label", "Scene name"));
+        body.appendChild(element("span", "vnccs-i3s__label", t("Scene name")));
         const input = element("input", "vnccs-i3s__input");
         input.value = "Untitled scene";
         input.maxLength = 96;
         body.appendChild(input);
-        const cancel = button("vnccs-i3s__button", "Cancel");
-        const create = button("vnccs-i3s__button vnccs-i3s__button--primary", "Create", "check");
+        const cancel = button("vnccs-i3s__button", t("Cancel"));
+        const create = button("vnccs-i3s__button vnccs-i3s__button--primary", t("Create"), "check");
         cancel.addEventListener("click", () => this.closeModal());
         const submit = async () => {
             create.disabled = true;
             try { await this.createScene(input.value); }
             catch (error) {
                 create.disabled = false;
-                this._showError("Scene creation failed", error);
+                this._showError(t("Scene creation failed"), error);
             }
         };
         create.addEventListener("click", submit);
         input.addEventListener("keydown", event => {
             if (event.key === "Enter") void submit();
         });
-        this.openModal({ title: "New scene", body, actions: [cancel, create], initialFocus: input });
+        this.openModal({ title: t("New scene"), body, actions: [cancel, create], initialFocus: input });
     }
 
     async openMeshModelSetup(provider) {
@@ -11501,12 +11508,12 @@ class Factory3DWidget {
         const head = element("div", "vnccs-i3s__setup-head");
         const title = element("div");
         title.append(
-            element("div", "vnccs-i3s__setup-title", `${generator.name || provider} models`),
-            element("div", "vnccs-i3s__setup-subtitle", generator.output_label || "Textured GLB"),
+            element("div", "vnccs-i3s__setup-title", t("{name} models", { name: generator.name || provider })),
+            element("div", "vnccs-i3s__setup-subtitle", generator.output_label || t("Textured GLB")),
         );
         const action = button(
             "vnccs-i3s__button vnccs-i3s__setup-action",
-            weights.ready ? "Recheck" : "Download weights",
+            weights.ready ? t("Recheck") : t("Download weights"),
             weights.ready ? "check" : "download",
         );
         action.disabled = runtime.ready === false;
@@ -11515,8 +11522,8 @@ class Factory3DWidget {
             "div",
             `vnccs-i3s__runtime-notice${runtime.ready === false ? " is-error" : ""}`,
             runtime.ready === false
-                ? `Install missing dependencies before generation: ${[...(runtime.missing_nodes || []), ...(runtime.missing_packages || [])].join(", ")}`
-                : "Required comfy-core nodes are available.",
+                ? t("Install missing dependencies before generation: {list}", { list: [...(runtime.missing_nodes || []), ...(runtime.missing_packages || [])].join(", ") })
+                : t("Required comfy-core nodes are available."),
         );
         const root = element("div", "vnccs-i3s__failure-context", weights.root || "");
         const list = element("div", "vnccs-i3s__weight-list");
@@ -11531,7 +11538,7 @@ class Factory3DWidget {
         }
         models.append(head, runtimeNotice, root, list);
         body.appendChild(models);
-        const close = button("vnccs-i3s__button", "Close");
+        const close = button("vnccs-i3s__button", t("Close"));
         close.addEventListener("click", () => this.closeModal());
         action.addEventListener("click", async () => {
             if (weights.ready) {
@@ -11552,7 +11559,7 @@ class Factory3DWidget {
             }
         });
         this.openModal({
-            title: `${generator.name || provider} setup`,
+            title: t("{name} setup", { name: generator.name || provider }),
             body,
             actions: [close],
             wide: true,
@@ -11593,16 +11600,16 @@ class Factory3DWidget {
         const modelsHead = element("div", "vnccs-i3s__setup-head");
         const modelsTitle = element("div");
         modelsTitle.append(
-            element("div", "vnccs-i3s__setup-title", "Models"),
+            element("div", "vnccs-i3s__setup-title", t("Models")),
             element(
                 "div",
                 "vnccs-i3s__setup-subtitle",
-                "Official weights in the ComfyUI model library.",
+                t("Official weights in the ComfyUI model library."),
             ),
         );
         const modelAction = button(
             "vnccs-i3s__button vnccs-i3s__setup-action",
-            weights.ready ? "Recheck" : "Download weights",
+            weights.ready ? t("Recheck") : t("Download weights"),
             weights.ready ? "check" : "download",
         );
         modelsHead.append(modelsTitle, modelAction);
@@ -11623,16 +11630,16 @@ class Factory3DWidget {
         const inferenceHead = element("div", "vnccs-i3s__setup-head");
         const inferenceTitle = element("div");
         inferenceTitle.append(
-            element("div", "vnccs-i3s__setup-title", "Inference settings"),
+            element("div", "vnccs-i3s__setup-title", t("Inference settings")),
             element(
                 "div",
                 "vnccs-i3s__setup-subtitle",
-                "Image evidence supplied to DINOv3 and Flux VAE.",
+                t("Image evidence supplied to DINOv3 and Flux VAE."),
             ),
         );
         inferenceHead.appendChild(inferenceTitle);
 
-        const resolutionLabel = element("div", "vnccs-i3s__label", "Conditioning resolution");
+        const resolutionLabel = element("div", "vnccs-i3s__label", t("Conditioning resolution"));
         const resolutionList = element("div", "vnccs-i3s__resolution-list");
         const resolutionOptions = [
             {
@@ -11665,16 +11672,16 @@ class Factory3DWidget {
             const copy = element("span", "vnccs-i3s__resolution-copy");
             const title = element("span", "vnccs-i3s__resolution-title");
             title.append(
-                element("span", "", option.title),
+                element("span", "", t(option.title)),
                 element(
                     "span",
                     `vnccs-i3s__resolution-badge${option.value > 1024 ? " is-experimental" : ""}`,
-                    option.badge,
+                    t(option.badge),
                 ),
             );
             copy.append(
                 title,
-                element("span", "vnccs-i3s__resolution-description", option.description),
+                element("span", "vnccs-i3s__resolution-description", t(option.description)),
             );
             choice.append(input, element("span", "vnccs-i3s__resolution-radio"), copy);
             resolutionList.appendChild(choice);
@@ -11683,16 +11690,16 @@ class Factory3DWidget {
         const upscaleControl = element("div", "vnccs-i3s__setup-switch-card");
         const upscaleCopy = element("div");
         upscaleCopy.append(
-            element("div", "vnccs-i3s__setup-switch-title", "Do not upscale smaller sources"),
+            element("div", "vnccs-i3s__setup-switch-title", t("Do not upscale smaller sources")),
             element(
                 "div",
                 "vnccs-i3s__setup-switch-description",
-                "Cap conditioning to the source image’s native short side.",
+                t("Cap conditioning to the source image’s native short side."),
             ),
         );
         const upscaleSwitch = button("vnccs-i3s__switch");
         upscaleSwitch.setAttribute("role", "switch");
-        upscaleSwitch.setAttribute("aria-label", "Do not upscale smaller source images");
+        upscaleSwitch.setAttribute("aria-label", t("Do not upscale smaller source images"));
         upscaleSwitch.setAttribute("aria-checked", String(preventUpscale));
         upscaleControl.append(upscaleCopy, upscaleSwitch);
         const effective = element("div", "vnccs-i3s__conditioning-summary");
@@ -11703,16 +11710,16 @@ class Factory3DWidget {
         const cacheHead = element("div", "vnccs-i3s__setup-head");
         const cacheTitle = element("div");
         cacheTitle.append(
-            element("div", "vnccs-i3s__setup-title", "SPLAT cache"),
+            element("div", "vnccs-i3s__setup-title", t("SPLAT cache")),
             element(
                 "div",
                 "vnccs-i3s__setup-subtitle",
-                "Realtime derivatives shared by identical PLY models.",
+                t("Realtime derivatives shared by identical PLY models."),
             ),
         );
         const clearCache = button(
             "vnccs-i3s__button vnccs-i3s__button--danger vnccs-i3s__setup-action",
-            "Clear cache",
+            t("Clear cache"),
             "trash",
         );
         cacheHead.append(cacheTitle, clearCache);
@@ -11728,7 +11735,7 @@ class Factory3DWidget {
         ]) {
             const metric = element("div", "vnccs-i3s__cache-stat");
             metric.append(
-                element("span", "", label),
+                element("span", "", t(label)),
                 value,
             );
             cacheStats.appendChild(metric);
@@ -11740,7 +11747,7 @@ class Factory3DWidget {
 
         const cacheLimitLabel = element("div", "vnccs-i3s__label");
         cacheLimitLabel.append(
-            element("span", "", "Cache limit"),
+            element("span", "", t("Cache limit")),
             element("span", "vnccs-i3s__cache-limit-caption", `${cacheLimitGB} GiB`),
         );
         const cacheLimitControls = element("div", "vnccs-i3s__cache-limit-controls");
@@ -11750,7 +11757,7 @@ class Factory3DWidget {
         cacheLimitRange.max = "1024";
         cacheLimitRange.step = "1";
         cacheLimitRange.value = String(cacheLimitGB);
-        cacheLimitRange.setAttribute("aria-label", "SPLAT cache limit in GiB");
+        cacheLimitRange.setAttribute("aria-label", t("SPLAT cache limit in GiB"));
         const cacheLimitInput = element("input", "vnccs-i3s__input");
         cacheLimitInput.type = "number";
         cacheLimitInput.min = "1";
@@ -11765,7 +11772,7 @@ class Factory3DWidget {
         const cacheHint = element(
             "div",
             "vnccs-i3s__cache-hint",
-            "The cache is rebuilt from PLY when needed. Clearing it never removes models or scenes.",
+            t("The cache is rebuilt from PLY when needed. Clearing it never removes models or scenes."),
         );
 
         const updateCacheStatus = value => {
@@ -11778,7 +11785,7 @@ class Factory3DWidget {
                 ? formatCacheBytes(cacheStatus.disk_free_bytes)
                 : "—";
             cacheUsageBar.style.width = `${clamp(used / limit * 100, 0, 100)}%`;
-            cacheUsage.title = `${formatCacheBytes(used)} of ${formatCacheBytes(limit)}`;
+            cacheUsage.title = t("{used} of {limit}", { used: formatCacheBytes(used), limit: formatCacheBytes(limit) });
         };
         const syncCacheLimit = (value, source) => {
             cacheLimitGB = Math.round(clamp(value, 1, 1024));
@@ -11826,9 +11833,9 @@ class Factory3DWidget {
             }
             effective.textContent = preventUpscale
                 ? sourceWidth && sourceHeight
-                    ? `Current source: ${sourceWidth}×${sourceHeight} · effective conditioning: ${effectiveResolution}×${effectiveResolution}.`
-                    : "Smaller sources will use their native short-side resolution on a 16-pixel patch grid."
-                : `Every source will be framed at ${requested}×${requested}, including smaller images.`;
+                    ? t("Current source: {width}×{height} · effective conditioning: {resolution}×{resolution}.", { width: sourceWidth, height: sourceHeight, resolution: effectiveResolution })
+                    : t("Smaller sources will use their native short-side resolution on a 16-pixel patch grid.")
+                : t("Every source will be framed at {resolution}×{resolution}, including smaller images.", { resolution: requested });
             effective.dataset.tone = requested === 2048
                 ? "extreme"
                 : requested === 1536
@@ -11850,17 +11857,17 @@ class Factory3DWidget {
         );
         body.append(models, inference, cache);
 
-        const close = button("vnccs-i3s__button", "Close");
+        const close = button("vnccs-i3s__button", t("Close"));
         const apply = button(
             "vnccs-i3s__button vnccs-i3s__button--primary",
-            "Apply settings",
+            t("Apply settings"),
             "check",
         );
         close.addEventListener("click", () => this.closeModal());
         clearCache.addEventListener("click", async () => {
             clearCache.disabled = true;
             const label = clearCache.querySelector("span:last-child");
-            if (label) label.textContent = "Clearing…";
+            if (label) label.textContent = t("Clearing…");
             try {
                 const result = await this._fetchJSON(
                     ENDPOINTS.splatCacheClear,
@@ -11869,14 +11876,14 @@ class Factory3DWidget {
                 updateCacheStatus(result);
                 if (this.capabilities) this.capabilities.splat_cache = result;
                 this.toast(
-                    `SPLAT cache cleared · ${Number(result.deleted_files) || 0} files removed.`,
+                    t("SPLAT cache cleared · {count} files removed.", { count: Number(result.deleted_files) || 0 }),
                     "success",
                 );
             } catch (error) {
-                this._showError("SPLAT cache cleanup failed", error);
+                this._showError(t("SPLAT cache cleanup failed"), error);
             } finally {
                 clearCache.disabled = false;
-                if (label) label.textContent = "Clear cache";
+                if (label) label.textContent = t("Clear cache");
             }
         });
         apply.addEventListener("click", async () => {
@@ -11905,14 +11912,14 @@ class Factory3DWidget {
                 this._scheduleStateSave(0);
                 this.closeModal();
                 this.toast(
-                    `TripoSplat settings applied · ${draft.splat_cache_limit_gb} GiB cache.`,
+                    t("TripoSplat settings applied · {limit} GiB cache.", { limit: draft.splat_cache_limit_gb }),
                     "success",
                 );
             } catch (error) {
                 apply.disabled = false;
                 close.disabled = false;
                 clearCache.disabled = false;
-                this._showError("TripoSplat settings failed", error);
+                this._showError(t("TripoSplat settings failed"), error);
             }
         });
         modelAction.addEventListener("click", async () => {
@@ -11934,7 +11941,7 @@ class Factory3DWidget {
         });
         updateSummary();
         this.openModal({
-            title: "TripoSplat setup",
+            title: t("TripoSplat setup"),
             body,
             actions: [close, apply],
             wide: true,
@@ -11957,12 +11964,12 @@ class Factory3DWidget {
             element("div", "vnccs-i3s__failure-summary", errorText(error)),
             element("pre", "vnccs-i3s__diagnostics", details),
         );
-        const close = button("vnccs-i3s__button", "Close");
+        const close = button("vnccs-i3s__button", t("Close"));
         close.addEventListener("click", () => this.closeModal());
         const actions = [close];
         const resolvedJobId = jobId || job?.job_id;
         if (resolvedJobId) {
-            const log = button("vnccs-i3s__button vnccs-i3s__button--primary", "Download full log", "download");
+            const log = button("vnccs-i3s__button vnccs-i3s__button--primary", t("Download full log"), "download");
             log.addEventListener("click", () => download(ENDPOINTS.jobLog(resolvedJobId)));
             actions.push(log);
         }
@@ -11994,7 +12001,7 @@ class Factory3DWidget {
         const head = element("header", "vnccs-i3s__modal-head");
         const heading = element("div", "vnccs-i3s__modal-title", title);
         const close = button("vnccs-i3s__button vnccs-i3s__button--quiet vnccs-i3s__icon-button", "", "close");
-        close.setAttribute("aria-label", "Close");
+        close.setAttribute("aria-label", t("Close"));
         head.append(heading, close);
         const content = element("div", "vnccs-i3s__modal-body");
         content.appendChild(body instanceof Node ? body : element("div", "", String(body || "")));
@@ -12080,9 +12087,9 @@ class Factory3DWidget {
         this._syncDensityMode();
         this._syncGeneratorUI();
         const exportLabel = this.els.sceneExport?.querySelector("span:last-child");
-        if (exportLabel) exportLabel.textContent = "Gaussian PLY";
+        if (exportLabel) exportLabel.textContent = t("Gaussian PLY");
         if (this.els.sceneExport) {
-            this.els.sceneExport.title = "Export visible Gaussian models as PLY; architecture is stored in the scene";
+            this.els.sceneExport.title = t("Export visible Gaussian models as PLY; architecture is stored in the scene");
         }
         this._customSelects?.refresh?.();
     }
@@ -12121,11 +12128,11 @@ class Factory3DWidget {
         summary.className = "vnccs-i3s__texturing-summary";
         summary.setAttribute("aria-live", "polite");
         const covered = Math.round(Number(texturing.coverage || 0) * 100);
-        summary.textContent = `${texturing.phase === "materials" ? "PBR materials" : "Surface views"} · ${covered}% surface coverage`;
+        summary.textContent = t("{phase} · {percent}% surface coverage", { phase: texturing.phase === "materials" ? t("PBR materials") : t("Surface views"), percent: covered });
         strip.appendChild(summary);
         const cards = document.createElement("div");
         cards.className = "vnccs-i3s__texturing-cards";
-        cards.setAttribute("aria-label", "Automatic texture views");
+        cards.setAttribute("aria-label", t("Automatic texture views"));
         cards.tabIndex = 0;
         const states = { pending: "Queued", rendering: "Rendering", generating: "Generating",
             projected: "Projected", complete: "PBR ready", occluded: "Not visible" };
@@ -12143,17 +12150,17 @@ class Factory3DWidget {
                 const image = document.createElement(view[key] ? "img" : "span");
                 if (view[key]) {
                     image.src = apiUrl(view[key]);
-                    image.alt = `${view.label}: ${name.toLowerCase()} view`;
+                    image.alt = t("{label}: {name} view", { label: view.label, name: name.toLowerCase() });
                 } else {
                     image.textContent = "·";
                 }
-                image.title = name;
+                image.title = t(name);
                 images.appendChild(image);
             }
             card.appendChild(images);
             const status = document.createElement("span");
             status.className = "vnccs-i3s__texturing-view-status";
-            status.textContent = states[view.state] || "Queued";
+            status.textContent = t(states[view.state] || "Queued");
             card.appendChild(status);
             cards.appendChild(card);
         }
@@ -12170,7 +12177,7 @@ class Factory3DWidget {
     _syncSeedMode() {
         const randomMode = this.settings.seed_mode === "randomize";
         this.els.seedDice.classList.toggle("active", randomMode);
-        this.els.seedDice.title = randomMode ? "Random seed" : "Fixed seed";
+        this.els.seedDice.title = randomMode ? t("Random seed") : t("Fixed seed");
         this.els.seedDice.setAttribute("aria-pressed", String(randomMode));
     }
 
@@ -12180,8 +12187,8 @@ class Factory3DWidget {
         const extreme = count >= 1048576;
         this.els.densityNote.hidden = !experimental;
         this.els.densityNote.textContent = extreme
-            ? "Extreme 4× density. Full-attention decode may exhaust even high-VRAM GPUs."
-            : "Experimental 2× density. Requires substantially more VRAM and decode time.";
+            ? t("Extreme 4× density. Full-attention decode may exhaust even high-VRAM GPUs.")
+            : t("Experimental 2× density. Requires substantially more VRAM and decode time.");
         this.els.density.closest(".vnccs-i3s__field")?.classList.toggle("is-experimental", experimental);
         this.els.density.closest(".vnccs-i3s__field")?.classList.toggle("is-extreme", extreme);
     }
@@ -12201,7 +12208,7 @@ class Factory3DWidget {
         this.els.grid.setAttribute("aria-pressed", String(Boolean(this.viewerState.grid)));
         const plan = this.editorView.view_mode === "plan";
         this.els.fit.disabled = false;
-        this.els.fit.title = plan ? "Frame complete plan" : "Frame complete 3D scene";
+        this.els.fit.title = plan ? t("Frame complete plan") : t("Frame complete 3D scene");
         this._syncCameraPanelControls();
         this.els.view3d.setAttribute("aria-pressed", String(!plan));
         this.els.viewPlan.setAttribute("aria-pressed", String(plan));
@@ -12212,8 +12219,8 @@ class Factory3DWidget {
         const cutawayEnabled = Boolean(this.editorView.interior_cutaway?.[cutawayKey]);
         this.els.cutaway.setAttribute("aria-pressed", String(cutawayEnabled));
         this.els.cutaway.title = cutawayEnabled
-            ? "Disable cutaway and show complete architecture in this viewport mode"
-            : "Interior cutaway (viewport only): hide ceilings and the nearest blocking wall";
+            ? t("Disable cutaway and show complete architecture in this viewport mode")
+            : t("Interior cutaway (viewport only): hide ceilings and the nearest blocking wall");
         this.viewer?.setInteriorCutaway?.(cutawayEnabled);
         this.els.planTools.hidden = !plan;
         const placingOnWall = this.editorView.plan_tool === "opening" && Boolean(this._openingWallId);
@@ -12244,7 +12251,7 @@ class Factory3DWidget {
         for (const control of this.els.planToolButtons) {
             control.hidden = !plan && !["select", "opening"].includes(control.dataset.planTool);
             control.disabled = false;
-            control.title = planToolTitles[control.dataset.planTool] || "";
+            control.title = t(planToolTitles[control.dataset.planTool] || "");
             control.setAttribute(
                 "aria-pressed",
                 String(control.dataset.planTool === this.editorView.plan_tool),
@@ -12257,7 +12264,7 @@ class Factory3DWidget {
             opening: "Click a wall to place · Drag to set width · Esc: select",
             camera: "Press and drag to place and aim",
         };
-        this.els.planHint.textContent = polygonRoom ? "Click corners · Enter: finish · Backspace: remove · Escape: cancel" : planHints[this.editorView.plan_tool] || planHints.select;
+        this.els.planHint.textContent = polygonRoom ? t("Click corners · Enter: finish · Backspace: remove · Escape: cancel") : t(planHints[this.editorView.plan_tool] || planHints.select);
         this.els.planGridToggle.setAttribute(
             "aria-pressed",
             String(this.editorView.plan_grid.visible),
@@ -12293,8 +12300,8 @@ class Factory3DWidget {
         this.els.levelPanel.setAttribute(
             "aria-label",
             activeLevel
-                ? `Floor levels, ${activeLevel.name} active`
-                : "Floor levels",
+                ? t("Floor levels, {level} active", { level: activeLevel.name })
+                : t("Floor levels"),
         );
         const levelSignature = levels.map(
             level => `${level.level_id}:${level.name}:${level.elevation}:${level.height}:${level.visible}`,
@@ -12314,7 +12321,7 @@ class Factory3DWidget {
                     element(
                         "small",
                         "",
-                        `${Number(level.elevation).toFixed(2)} m · height ${Number(level.height).toFixed(2)} m`,
+                        t("{elevation} m · height {height} m", { elevation: Number(level.elevation).toFixed(2), height: Number(level.height).toFixed(2) }),
                     ),
                 );
                 control.appendChild(copy);
@@ -12414,10 +12421,10 @@ class Factory3DWidget {
             try {
                 state = JSON.parse(String(widget?.value || "{}"));
                 if (!state || typeof state !== "object" || Array.isArray(state)) {
-                    throw new Error("Saved Factory state must be an object.");
+                    throw new Error(t("Saved Factory state must be an object."));
                 }
             } catch (error) {
-                this._showError("Saved state is invalid", error);
+                this._showError(t("Saved state is invalid"), error);
                 return;
             }
             try {
@@ -12425,7 +12432,7 @@ class Factory3DWidget {
                 this._unsupportedEditorState = false;
             } catch (error) {
                 this._unsupportedEditorState = true;
-                this._showError("Workflow requires a newer Factory editor", error);
+                this._showError(t("Workflow requires a newer Factory editor"), error);
                 return;
             }
             this.sceneId = String(state.scene_id || "");
@@ -12552,7 +12559,7 @@ class Factory3DWidget {
             }
             this._restoreFailed = false;
         } catch (error) {
-            this._showError("Saved scene could not be restored", error);
+            this._showError(t("Saved scene could not be restored"), error);
         } finally {
             this._isRestoring = false;
             this.syncToNode();

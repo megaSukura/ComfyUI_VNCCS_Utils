@@ -1,3 +1,5 @@
+import { t } from "../i18n/index.mjs";
+
 export const MAX_STATE_CHARS = 256 * 1024;
 export const MAX_PROMPT_CHARS = 64 * 1024;
 export const MAX_PROMPT_OUTPUTS = 16;
@@ -68,43 +70,43 @@ export function templateText(state, output = 0) {
 
 export function normalizeState(raw = {}) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw) || (raw.version ?? 1) !== 1) {
-        throw new Error("Unsupported Prompt Designer state.");
+        throw new Error(t("Unsupported Prompt Designer state."));
     }
     const defaults = defaultState();
     if (raw.cycleIndex !== undefined && (!Number.isSafeInteger(raw.cycleIndex) || raw.cycleIndex < -1)) {
-        throw new Error("Invalid cycle position.");
+        throw new Error(t("Invalid cycle position."));
     }
     const categories = raw.categories ?? defaults.categories;
     const categoryNames = new Set();
-    if (!Array.isArray(categories) || categories.length > 128) throw new Error("The library supports up to 128 categories.");
+    if (!Array.isArray(categories) || categories.length > 128) throw new Error(t("The library supports up to 128 categories."));
     for (const category of categories) {
         if (!category || typeof category.name !== "string" || !category.name.trim() || category.name.length > 128
             || categoryNames.has(category.name.toLowerCase())
             || (category.color !== undefined && (typeof category.color !== "string" || !/^#[\da-f]{6}$/i.test(category.color)))) {
-            throw new Error("Invalid or duplicate category.");
+            throw new Error(t("Invalid or duplicate category."));
         }
         categoryNames.add(category.name.toLowerCase());
     }
     const blocks = raw.blocks ?? defaults.blocks;
-    if (!Array.isArray(blocks) || blocks.length > 256) throw new Error("The block library supports up to 256 blocks.");
+    if (!Array.isArray(blocks) || blocks.length > 256) throw new Error(t("The block library supports up to 256 blocks."));
     const ids = new Set();
     for (const block of blocks) {
         if (!block || typeof block.id !== "string" || !block.id || ids.has(block.id)
             || typeof block.name !== "string" || typeof block.text !== "string"
             || block.id.length > 128 || block.name.length > 128 || block.text.length > MAX_PROMPT_CHARS) {
-            throw new Error("Invalid or duplicate prompt block.");
+            throw new Error(t("Invalid or duplicate prompt block."));
         }
         if ((block.mode !== undefined && !["random", "cycle"].includes(block.mode))
             || (block.color !== undefined && (typeof block.color !== "string" || !/^#[\da-f]{6}$/i.test(block.color)))) {
-            throw new Error("Invalid block sampling mode or color.");
+            throw new Error(t("Invalid block sampling mode or color."));
         }
         if (block.category !== undefined && (typeof block.category !== "string" || block.category.length > 128)) {
-            throw new Error("Invalid block category.");
+            throw new Error(t("Invalid block category."));
         }
         ids.add(block.id);
     }
     const parts = raw.parts ?? (raw.blocks ? [] : defaults.parts);
-    if (!Array.isArray(parts) || parts.length > 4096) throw new Error("The prompt contains too many fragments.");
+    if (!Array.isArray(parts) || parts.length > 4096) throw new Error(t("The prompt contains too many fragments."));
     const validOutput = part => part && typeof part === "object" && (
         (Object.keys(part).length === 1 && typeof part.text === "string")
         || (typeof part.blockId === "string" && ids.has(part.blockId)
@@ -121,7 +123,7 @@ export function normalizeState(raw = {}) {
             if (!multi || typeof multi !== "object" || Object.keys(multi).length !== 1 || !Array.isArray(multi.variants)
                 || multi.variants.length < 2 || multi.variants.length > MAX_PROMPT_OUTPUTS
                 || multi.variants.some(variant => !Array.isArray(variant) || variant.length > 4096 || variant.some(item => !validOutput(item)))) {
-                throw new Error(`Multi-prompt requires 2–${MAX_PROMPT_OUTPUTS} variants containing text and blocks.`);
+                throw new Error(t("Multi-prompt requires 2–{max} variants containing text and blocks.", { max: MAX_PROMPT_OUTPUTS }));
             }
         } else if (part && Object.keys(part).length === 1 && "condition" in part) {
             const condition = part.condition;
@@ -132,10 +134,10 @@ export function normalizeState(raw = {}) {
                 || (Object.hasOwn(condition, "clauses") && (!Array.isArray(condition.clauses) || condition.clauses.length > 64
                     || condition.clauses.some(clause => !validCheck(clause) || Object.keys(clause).length !== 4
                         || !["and", "or"].includes(clause.join))))) {
-                throw new Error("Invalid prompt condition.");
+                throw new Error(t("Invalid prompt condition."));
             }
         } else if (!validOutput(part)) {
-            throw new Error("The prompt references a missing block or an invalid fragment.");
+            throw new Error(t("The prompt references a missing block or an invalid fragment."));
         }
     }
     const tabs = Array.isArray(raw.openTabs) ? [...new Set(raw.openTabs.filter(id => ids.has(id)))] : [];
@@ -151,7 +153,7 @@ export function normalizeState(raw = {}) {
         openTabs: tabs, activeTab: tabs.includes(raw.activeTab) ? raw.activeTab : "prompt",
     };
     if (raw.promptTabs !== undefined) {
-        if (!Array.isArray(raw.promptTabs) || !raw.promptTabs.length || raw.promptTabs.length > 128) throw new Error("Invalid prompt tabs.");
+        if (!Array.isArray(raw.promptTabs) || !raw.promptTabs.length || raw.promptTabs.length > 128) throw new Error(t("Invalid prompt tabs."));
         const promptIds = new Set();
         state.promptTabs = raw.promptTabs.map(tab => {
             const details = tab?.details ?? {};
@@ -164,9 +166,9 @@ export function normalizeState(raw = {}) {
                 || (details.color !== undefined && (typeof details.color !== "string" || !/^#[\da-f]{6}$/i.test(details.color)))
                 || (details.id !== undefined && (typeof details.id !== "string" || !/^[\da-f]{32}$/.test(details.id)
                     || !Number.isSafeInteger(details.revision) || details.revision < 0))
-                || (details.revision !== undefined && details.id === undefined)) throw new Error("Invalid prompt tab or template details.");
+                || (details.revision !== undefined && details.id === undefined)) throw new Error(t("Invalid prompt tab or template details."));
             if (tab.templateId !== undefined && (tab.templateId !== details.id || !(details.revision > 0))) {
-                throw new Error("Invalid opened prompt template.");
+                throw new Error(t("Invalid opened prompt template."));
             }
             promptIds.add(tab.id);
             const draft = normalizeState({ version: 1, categories, blocks, parts: tab.parts, seed: tab.seed,
@@ -175,7 +177,7 @@ export function normalizeState(raw = {}) {
                 ...(draft.cycleIndex === undefined ? {} : { cycleIndex: draft.cycleIndex }),
                 ...(tab.templateId === undefined ? {} : { templateId: tab.templateId }), details: { ...details }, dirty: tab.dirty };
         });
-        if (!promptIds.has(raw.activePrompt)) throw new Error("The active prompt tab is missing.");
+        if (!promptIds.has(raw.activePrompt)) throw new Error(t("The active prompt tab is missing."));
         state.activePrompt = raw.activePrompt;
         Object.assign(state.promptTabs.find(tab => tab.id === state.activePrompt), {
             parts: mergeText(state.parts), seed: state.seed, afterGenerate: state.afterGenerate,
@@ -184,7 +186,7 @@ export function normalizeState(raw = {}) {
     }
     if (Array.from({ length: outputCount(state) }, (_, output) => templateText(state, output)).some(text => text.length > MAX_PROMPT_CHARS)
         || JSON.stringify(state).length > MAX_STATE_CHARS) {
-        throw new Error("Prompt Designer state or expanded prompt is too large.");
+        throw new Error(t("Prompt Designer state or expanded prompt is too large."));
     }
     return state;
 }

@@ -94,8 +94,8 @@ test("pose entries guard the parallel-branch methods with a status fallback", ()
 test("the PSD row is built once by the widget and wired through an explicit hook", () => {
   assert.ok(widgetSource.includes("vnccs-uc-psd-row"), "the grouped PSD row must be built in the footer");
   assert.ok(widgetSource.includes("vnccs-uc-psd-label"), "the row must carry the small PSD group label");
-  assert.ok(widgetSource.includes("<span>Export</span>"), "the export button keeps its Export label");
-  assert.ok(widgetSource.includes("<span>Import</span>"), "the import button keeps its Import label");
+  assert.ok(widgetSource.includes("<span>${tr(\"Export\")}</span>"), "the export button keeps its Export label");
+  assert.ok(widgetSource.includes("<span>${tr(\"Import\")}</span>"), "the import button keeps its Import label");
   assert.match(widgetSource, /this\.psdImportInput\.accept = "\.psd,application\/octet-stream";/, "the hidden picker must accept PSD files");
   assert.match(widgetSource, /this\.wirePsdImport = \(onPickFile\) =>/, "the widget must expose the import wiring hook");
   assert.match(layerTools, /uc\.wirePsdImport\?\.\(\(file\) => importPSDFile\(uc, file\)\)/, "layer tools must wire only the import handler");

@@ -13,7 +13,7 @@ test("inpaint defaults to the full bbox and crop settings describe the edit-mode
         UNICANVAS_MODEL_MODULES: { sdxl:{ defaults:{} }, anima:{ defaults:{} } }, DEFAULT_SEED_MODE:"randomize",
     });
     assert.equal(settings.inpaint_crop_to_mask, false);
-    assert.match(source, /checkboxRow\("Crop and stitch \(non-edit models only\)", s\.inpaint_crop_to_mask === true/);
+    assert.match(source, /checkboxRow\(tr\("Crop and stitch \(non-edit models only\)"\), s\.inpaint_crop_to_mask === true/);
     assert.ok(source.includes("Edit models always generate the whole bbox and apply only the mask."));
 });
 
@@ -85,7 +85,7 @@ test("settings gear drives remove bg; the mannequin character recipe is gone", (
 });
 
 test("the settings gear sits next to the snap-to-grid icon", () => {
-    assert.match(source, /this\.gearBtn = this\._button\(UI_ICONS\.gear, "vnccs-uc-icon vnccs-uc-gear", \(\) => this\.openUniCanvasSettings\(\), "UniCanvas settings"\);/,
+    assert.match(source, /this\.gearBtn = this\._button\(UI_ICONS\.gear, "vnccs-uc-icon vnccs-uc-gear", \(\) => this\.openUniCanvasSettings\(\), tr\("UniCanvas settings"\)\);/,
         "a gear button must be created for the corner bar");
     assert.match(source, /this\.settingsBar\.append\(this\.undoBtn, this\.redoBtn, this\.fitBtn, this\.zoomResetBtn, settingsSpacer, this\.snapBtn, this\.gearBtn\);/,
         "the gear must sit in the corner bar right after Snap to grid");
@@ -162,7 +162,7 @@ test("tool settings dock above the Layers section in the right sidebar", () => {
         "the docked tool settings must be styled as a sidebar section");
     assert.match(source, /if \(this\.toolSettingsSection\) this\.toolSettingsSection\.hidden = true;/,
         "tools without settings (move/pan/sam/bbox) must collapse the whole section");
-    assert.match(source, /if \(this\.toolSettingsTitle\) this\.toolSettingsTitle\.textContent = `\$\{title\} Settings`;/,
+    assert.match(source, /if \(this\.toolSettingsTitle\) this\.toolSettingsTitle\.textContent = tr\("\{title\} Settings", \{ title: tr\(title\) \}\);/,
         "the section head must carry the active tool's title");
     assert.ok(!/\.vnccs-uc-tool-settings \{ position:absolute/.test(source),
         "the old stage-overlay positioning must be gone");
@@ -175,7 +175,7 @@ test("a linked VNCSS Config greys out every UniCanvas control it overrides", () 
         'data-lora-stack data-config-override',
         'class="vnccs-uc-model-tabs" data-config-override',
         'data-action="edit-refs" data-config-override',
-        'data-config-override>Loader<select',
+        'data-config-override>${tr("Loader")}<select',
     ]) {
         assert.ok(source.includes(marker), "missing override marker: " + marker);
     }
@@ -191,7 +191,7 @@ test("sidebar polish: denoise field fits 0.65, preset picker shows a chevron, Lo
     assert.match(source, /\.vnccs-uc-denoise-control\s*\{[^}]*grid-template-columns:auto minmax\(0,1fr\) 58px/, "the denoise number field must be wide enough for 0.65");
     assert.match(source, /\.vnccs-uc-denoise-control \.vnccs-uc-input\s*\{[^}]*width:58px/);
     assert.ok(source.includes("${head ? PRESET_CHEVRON_ICON : \"\"}"), "the selected preset card must carry a dropdown chevron");
-    assert.ok(source.includes('card.title = "Choose another preset"'), "the preset card explains that it opens a list");
+    assert.ok(source.includes('card.title = tr("Choose another preset")'), "the preset card explains that it opens a list");
     assert.match(source, /const LORA_STACK_MAX = 10/);
     assert.ok(source.includes('data-action="lora-add"') && source.includes('data-action="lora-remove"'), "the LoRA stack needs + and - buttons");
     assert.match(source, /\.vnccs-uc-lora-rows\s*\{[^}]*max-height:186px[^}]*overflow-y:auto/, "more than three LoRA rows scroll inside the list");

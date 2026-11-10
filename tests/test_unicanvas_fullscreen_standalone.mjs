@@ -186,7 +186,7 @@ test("New canvas lives in the top bar and delegates to durable document creation
     assert.ok(!outputActions.includes("vnccs-uc-new-canvas"), "mode installation must not duplicate the document toolbar's New icon");
     assert.ok(!modesSource.includes("vnccs-uc2-output-actions"), "the old New row above GENERATE must be gone");
     assert.ok(!modesSource.includes("_vnccsOutputActions"), "no dead output-actions handle may remain");
-    assert.ok(modesSource.includes('widget._button("Save to output", "vnccs-uc-btn"'), "Save to output must be a widget button");
+    assert.ok(modesSource.includes('widget._button(t("Save to output"), "vnccs-uc-btn"'), "Save to output must be a widget button");
     assert.match(widgetSource, /\.vnccs-uc-bottom \.vnccs-uc-canvas-actions \{ position:absolute; left:50%; transform:translateX\(-50%\);/,
         "the manager must be centered between the toolbar clusters");
     assert.match(widgetSource, /\.vnccs-uc-bottom \.vnccs-uc-new-canvas \{ position:absolute; left:calc\(100% \+ 6px\); \}/,
@@ -261,7 +261,7 @@ test("Save to output flattens through the shared helper and keeps the layer-menu
         "flattenLayersToMaster must not keep its own compositing loop");
 
     const save = region(modesSource, "export async function saveUniCanvasOutput", "export async function newUniCanvasDocument");
-    assert.ok(save.includes('widget.setStatus("[VNCCS UniCanvas] Saving to output...")'),
+    assert.ok(save.includes('widget.setStatus(t("[VNCCS UniCanvas] Saving to output..."))'),
         "the status message must carry the [VNCCS UniCanvas] prefix");
     assert.ok(save.includes("widget.downloadBlob(blob, fileName)"),
         "the composite save must download the file in the browser");
@@ -334,8 +334,8 @@ test("Save to output saves the bbox crop and reports the result in a toast", () 
     assert.ok(!crop.includes("buildUniCanvasCompositeCanvas(widget)"), "the bbox export cannot clip native pixels to the backing canvas first");
     const save = region(modesSource, "export async function saveUniCanvasOutput", "export async function newUniCanvasDocument");
     assert.ok(save.includes("canvasToPngBlob(buildUniCanvasBboxCompositeCanvas(widget))"), "Save to output must download the bbox crop");
-    assert.ok(save.includes('showUniCanvasToast(widget, "Image downloaded"'), "success must show a toast with the file name");
-    assert.ok(save.includes('showUniCanvasToast(widget, "Save to output failed", message, "error")'),
+    assert.ok(save.includes('showUniCanvasToast(widget, t("Image downloaded")'), "success must show a toast with the file name");
+    assert.ok(save.includes('showUniCanvasToast(widget, t("Save to output failed"), message, "error")'),
         "failure must show an error toast with the message");
 });
 

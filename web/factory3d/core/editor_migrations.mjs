@@ -1,3 +1,5 @@
+import { t } from "../../i18n/index.mjs";
+
 export const EDITOR_VERSION = 18;
 export const WORKSPACE_LAYOUTS = Object.freeze(["scene", "architecture", "landscape", "lighting", "camera", "output"]);
 const bounded = (value, fallback, min, max) => Number.isFinite(Number(value))
@@ -21,7 +23,7 @@ export function normalizedWorkspace(value = {}) {
 export function migrateEditorState(value = {}) {
     const version = Number(value.schema_version || 0);
     if (!Number.isInteger(version) || version < 0 || version > EDITOR_VERSION) {
-        throw new Error(`Unsupported Factory editor version ${value.schema_version}. Update the extension to open this workflow.`);
+        throw new Error(t("Unsupported Factory editor version {version}. Update the extension to open this workflow.", { version: value.schema_version }));
     }
     const result = globalThis.structuredClone ? structuredClone(value) : JSON.parse(JSON.stringify(value));
     result.schema_version = EDITOR_VERSION;

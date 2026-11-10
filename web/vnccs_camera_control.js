@@ -9,6 +9,7 @@ import {
     randomizeCameraState,
     serializeCameraState,
 } from "./camera_control/utils.mjs";
+import { t } from "./i18n/index.mjs";
 
 const STYLE_ID = "vnccs-camera-control-styles";
 const DOM_WIDGET_NAME = "camera_control_ui";
@@ -404,7 +405,7 @@ class VNCCSCameraWidget {
 
         this.canvas = document.createElement("canvas");
         this.canvas.className = "vnccs-camera-radar";
-        this.canvas.setAttribute("aria-label", "Camera azimuth and distance radar");
+        this.canvas.setAttribute("aria-label", t("Camera azimuth and distance radar"));
         this.ctx = this.canvas.getContext("2d");
         this.radarWrap.appendChild(this.canvas);
 
@@ -413,11 +414,11 @@ class VNCCSCameraWidget {
 
         const elevationTitle = document.createElement("div");
         elevationTitle.className = "vnccs-camera-elevation-title";
-        elevationTitle.textContent = "Height";
+        elevationTitle.textContent = t("Height");
 
         this.elevationTrack = document.createElement("div");
         this.elevationTrack.className = "vnccs-camera-elevation-track";
-        this.elevationTrack.setAttribute("aria-label", "Camera elevation");
+        this.elevationTrack.setAttribute("aria-label", t("Camera elevation"));
 
         const elevationLine = document.createElement("div");
         elevationLine.className = "vnccs-camera-elevation-line";
@@ -431,7 +432,7 @@ class VNCCSCameraWidget {
             button.dataset.elevation = String(elevation);
             button.style.top = `${8 + (index * 28)}%`;
             button.textContent = `${elevation}°`;
-            button.title = `Elevation ${elevation}°`;
+            button.title = t("Elevation {degrees}°", { degrees: elevation });
             this.elevationButtons.set(elevation, button);
             this.elevationTrack.appendChild(button);
         });
@@ -452,14 +453,14 @@ class VNCCSCameraWidget {
         triggerLabel.className = "vnccs-camera-check";
         this.triggerInput = document.createElement("input");
         this.triggerInput.type = "checkbox";
-        triggerLabel.append(this.triggerInput, document.createTextNode("Trigger"));
+        triggerLabel.append(this.triggerInput, document.createTextNode(t("Trigger")));
 
         const randomLabel = document.createElement("label");
         randomLabel.className = "vnccs-camera-check";
-        randomLabel.title = "Choose a new camera angle, height and distance for every queued generation";
+        randomLabel.title = t("Choose a new camera angle, height and distance for every queued generation");
         this.randomInput = document.createElement("input");
         this.randomInput.type = "checkbox";
-        randomLabel.append(this.randomInput, document.createTextNode("Random"));
+        randomLabel.append(this.randomInput, document.createTextNode(t("Random")));
 
         toggles.append(triggerLabel, randomLabel);
         this.footer.append(this.readout, toggles);
@@ -469,7 +470,7 @@ class VNCCSCameraWidget {
 
         const randomScopeLabel = document.createElement("span");
         randomScopeLabel.className = "vnccs-camera-random-scope-label";
-        randomScopeLabel.textContent = "Random angle";
+        randomScopeLabel.textContent = t("Random angle");
 
         const randomScopeOptions = document.createElement("div");
         randomScopeOptions.className = "vnccs-camera-random-scope-options";
@@ -481,8 +482,8 @@ class VNCCSCameraWidget {
             const button = document.createElement("button");
             button.type = "button";
             button.className = "vnccs-camera-random-scope-btn";
-            button.textContent = label;
-            button.title = title;
+            button.textContent = t(label);
+            button.title = t(title);
             button.dataset.mode = mode;
             this.randomScopeButtons.set(mode, button);
             randomScopeOptions.appendChild(button);
@@ -625,11 +626,11 @@ class VNCCSCameraWidget {
         }
 
         const distanceLabel = this.state.distance === "close-up"
-            ? "CLOSE"
-            : this.state.distance === "medium shot" ? "MEDIUM" : "WIDE";
+            ? t("CLOSE")
+            : this.state.distance === "medium shot" ? t("MEDIUM") : t("WIDE");
         this.readout.innerHTML = [
-            `<strong>AZ</strong> ${this.state.azimuth}°`,
-            `<strong>EL</strong> ${this.state.elevation}°`,
+            `<strong>${t("AZ")}</strong> ${this.state.azimuth}°`,
+            `<strong>${t("EL")}</strong> ${this.state.elevation}°`,
             `<strong>${distanceLabel}</strong>`,
         ].join(" · ");
         this.draw();
@@ -691,7 +692,7 @@ class VNCCSCameraWidget {
         ctx.font = `800 ${Math.max(7, size * 0.034)}px 'Sora', sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("FRONT", 0, outerRadius * 0.72);
+        ctx.fillText(t("FRONT"), 0, outerRadius * 0.72);
 
         ctx.strokeStyle = "rgba(232, 232, 240, 0.24)";
         ctx.lineWidth = Math.max(1.5, size * 0.008);

@@ -8,6 +8,7 @@ import { UniCanvasPoseBackdrop } from "./pose_backdrop.mjs";
 import { POSE_HELP_CSS, buildPoseHelp } from "./pose_help.mjs";
 import { installBodyDrag } from "./pose_body_drag.mjs";
 import { UniCanvasPoseWall, poseWallPlacement } from "./pose_wall.mjs";
+import { t } from "../i18n/index.mjs";
 const EYE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const EYE_OFF_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.1 10.1 0 0 1 12 19c-6.4 0-10-7-10-7a17.7 17.7 0 0 1 4.1-4.9M9.9 5.2A9.7 9.7 0 0 1 12 5c6.4 0 10 7 10 7a17.8 17.8 0 0 1-2.2 3.2M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="M2 2l20 20"/></svg>';
 // Pose Studio's own rotation gizmo size (pose_studio/core.js: transform.setSize).
@@ -216,7 +217,7 @@ export class UniCanvasPoseEditor {
         try { await this.ready; }
         catch (error) {
             if (this.token === token && !this.activationPreparation?.cancelled) {
-                this.host.setStatus(`Pose Studio: ${error.message || error}`, true);
+                this.host.setStatus(t("Pose Studio: {message}", { message: error.message || error }), true);
                 this.release();
                 this.host.setTool?.("move");
             }
@@ -231,12 +232,12 @@ export class UniCanvasPoseEditor {
         // While editing, the right sidebar (denoise, masks, layers) is replaced by this panel.
         const side = document.createElement("div"); side.className = "vnccs-uc-pose-side";
         const head = document.createElement("div"); head.className = "vnccs-uc-pose-side-head";
-        const headTitle = document.createElement("strong"); headTitle.textContent = "Edit pose";
+        const headTitle = document.createElement("strong"); headTitle.textContent = t("Edit pose");
         this.sideLayerName = document.createElement("span");
         head.append(headTitle, this.sideLayerName);
         const dock = document.createElement("div"); dock.className = "vnccs-uc-pose-dock";
         const tabs = document.createElement("div"); tabs.className = "vnccs-uc-pose-tabs";
-        tabs.setAttribute("role", "tablist"); tabs.setAttribute("aria-label", "Pose settings");
+        tabs.setAttribute("role", "tablist"); tabs.setAttribute("aria-label", t("Pose settings"));
         dock.appendChild(tabs);
         root.appendChild(studio.canvasContainer);
         // Keep shared scene state and action references alive without a second action toolbar.
@@ -255,7 +256,7 @@ export class UniCanvasPoseEditor {
             const page = document.createElement("div"); page.className = "vnccs-uc-pose-page";
             page.id = `uc-pose-${this.layer.id}-${index}`; page.setAttribute("role", "tabpanel");
             page.appendChild(content); page.hidden = index !== 0; dock.appendChild(page);
-            const button = this.host._button(name, "vnccs-uc-btn", () => select(index));
+            const button = this.host._button(t(name), "vnccs-uc-btn", () => select(index));
             button.setAttribute("role", "tab"); button.setAttribute("aria-controls", page.id);
             button.setAttribute("aria-selected", String(index === 0));
             button.tabIndex = index === 0 ? 0 : -1;
@@ -333,19 +334,19 @@ export class UniCanvasPoseEditor {
 
     buildEditBar() {
         const bar = document.createElement("div"); bar.className = "vnccs-uc-pose-editbar";
-        const title = document.createElement("strong"); title.textContent = "Editing pose";
+        const title = document.createElement("strong"); title.textContent = t("Editing pose");
         const helpButton = this.host._button("?", "vnccs-uc-btn vnccs-uc-pose-eye", () => {
             if (this.help.open) this.help.hide(); else { this.help.show(); helpButton.setAttribute("aria-expanded", "true"); }
-        }, "How editing a pose works");
-        helpButton.setAttribute("aria-label", "Editing pose help"); helpButton.setAttribute("aria-expanded", "false");
+        }, t("How editing a pose works"));
+        helpButton.setAttribute("aria-label", t("Editing pose help")); helpButton.setAttribute("aria-expanded", "false");
         this.help = buildPoseHelp(document, { saveView: this.host.standalone, onClose: () => helpButton.setAttribute("aria-expanded", "false") });
-        const eye = this.host._button("", "vnccs-uc-btn vnccs-uc-pose-eye", () => this.toggleWall(), "Show or hide the layers below (the wall)");
-        eye.setAttribute("aria-label", "Toggle the layers below"); eye.setAttribute("aria-pressed", "true");
+        const eye = this.host._button("", "vnccs-uc-btn vnccs-uc-pose-eye", () => this.toggleWall(), t("Show or hide the layers below (the wall)"));
+        eye.setAttribute("aria-label", t("Toggle the layers below")); eye.setAttribute("aria-pressed", "true");
         eye.innerHTML = EYE_ICON;
         this.eyeButton = eye;
-        const reset = this.host._button("Reset camera", "vnccs-uc-btn", () => this.resetCamera(), "Return the editing camera to the capture framing");
-        const cancel = this.host._button("Cancel", "vnccs-uc-btn", () => this.host.finishPoseEdit(false), "Discard this edit session and restore the pose");
-        const save = this.host._button("Save pose", "vnccs-uc-btn primary", () => this.host.finishPoseEdit(true), "Keep the pose and leave the editor (Enter / Esc)");
+        const reset = this.host._button(t("Reset camera"), "vnccs-uc-btn", () => this.resetCamera(), t("Return the editing camera to the capture framing"));
+        const cancel = this.host._button(t("Cancel"), "vnccs-uc-btn", () => this.host.finishPoseEdit(false), t("Discard this edit session and restore the pose"));
+        const save = this.host._button(t("Save pose"), "vnccs-uc-btn primary", () => this.host.finishPoseEdit(true), t("Keep the pose and leave the editor (Enter / Esc)"));
         bar.append(title, helpButton, eye, reset, cancel, save);
         this.editBar = bar;
         return bar;
@@ -374,20 +375,20 @@ export class UniCanvasPoseEditor {
     buildCharacterMenu() {
         const menu = document.createElement("div"); menu.className = "vnccs-uc-pose-character";
         menu.id = `uc-pose-character-${this.layer.id}`;
-        menu.setAttribute("role", "group"); menu.setAttribute("aria-label", "Character reference");
+        menu.setAttribute("role", "group"); menu.setAttribute("aria-label", t("Character reference"));
         const header = document.createElement("div"); header.className = "vnccs-uc-pose-character-header";
-        const title = document.createElement("strong"); title.textContent = "Character reference";
+        const title = document.createElement("strong"); title.textContent = t("Character reference");
         header.append(title);
         const select = document.createElement("select"); select.className = "vnccs-uc-select";
         select.id = `${menu.id}-source`;
-        select.setAttribute("aria-label", "Character image source");
-        const image = document.createElement("img"); image.alt = "Selected character"; image.hidden = true;
+        select.setAttribute("aria-label", t("Character image source"));
+        const image = document.createElement("img"); image.alt = t("Selected character"); image.hidden = true;
         const row = document.createElement("div"); row.className = "vnccs-uc-pose-character-row";
         row.append(image, select);
         const issue = document.createElement("div"); issue.className = "vnccs-uc-pose-character-issue";
         const file = document.createElement("input"); file.type = "file"; file.accept = "image/*"; file.hidden = true;
-        const upload = this.host._button("Upload image", "vnccs-uc-btn", () => file.click());
-        const clear = this.host._button("Clear", "vnccs-uc-btn", () => {
+        const upload = this.host._button(t("Upload image"), "vnccs-uc-btn", () => file.click());
+        const clear = this.host._button(t("Clear"), "vnccs-uc-btn", () => {
             this.characterRequestRevision = (this.characterRequestRevision || 0) + 1;
             this.host.recordHistoryBefore(); this.layer.pose.character = null;
             this.refreshCharacterMenu(); this.host.syncToNode();
@@ -428,7 +429,7 @@ export class UniCanvasPoseEditor {
                 this.characterMenuKey = null;
                 this.setCharacterOpen(false);
                 this.refreshCharacterMenu(); this.host.syncToNode();
-            } catch (error) { if (current()) this.host.setStatus(`Character image: ${error.message || error}`, true); }
+            } catch (error) { if (current()) this.host.setStatus(t("Character image: {message}", { message: error.message || error }), true); }
         });
         menu.append(header, row, issue, actions, file);
         this.characterMenu = menu; this.characterClear = clear; this.characterIssue = issue;
@@ -462,7 +463,7 @@ export class UniCanvasPoseEditor {
             const query = `character=${encodeURIComponent(name)}`;
             let res = await fetch(`/vnccs/get_cached_preview?${query}`);
             if (!res.ok) res = await fetch(`/vnccs/get_character_pose_preview?${query}&index=0`);
-            if (!res.ok) throw new Error(`no preview image for ${name} (HTTP ${res.status})`);
+            if (!res.ok) throw new Error(t("no preview image for {name} (HTTP {status})", { name, status: res.status }));
             const blob = await res.blob();
             const dataURL = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -477,7 +478,7 @@ export class UniCanvasPoseEditor {
             this.refreshCharacterMenu(); this.host.syncToNode();
         } catch (error) {
             if (!current()) return;
-            this.host.setStatus(`Character reference: ${error.message || error}`, true);
+            this.host.setStatus(t("Character reference: {message}", { message: error.message || error }), true);
             this.characterMenuKey = null;
             this.refreshCharacterMenu();
         }
@@ -497,14 +498,14 @@ export class UniCanvasPoseEditor {
                 this.refreshCharacterMenu();
             });
         }
-        select.replaceChildren(new Option(characters.length ? "Choose a character" : "No VNCCS characters - upload an image", ""));
+        select.replaceChildren(new Option(characters.length ? t("Choose a character") : t("No VNCCS characters - upload an image"), ""));
         for (const name of characters) {
             if (character?.vnccsCharacter !== name) select.add(new Option(name, `vnccs:${name}`));
         }
         if (character?.source === "upload") select.add(new Option(character.name, "__uploaded__"));
         // Older poses referenced a canvas layer: keep showing that choice, but offer no new ones.
         const legacy = character?.source === "layer" ? this.host.layers.find(item => item.id === character.layerId) : null;
-        if (legacy) select.add(new Option(`Layer: ${legacy.name}`, legacy.id));
+        if (legacy) select.add(new Option(t("Layer: {name}", { name: legacy.name }), legacy.id));
         select.value = character?.source === "layer" ? character.layerId : character?.source === "upload" ? "__uploaded__" : "";
         const selected = character?.source === "layer" ? this.host.layers.find(item => item.id === character.layerId) : null;
         const src = character?.source === "upload" ? character.dataURL
@@ -513,7 +514,7 @@ export class UniCanvasPoseEditor {
         if (src) this.characterPreview.src = src;
         else this.characterPreview.removeAttribute("src");
         this.characterClear.disabled = !character;
-        this.characterIssue.textContent = character ? "" : "Needed to generate: pick a VNCCS character or upload an image.";
+        this.characterIssue.textContent = character ? "" : t("Needed to generate: pick a VNCCS character or upload an image.");
     }
 
     // Pose Studio's own history (mannequin edits; the animation timeline in animation mode),
@@ -915,10 +916,10 @@ export class UniCanvasPoseEditor {
     async flush(preparation) {
         const token = this.token, studio = this.studio;
         await this.ready;
-        if (token !== this.token || preparation?.cancelled) throw new Error("The pose layer changed while preparing the image.");
+        if (token !== this.token || preparation?.cancelled) throw new Error(t("The pose layer changed while preparing the image."));
         if (!this.initialized) return;
         await studio.awaitReadyForCompositeCapture();
-        if (token !== this.token || preparation?.cancelled) throw new Error("The pose layer changed while preparing the image.");
+        if (token !== this.token || preparation?.cancelled) throw new Error(t("The pose layer changed while preparing the image."));
         this.commit();
         await this.studio.flushAnimationCacheUpload();
     }
@@ -929,11 +930,11 @@ export class UniCanvasPoseEditor {
         const projected = !poseAtPanoramaCamera(layer, this.host.panorama);
         if (!projected) {
             await this.activate(layer, { show: this.host.tool === "pose", preparation });
-            if (preparation?.cancelled) throw new Error("Generation stopped");
+            if (preparation?.cancelled) throw new Error(t("Generation stopped"));
             await this.flush(preparation);
-            if (this.layer !== layer) throw new Error("The pose layer changed. Generate again.");
+            if (this.layer !== layer) throw new Error(t("The pose layer changed. Generate again."));
         }
-        if (!this.host.layers.includes(layer)) throw new Error("The pose layer changed. Generate again.");
+        if (!this.host.layers.includes(layer)) throw new Error(t("The pose layer changed. Generate again."));
         const token = this.token;
         const state = layer.pose.studio;
         const params = state.export || {};
@@ -945,7 +946,7 @@ export class UniCanvasPoseEditor {
         this.host.drawRasterLayerToWorldRect(ctx, layer, this.host.bbox,
             { x: 0, y: 0, width: image1.width, height: image1.height });
         const image2 = await composePoseReference(this.host, layer, size);
-        if (token !== this.token || !this.host.layers.includes(layer) || preparation?.cancelled) throw new Error("The pose layer changed. Generate again.");
+        if (token !== this.token || !this.host.layers.includes(layer) || preparation?.cancelled) throw new Error(t("The pose layer changed. Generate again."));
         const index = state.activeTab || 0;
         const posePrompt = state.pose_prompts?.[index] ?? state.poses?.[index]?.prompt ?? params.user_prompt ?? "";
         const userPrompt = [posePrompt, prompt].filter(Boolean).join("\n");

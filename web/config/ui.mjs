@@ -5,6 +5,8 @@
  * controls. Pure DOM APIs — no value is ever parsed as HTML.
  */
 
+import { t } from "../i18n/index.mjs";
+
 const STYLE_ID = "vnccs-config-ui-styles";
 
 export function ensureConfigStyles(doc = document) {
@@ -116,7 +118,7 @@ export function createCollapsibleSection({ title, badge = "", open = true, onTog
 export function createSwitch(enabled = false, onChange) {
   const root = document.createElement("div");
   root.className = "vnccs-cfg-switch" + (enabled ? " on" : "");
-  root.title = "Toggle";
+  root.title = t("Toggle");
   root.addEventListener("click", () => {
     const next = !root.classList.contains("on");
     root.classList.toggle("on", next);

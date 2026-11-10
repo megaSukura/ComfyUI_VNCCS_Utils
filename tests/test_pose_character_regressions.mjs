@@ -42,7 +42,7 @@ test("Pose Studio imports one strict version of its transform-track modules", ()
 
 test("connected pose images capture their exact size only when enabled", () => {
     assert.match(poseStudioSource, /capture_image_size:\s*false/);
-    assert.match(poseStudioSource, /<strong>Capture Image Size<\/strong>/);
+    assert.match(poseStudioSource, /<strong>\$\{tr\("Capture Image Size"\)\}<\/strong>/);
     const applyMethod = methodSource(
         poseStudioSource,
         "applyCapturedImageSize(width, height)",

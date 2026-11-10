@@ -1,3 +1,5 @@
+import { t } from "../../i18n/index.mjs";
+
 // These descriptors describe the current scene-11 light contract. Wider ranges
 // and transform-v2 semantics require their own schema migration.
 const numeric = (id, label, unit, hardMin, hardMax, step, extra = {}) => Object.freeze({
@@ -88,19 +90,19 @@ export function acceptNumericDraft(descriptor, draft, baseValue = 0) {
     const text = String(draft ?? "").trim();
     const match = /^([+*/-]=)?\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)\s*(m|cm|mm|km|deg|°|rad)?$/i.exec(text);
     if (!match) {
-        return { valid: false, message: "Enter a finite number; Escape cancels this edit." };
+        return { valid: false, message: t("Enter a finite number; Escape cancels this edit.") };
     }
     const [, operation, raw, suffix] = match;
     const units = descriptor.unit === "m" ? { m: 1, cm: 0.01, mm: 0.001, km: 1000 }
         : descriptor.unit === "deg" ? { deg: 1, "°": 1, rad: 180 / Math.PI } : {};
     if (suffix && (!Object.hasOwn(units, suffix.toLowerCase()) || ["*=", "/="].includes(operation))) {
-        return { valid: false, message: "This unit is not supported for this property or operation." };
+        return { valid: false, message: t("This unit is not supported for this property or operation.") };
     }
     const operand = Number(raw) * (suffix ? units[suffix.toLowerCase()] : 1);
     const requested = operation === "+=" ? baseValue + operand : operation === "-=" ? baseValue - operand
         : operation === "*=" ? baseValue * operand : operation === "/=" ? baseValue / operand : operand;
-    if (!Number.isFinite(requested)) return { valid: false, message: "Enter a finite number." };
+    if (!Number.isFinite(requested)) return { valid: false, message: t("Enter a finite number.") };
     const bounded = Math.max(descriptor.hardMin, Math.min(descriptor.hardMax, requested));
     const value = descriptor.integer ? Math.trunc(bounded) : bounded;
-    return { valid: true, value, message: value === requested ? "" : `Limited to ${value}${descriptor.unit ? ` ${descriptor.unit}` : ""}.` };
+    return { valid: true, value, message: value === requested ? "" : t("Limited to {value}{unit}.", { value, unit: descriptor.unit ? ` ${descriptor.unit}` : "" }) };
 }

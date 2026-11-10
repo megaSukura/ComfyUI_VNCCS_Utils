@@ -5,6 +5,8 @@
  * or Three.js dependencies so workflow migration can be covered by Node tests.
  */
 
+import { t } from "../i18n/index.mjs";
+
 export const MAX_POSE_STUDIO_CHARACTERS = 4;
 
 export const DEFAULT_CHARACTER_COLORS = Object.freeze([
@@ -84,7 +86,7 @@ export function cameraFramingToCharacterTransform(cameraParams, pivot) {
         pivot?.z,
     ].map(Number);
     if (values.some(value => !Number.isFinite(value))) {
-        throw new TypeError("Pose framing requires finite zoom, offsets, and model pivot.");
+        throw new TypeError(t("Pose framing requires finite zoom, offsets, and model pivot."));
     }
     const [zoom, offsetX, offsetY, pivotX, pivotY, pivotZ] = values;
     const transform = {
@@ -99,7 +101,7 @@ export function cameraFramingToCharacterTransform(cameraParams, pivot) {
         || !Number.isFinite(transform.z) || transform.z < -40 || transform.z > 40
         || transform.zoom < 0.1 || transform.zoom > 7
     ) {
-        throw new RangeError("Pose framing is outside the supported character transform range.");
+        throw new RangeError(t("Pose framing is outside the supported character transform range."));
     }
     return transform;
 }
@@ -119,10 +121,10 @@ export function composeCameraFramingWithCharacterTransform(
         pivot?.z,
     ].map(Number);
     if (values.some(value => !Number.isFinite(value))) {
-        throw new TypeError("Pose framing requires finite zoom, offsets, and model pivot.");
+        throw new TypeError(t("Pose framing requires finite zoom, offsets, and model pivot."));
     }
     const [zoom, offsetX, offsetY, pivotX, pivotY, pivotZ] = values;
-    if (zoom <= 0) throw new RangeError("Pose framing zoom must be positive.");
+    if (zoom <= 0) throw new RangeError(t("Pose framing zoom must be positive."));
 
     return normalizeCharacterTransform({
         x: zoom * current.x + (1 - zoom) * pivotX + zoom * offsetX,

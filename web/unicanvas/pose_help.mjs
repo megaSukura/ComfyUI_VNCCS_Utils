@@ -1,6 +1,8 @@
 // Illustrated help popup for the UniCanvas pose editor ("?" in the editing bar).
 // Everything here is static markup written by this module; no server or user text is inserted.
 
+import { t } from "../i18n/index.mjs";
+
 export const POSE_HELP_CSS = `
 .vnccs-uc-pose-help { position:absolute; inset:0; z-index:5; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box; background:rgba(8,6,12,.62); pointer-events:auto; }
 .vnccs-uc-pose-help[hidden] { display:none; }
@@ -36,10 +38,10 @@ const svg = (body, label) => `<svg viewBox="0 0 120 120" role="img" aria-label="
 const scene = body => `<rect width="120" height="120" fill="#1b2433"/><path d="M0 84h120v36H0z" fill="#132030"/>${body}`;
 
 const ILLUSTRATIONS = {
-    rotate: svg(scene(`${figure()}<circle cx="32" cy="62" r="14" stroke="${ACCENT}" stroke-width="2" fill="none"/><ellipse cx="32" cy="62" rx="5" ry="14" stroke="#e05555" stroke-width="2" fill="none"/><circle cx="32" cy="62" r="4.5" fill="${ACCENT}"/>`), "Rotating a joint"),
-    move: svg(scene(`${figure(4, 0)}${arrow("M60 56H12M12 56l7-6M12 56l7 6")}${arrow("M60 56h48M108 56l-7-6M108 56l-7 6")}${arrow("M60 56V6M60 6l-6 7M60 6l6 7")}`), "Moving the body"),
-    depth: svg(scene(`${figure(-4, 8, 0.35)}${figure(4, 0)}${arrow("M96 106 78 62M78 62l1 9M78 62l8 5", VIOLET)}<text x="88" y="118" fill="${VIOLET}" font-size="16" font-weight="700" font-family="sans-serif">Z</text>`), "Moving in depth"),
-    view: svg(scene(`${figure()}<path d="M22 100a48 20 0 0 0 76 0" stroke="${LINE}" stroke-width="2" stroke-dasharray="4 3" fill="none"/>${arrow("M98 100l-2-8M98 100l-8-1", LINE)}`), "Orbiting the view"),
+    rotate: () => svg(scene(`${figure()}<circle cx="32" cy="62" r="14" stroke="${ACCENT}" stroke-width="2" fill="none"/><ellipse cx="32" cy="62" rx="5" ry="14" stroke="#e05555" stroke-width="2" fill="none"/><circle cx="32" cy="62" r="4.5" fill="${ACCENT}"/>`), t("Rotating a joint")),
+    move: () => svg(scene(`${figure(4, 0)}${arrow("M60 56H12M12 56l7-6M12 56l7 6")}${arrow("M60 56h48M108 56l-7-6M108 56l-7 6")}${arrow("M60 56V6M60 6l-6 7M60 6l6 7")}`), t("Moving the body")),
+    depth: () => svg(scene(`${figure(-4, 8, 0.35)}${figure(4, 0)}${arrow("M96 106 78 62M78 62l1 9M78 62l8 5", VIOLET)}<text x="88" y="118" fill="${VIOLET}" font-size="16" font-weight="700" font-family="sans-serif">Z</text>`), t("Moving in depth")),
+    view: () => svg(scene(`${figure()}<path d="M22 100a48 20 0 0 0 76 0" stroke="${LINE}" stroke-width="2" stroke-dasharray="4 3" fill="none"/>${arrow("M98 100l-2-8M98 100l-8-1", LINE)}`), t("Orbiting the view")),
 };
 
 const mouse = (highlight, extra = "") => `<svg viewBox="0 0 40 56" width="34" height="48" role="img" aria-hidden="true"><rect x="6" y="4" width="28" height="48" rx="14" fill="none" stroke="${LINE}" stroke-width="2"/><path d="M20 4v20M6 24h28" stroke="${LINE}" stroke-width="2"/>${highlight}${extra}</svg>`;
@@ -50,20 +52,20 @@ const MOUSE_WHEEL = mouse(`<rect x="17" y="8" width="6" height="12" rx="3" fill=
 const EYE = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`;
 
 const ITEMS = [
-    { key: "rotate", title: "Rotate a joint", html: `Drag a <b style="color:${DOT}">yellow joint dot</b>. A rotation gizmo appears around it: drag a ring to turn the limb. Grab the body again to leave the joint.` },
-    { key: "move", title: "Move the body", html: "Drag the <b>torso</b> (the body itself, not a dot). The mannequin slides left, right, up and down on the wall - the layers below stay where they are." },
-    { key: "depth", title: "Move in depth (Z)", html: "Hold <kbd>Shift</kbd> while dragging the torso. Drag <b>up</b> to move away from the wall, <b>down</b> to come closer. An indicator next to the pointer shows which axes you are controlling." },
-    { key: "view", title: "Look around", html: "The view is only for inspecting: it never changes the image. Use it to check a hand or a foot from the side, then press <b>Reset camera</b>." },
+    { key: "rotate", title: "Rotate a joint", html: () => `Drag a <b style="color:${DOT}">${t("yellow joint dot")}</b>. ${t("A rotation gizmo appears around it: drag a ring to turn the limb. Grab the body again to leave the joint.")}` },
+    { key: "move", title: "Move the body", html: () => `${t("Drag the")} <b>${t("torso")}</b> ${t("(the body itself, not a dot). The mannequin slides left, right, up and down on the wall - the layers below stay where they are.")}` },
+    { key: "depth", title: "Move in depth (Z)", html: () => `${t("Hold")} <kbd>Shift</kbd> ${t("while dragging the torso. Drag")} <b>${t("up")}</b> ${t("to move away from the wall,")} <b>${t("down")}</b> ${t("to come closer. An indicator next to the pointer shows which axes you are controlling.")}` },
+    { key: "view", title: "Look around", html: () => `${t("The view is only for inspecting: it never changes the image. Use it to check a hand or a foot from the side, then press")} <b>${t("Reset camera")}</b>.` },
 ];
 
 export function buildPoseHelp(document, { onClose, saveView = false } = {}) {
     const overlay = document.createElement("div");
     overlay.className = "vnccs-uc-pose-help"; overlay.hidden = true;
-    overlay.setAttribute("role", "dialog"); overlay.setAttribute("aria-label", "Editing pose help");
+    overlay.setAttribute("role", "dialog"); overlay.setAttribute("aria-label", t("Editing pose help"));
     const card = document.createElement("div"); card.className = "vnccs-uc-pose-help-card";
     const bar = document.createElement("div"); bar.className = "vnccs-uc-pose-help-bar";
-    const title = document.createElement("strong"); title.textContent = "Editing pose - how it works";
-    const close = document.createElement("button"); close.type = "button"; close.className = "vnccs-uc-btn"; close.textContent = "Close";
+    const title = document.createElement("strong"); title.textContent = t("Editing pose - how it works");
+    const close = document.createElement("button"); close.type = "button"; close.className = "vnccs-uc-btn"; close.textContent = t("Close");
     bar.append(title, close);
     const grid = document.createElement("div"); grid.className = "vnccs-uc-pose-help-grid";
     const item = (svgMarkup, heading, html) => {
@@ -71,18 +73,20 @@ export function buildPoseHelp(document, { onClose, saveView = false } = {}) {
         cell.innerHTML = `${svgMarkup}<h4>${heading}</h4><p>${html}</p>`;
         return cell;
     };
-    for (const entry of ITEMS) grid.append(item(ILLUSTRATIONS[entry.key], entry.title,
-        saveView && entry.key === "view" ? "Orbit, pan or zoom to frame the pose. <b>Save pose</b> keeps this view in the image. <b>Reset camera</b> returns to the last saved framing." : entry.html));
+    for (const entry of ITEMS) grid.append(item(ILLUSTRATIONS[entry.key](), t(entry.title),
+        saveView && entry.key === "view"
+            ? `${t("Orbit, pan or zoom to frame the pose.")} <b>${t("Save pose")}</b> ${t("keeps this view in the image.")} <b>${t("Reset camera")}</b> ${t("returns to the last saved framing.")}`
+            : entry.html()));
     const mice = document.createElement("div"); mice.className = "vnccs-uc-pose-help-item";
-    mice.innerHTML = `<div class="vnccs-uc-pose-help-buttons"><div>${MOUSE_ORBIT}<span>Right-drag<br>orbit</span></div><div>${MOUSE_PAN}<span>Middle-drag<br>pan</span></div><div>${MOUSE_WHEEL}<span>Wheel<br>zoom</span></div></div><h4>Camera mouse controls</h4><p>${saveView ? "Save pose keeps the current camera framing." : "These move the editing view only."} Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) reverts the mannequin, never the view.</p>`;
+    mice.innerHTML = `<div class="vnccs-uc-pose-help-buttons"><div>${MOUSE_ORBIT}<span>${t("Right-drag")}<br>${t("orbit")}</span></div><div>${MOUSE_PAN}<span>${t("Middle-drag")}<br>${t("pan")}</span></div><div>${MOUSE_WHEEL}<span>${t("Wheel")}<br>${t("zoom")}</span></div></div><h4>${t("Camera mouse controls")}</h4><p>${saveView ? t("Save pose keeps the current camera framing.") : t("These move the editing view only.")} ${t("Undo")} (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) ${t("reverts the mannequin, never the view.")}</p>`;
     grid.append(mice);
     const buttons = document.createElement("div"); buttons.className = "vnccs-uc-pose-help-item wide";
-    buttons.innerHTML = `<h4>Buttons</h4><div class="vnccs-uc-pose-help-legend">
-<span class="vnccs-uc-btn icon">${EYE}</span><span>Show or hide the layers below the pose (the wall). The eye closes when they are hidden.</span>
-<span class="vnccs-uc-btn">Reset camera</span><span>Editing view back to the image framing. The mannequin is not touched.</span>
-<span class="vnccs-uc-btn">Cancel</span><span>Discard this session and restore the pose.</span>
-<span class="vnccs-uc-btn primary">Save pose</span><span>Keep the pose${saveView ? " and camera framing" : ""} and leave the editor (Enter).</span></div>
-<p>The Pose Library is in the <b>Scene</b> tab; body shape, gender and proportions are in <b>Body</b>. A new character starts as a copy of the current one.</p>`;
+    buttons.innerHTML = `<h4>${t("Buttons")}</h4><div class="vnccs-uc-pose-help-legend">
+<span class="vnccs-uc-btn icon">${EYE}</span><span>${t("Show or hide the layers below the pose (the wall). The eye closes when they are hidden.")}</span>
+<span class="vnccs-uc-btn">${t("Reset camera")}</span><span>${t("Editing view back to the image framing. The mannequin is not touched.")}</span>
+<span class="vnccs-uc-btn">${t("Cancel")}</span><span>${t("Discard this session and restore the pose.")}</span>
+<span class="vnccs-uc-btn primary">${t("Save pose")}</span><span>${saveView ? t("Keep the pose and camera framing and leave the editor (Enter).") : t("Keep the pose and leave the editor (Enter).")}</span></div>
+<p>${t("The Pose Library is in the")} <b>${t("Scene")}</b> ${t("tab; body shape, gender and proportions are in")} <b>${t("Body")}</b>. ${t("A new character starts as a copy of the current one.")}</p>`;
     grid.append(buttons);
     card.append(bar, grid); overlay.append(card);
     const hide = () => { overlay.hidden = true; onClose?.(); };

@@ -1,5 +1,5 @@
 import { parametricMetrics, createParametricGeometry } from "./geometry/parametric_parts.mjs";
-import { renderConditioningPixels, encodeConditioningPixels } from "./conditioning.mjs?v=20260908.1";
+import { renderConditioningPixels, encodeConditioningPixels } from "./conditioning.mjs?v=20261110.1";
 import * as THREE from "../vendor/spark/three.module.js";
 import { OrbitControls } from "../vendor/spark/OrbitControls.js";
 import { TransformControls } from "../vendor/spark/TransformControls.js";
@@ -10,12 +10,13 @@ import {
 } from "../vendor/spark/spark.module.js";
 import { FactoryArchitectureRuntime } from "./plan_geometry.mjs?v=20260908.3";
 import { solveDropToSurface } from "./support_solver.mjs?v=20260905.4";
-import { allocateLocalLightShadows } from "./lighting_policy.mjs?v=20260905.1";
+import { allocateLocalLightShadows } from "./lighting_policy.mjs?v=20261110.1";
 import { FactoryGenerationPreview } from "./generation_preview.mjs?v=20261107.1";
+import { t } from "../i18n/index.mjs";
 import {
     disposeFactoryModel,
     loadFactoryModel,
-} from "./model_loader.mjs?v=20261108.1";
+} from "./model_loader.mjs?v=20261110.1";
 
 
 const EMPTY = () => {};
@@ -513,18 +514,18 @@ function radians(value) {
     return value * Math.PI / 180;
 }
 
-export function validateSplatBuffer(buffer, label = "SPLAT asset") {
+export function validateSplatBuffer(buffer, label = t("SPLAT asset")) {
     if (!(buffer instanceof ArrayBuffer)) {
-        throw new TypeError(`${label} did not return an ArrayBuffer`);
+        throw new TypeError(t("{label} did not return an ArrayBuffer", { label }));
     }
     if (!buffer.byteLength) {
-        throw new Error(`${label} is empty`);
+        throw new Error(t("{label} is empty", { label }));
     }
     if (buffer.byteLength % 32 !== 0) {
-        throw new Error(
-            `${label} contains ${buffer.byteLength.toLocaleString()} bytes; `
-            + "a compact SPLAT must contain exactly 32 bytes per Gaussian",
-        );
+        throw new Error(t("{label} contains {bytes} bytes; a compact SPLAT must contain exactly 32 bytes per Gaussian", {
+            label,
+            bytes: buffer.byteLength.toLocaleString(),
+        }));
     }
     return buffer;
 }
@@ -597,10 +598,11 @@ function splatScanState(buffer) {
 
 function splatScanResult(buffer, label, state) {
     if (!state.visible) {
-        throw new Error(
-            `${label} contains ${state.count.toLocaleString()} records but no finite visible Gaussians`
-            + (state.invalid ? ` (${state.invalid.toLocaleString()} invalid records)` : ""),
-        );
+        throw new Error(t("{label} contains {count} records but no finite visible Gaussians{invalid}", {
+            label,
+            count: state.count.toLocaleString(),
+            invalid: state.invalid ? t(" ({count} invalid records)", { count: state.invalid.toLocaleString() }) : "",
+        }));
     }
     return {
         buffer: state.output || buffer,
@@ -615,7 +617,7 @@ function splatScanResult(buffer, label, state) {
 }
 
 function abortError() {
-    const error = new Error("SPLAT preparation was cancelled");
+    const error = new Error(t("SPLAT preparation was cancelled"));
     error.name = "AbortError";
     return error;
 }
@@ -628,7 +630,7 @@ async function yieldToMainThread() {
     await new Promise(resolve => setTimeout(resolve, 0));
 }
 
-export function prepareSplatBuffer(buffer, label = "SPLAT asset") {
+export function prepareSplatBuffer(buffer, label = t("SPLAT asset")) {
     validateSplatBuffer(buffer, label);
     const source = new DataView(buffer);
     const state = splatScanState(buffer);
@@ -638,7 +640,7 @@ export function prepareSplatBuffer(buffer, label = "SPLAT asset") {
 
 export async function prepareSplatBufferAsync(
     buffer,
-    label = "SPLAT asset",
+    label = t("SPLAT asset"),
     { signal, chunkRecords = SPLAT_SCAN_CHUNK } = {},
 ) {
     validateSplatBuffer(buffer, label);
@@ -699,7 +701,7 @@ export function canonicalObjectPreviewCamera(
     padding = 1.12,
 ) {
     if (!hasFiniteBounds(bounds)) {
-        throw new Error("The Gaussian object has no finite canonical preview bounds");
+        throw new Error(t("The Gaussian object has no finite canonical preview bounds"));
     }
     const targetWidth = Math.max(1, Number(width) || 640);
     const targetHeight = Math.max(1, Number(height) || 640);
@@ -1307,7 +1309,7 @@ export class Factory3DViewer {
         this.canvas.tabIndex = 0;
         this.canvas.setAttribute(
             "aria-label",
-            "3D scene. Drag to look around in place, use the mouse wheel to move forward or backward, or click an object to select it.",
+            t("3D scene. Drag to look around in place, use the mouse wheel to move forward or backward, or click an object to select it."),
         );
         Object.assign(this.canvas.style, {
             width: "100%",
@@ -1331,21 +1333,21 @@ export class Factory3DViewer {
         this.cameraInset = document.createElement("section");
         this.cameraInset.className = "vnccs-i3s__camera-inset";
         this.cameraInset.hidden = true;
-        this.cameraInset.setAttribute("aria-label", "Selected camera preview");
+        this.cameraInset.setAttribute("aria-label", t("Selected camera preview"));
         this.cameraInset.innerHTML = `
             <header class="vnccs-i3s__camera-inset-head">
-                <span class="vnccs-i3s__camera-inset-title">Camera preview</span>
+                <span class="vnccs-i3s__camera-inset-title">${t("Camera preview")}</span>
                 <span class="vnccs-i3s__camera-inset-actions">
-                    <button class="vnccs-i3s__camera-inset-open" type="button">Open</button>
-                    <button class="vnccs-i3s__camera-inset-refresh" type="button" aria-label="Refresh camera preview" title="Refresh camera preview">
+                    <button class="vnccs-i3s__camera-inset-open" type="button">${t("Open")}</button>
+                    <button class="vnccs-i3s__camera-inset-refresh" type="button" aria-label="${t("Refresh camera preview")}" title="${t("Refresh camera preview")}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M6.1 9a7 7 0 0 1 11.5-2.2L20 9M4 15l2.4 2.2A7 7 0 0 0 17.9 15" /></svg>
                     </button>
-                    <button class="vnccs-i3s__camera-inset-close" type="button" aria-label="Close camera preview">×</button>
+                    <button class="vnccs-i3s__camera-inset-close" type="button" aria-label="${t("Close camera preview")}">×</button>
                 </span>
             </header>
             <div class="vnccs-i3s__camera-inset-media">
                 <img alt="" decoding="async" draggable="false" />
-                <span class="vnccs-i3s__camera-inset-status" role="status">Rendering preview…</span>
+                <span class="vnccs-i3s__camera-inset-status" role="status">${t("Rendering preview…")}</span>
             </div>`;
         this.cameraInsetTitle = this.cameraInset.querySelector(".vnccs-i3s__camera-inset-title");
         this.cameraInsetMedia = this.cameraInset.querySelector(".vnccs-i3s__camera-inset-media");
@@ -2452,8 +2454,8 @@ export class Factory3DViewer {
         this.cameraInsetMedia.style.aspectRatio = (
             `${Math.max(1, this.captureWidth)} / ${Math.max(1, this.captureHeight)}`
         );
-        this.cameraInsetTitle.textContent = camera.name || "Camera preview";
-        this.cameraInsetImage.alt = `${camera.name || "Camera"} preview`;
+        this.cameraInsetTitle.textContent = camera.name || t("Camera preview");
+        this.cameraInsetImage.alt = t("{name} preview", { name: camera.name || t("Camera") });
         if (!refresh && sameCamera && this._cameraInsetObjectURL) return;
 
         this._cancelCameraInsetSchedule();
@@ -2468,7 +2470,7 @@ export class Factory3DViewer {
             !realtime || !sameCamera || !this._cameraInsetObjectURL,
         );
         this.cameraInset.classList.remove("has-error");
-        this.cameraInsetStatus.textContent = "Rendering preview…";
+        this.cameraInsetStatus.textContent = t("Rendering preview…");
 
         const capture = () => {
             this._cameraInsetSchedule = 0;
@@ -2519,14 +2521,14 @@ export class Factory3DViewer {
                 this._cameraInsetObjectURL = objectURL;
                 this.cameraInsetImage.src = objectURL;
                 this.cameraInset.classList.remove("is-loading", "has-error");
-                this.cameraInsetStatus.textContent = "Preview ready";
+                this.cameraInsetStatus.textContent = t("Preview ready");
             });
             this._cameraInsetSerial = operation.catch(() => null);
             operation.catch(() => {
                 if (request !== this._cameraInsetRequest || this._disposed) return;
                 this.cameraInset.classList.remove("is-loading");
                 this.cameraInset.classList.add("has-error");
-                this.cameraInsetStatus.textContent = "Preview unavailable";
+                this.cameraInsetStatus.textContent = t("Preview unavailable");
             });
         };
         if (realtime) {
@@ -3256,7 +3258,7 @@ export class Factory3DViewer {
             this.skydomeTexture = null;
             this._applySkydomeSettings();
             this.options.onError(
-                new Error(`Skydome image could not be loaded: ${error?.message || error}`),
+                new Error(t("Skydome image could not be loaded: {error}", { error: error?.message || error })),
             );
             return null;
         }
@@ -4328,9 +4330,9 @@ export class Factory3DViewer {
                 const isMeshModel = item.asset_kind === "mesh";
                 const assetPath = assetPathFor(item);
                 if (!assetPath && !isPrimitive) {
-                    throw new Error(
-                        `Object ${item.object_id} has no ${isMeshModel ? "model" : "SPLAT"} asset URL`,
-                    );
+                    throw new Error(isMeshModel
+                        ? t("Object {id} has no model asset URL", { id: item.object_id })
+                        : t("Object {id} has no SPLAT asset URL", { id: item.object_id }));
                 }
                 const existing = this.objects.get(item.object_id);
                 if (existing?.assetPath === assetPath) {
@@ -4445,14 +4447,12 @@ export class Factory3DViewer {
                     let detail = "";
                     try { detail = (await response.text()).slice(0, 500); }
                     catch (_) {}
-                    throw new Error(
-                        `SPLAT download failed for ${item.object_id}: HTTP ${response.status}`
-                        + (detail ? ` — ${detail}` : ""),
-                    );
+                    throw new Error(t("SPLAT download failed for {id}: HTTP {status}", { id: item.object_id, status: response.status })
+                        + (detail ? ` — ${detail}` : ""));
                 }
                 const preparedAsset = await prepareSplatBufferAsync(
                     await response.arrayBuffer(),
-                    `SPLAT object ${item.object_id}`,
+                    t("SPLAT object {id}", { id: item.object_id }),
                     { signal: loadController.signal },
                 );
                 const fileBytes = preparedAsset.buffer;
@@ -4488,7 +4488,7 @@ export class Factory3DViewer {
                 this.scene.add(objectRoot);
                 await mesh.initialized;
                 if (!Number.isFinite(mesh.numSplats) || mesh.numSplats < 1) {
-                    throw new Error(`SPLAT object ${item.object_id} decoded to zero Gaussians`);
+                    throw new Error(t("SPLAT object {id} decoded to zero Gaussians", { id: item.object_id }));
                 }
                 if (token !== this._loadingToken || this._disposed) {
                     this.scene.remove(objectRoot);
@@ -4503,7 +4503,7 @@ export class Factory3DViewer {
                 const localBounds = splatBounds.clone().applyMatrix4(mesh.matrix);
                 if (!hasFiniteBounds(localBounds)) {
                     throw new Error(
-                        `SPLAT object ${item.object_id} has no finite interaction bounds after decoding`,
+                        t("SPLAT object {id} has no finite interaction bounds after decoding", { id: item.object_id }),
                     );
                 }
                 const entry = {
@@ -6221,7 +6221,7 @@ export class Factory3DViewer {
             }
         }
         throw new Error(
-            `3D viewport did not produce renderable scene content within ${Math.round(timeoutMs / 1000)} seconds`,
+            t("3D viewport did not produce renderable scene content within {seconds} seconds", { seconds: Math.round(timeoutMs / 1000) }),
         );
     }
 
@@ -6242,7 +6242,7 @@ export class Factory3DViewer {
         waitForRenderable = true,
         afterRender = null,
     } = {}) {
-        if (this._disposed) throw new Error("3D viewport has been disposed");
+        if (this._disposed) throw new Error(t("3D viewport has been disposed"));
         const targetWidth = Math.max(64, Math.min(4096, Math.round(Number(width) || 1024)));
         const targetHeight = Math.max(64, Math.min(4096, Math.round(Number(height) || 1024)));
         let captureSkydomeTexture = null;
@@ -6273,7 +6273,7 @@ export class Factory3DViewer {
         }
         if (this._disposed) {
             captureSkydomeTexture?.dispose?.();
-            throw new Error("3D viewport was disposed while preparing the preview");
+            throw new Error(t("3D viewport was disposed while preparing the preview"));
         }
 
         let target = null;
@@ -6362,7 +6362,7 @@ export class Factory3DViewer {
             target.width = targetWidth;
             target.height = targetHeight;
             const context = target.getContext("2d", { alpha: false });
-            if (!context) throw new Error("Could not create the 3D preview canvas");
+            if (!context) throw new Error(t("Could not create the 3D preview canvas"));
             context.drawImage(this.canvas, 0, 0, targetWidth, targetHeight);
             // Capture geometry synchronously from the exact RGB camera before
             // restoring cutaway/visibility or yielding to another editor action.
@@ -6403,7 +6403,7 @@ export class Factory3DViewer {
             target.toBlob(
                 blob => blob
                     ? resolve(blob)
-                    : reject(new Error("Could not encode the 3D scene preview")),
+                    : reject(new Error(t("Could not encode the 3D scene preview"))),
                 "image/png",
             );
         });
@@ -6428,8 +6428,8 @@ export class Factory3DViewer {
     }
 
     async _captureCameraPreviewNow({ width = 320, height = 180, cameraState = null } = {}) {
-        if (this._disposed) throw new Error("3D viewport has been disposed");
-        if (!cameraState) throw new Error("A saved camera is required for camera preview");
+        if (this._disposed) throw new Error(t("3D viewport has been disposed"));
+        if (!cameraState) throw new Error(t("A saved camera is required for camera preview"));
         const targetWidth = Math.max(64, Math.min(4096, Math.round(Number(width) || 320)));
         const targetHeight = Math.max(64, Math.min(4096, Math.round(Number(height) || 180)));
         const position = finiteVector(cameraState.position, this.camera.position.toArray());
@@ -6485,7 +6485,7 @@ export class Factory3DViewer {
             // asynchronously. Keep the visible viewport untouched while it
             // works; only the final offscreen draw changes editor visibility.
             await this.spark.update({ scene: this.scene, camera: this.captureCamera });
-            if (this._disposed) throw new Error("3D viewport was disposed while rendering camera preview");
+            if (this._disposed) throw new Error(t("3D viewport was disposed while rendering camera preview"));
 
             this.grid.visible = false;
             this.transformHelper.visible = false;
@@ -6517,7 +6517,7 @@ export class Factory3DViewer {
             target.width = targetWidth;
             target.height = targetHeight;
             const context = target.getContext("2d", { alpha: false });
-            if (!context) throw new Error("Could not create the camera preview canvas");
+            if (!context) throw new Error(t("Could not create the camera preview canvas"));
             const image = context.createImageData(targetWidth, targetHeight);
             const rowSize = targetWidth * 4;
             for (let row = 0; row < targetHeight; row += 1) {
@@ -6552,7 +6552,7 @@ export class Factory3DViewer {
             target.toBlob(
                 blob => blob
                     ? resolve(blob)
-                    : reject(new Error("Could not encode the camera preview")),
+                    : reject(new Error(t("Could not encode the camera preview"))),
                 "image/png",
             );
         });
@@ -6563,8 +6563,8 @@ export class Factory3DViewer {
         cameraState = null,
         onProgress = EMPTY,
     } = {}) {
-        if (this._disposed) throw new Error("3D viewport has been disposed");
-        if (!cameraState) throw new Error("A saved camera is required for panorama export");
+        if (this._disposed) throw new Error(t("3D viewport has been disposed"));
+        if (!cameraState) throw new Error(t("A saved camera is required for panorama export"));
         const targetWidth = [2048, 4096].includes(Number(width)) ? Number(width) : 4096;
         const targetHeight = targetWidth / 2;
         const faceSize = targetWidth / 4;
@@ -6608,7 +6608,7 @@ export class Factory3DViewer {
         }
         if (this._disposed) {
             captureSkydomeTexture?.dispose?.();
-            throw new Error("3D viewport was disposed while preparing the panorama");
+            throw new Error(t("3D viewport was disposed while preparing the panorama"));
         }
 
         const faceDefinitions = [
@@ -6667,7 +6667,7 @@ export class Factory3DViewer {
             this.renderer.setSize(faceSize, faceSize, false);
 
             for (const [index, face] of faceDefinitions.entries()) {
-                if (this._disposed) throw new Error("3D viewport was disposed during panorama export");
+                if (this._disposed) throw new Error(t("3D viewport was disposed during panorama export"));
                 const forward = new THREE.Vector3().fromArray(face.forward).applyQuaternion(baseQuaternion);
                 const up = new THREE.Vector3().fromArray(face.up).applyQuaternion(baseQuaternion);
                 this.captureCamera.position.copy(position);
@@ -6681,11 +6681,11 @@ export class Factory3DViewer {
                 faceCanvas.width = faceSize;
                 faceCanvas.height = faceSize;
                 const context = faceCanvas.getContext("2d", { alpha: false });
-                if (!context) throw new Error("Could not create a panorama cube face");
+                if (!context) throw new Error(t("Could not create a panorama cube face"));
                 context.drawImage(this.canvas, 0, 0, faceSize, faceSize);
                 faceCanvases.push(faceCanvas);
                 onProgress({
-                    stage: "Rendering cube faces",
+                    stage: t("Rendering cube faces"),
                     progress: 5 + Math.round(((index + 1) / faceDefinitions.length) * 50),
                     detail: `${index + 1} / ${faceDefinitions.length}`,
                 });
@@ -6720,8 +6720,8 @@ export class Factory3DViewer {
             this.invalidate();
         }
 
-        if (faceCanvases.length !== 6) throw new Error("Panorama cube rendering was incomplete");
-        onProgress({ stage: "Projecting panorama", progress: 58, detail: "Preparing pixels" });
+        if (faceCanvases.length !== 6) throw new Error(t("Panorama cube rendering was incomplete"));
+        onProgress({ stage: t("Projecting panorama"), progress: 58, detail: t("Preparing pixels") });
         const facePixels = faceCanvases.map(face => {
             const context = face.getContext("2d", { alpha: false });
             return context.getImageData(0, 0, faceSize, faceSize).data;
@@ -6730,7 +6730,7 @@ export class Factory3DViewer {
         panorama.width = targetWidth;
         panorama.height = targetHeight;
         const context = panorama.getContext("2d", { alpha: false });
-        if (!context) throw new Error("Could not create the equirectangular panorama canvas");
+        if (!context) throw new Error(t("Could not create the equirectangular panorama canvas"));
         const image = context.createImageData(targetWidth, targetHeight);
         const output = image.data;
         const sinLongitude = new Float32Array(targetWidth);
@@ -6799,20 +6799,20 @@ export class Factory3DViewer {
             }
             if (y % 32 === 31) {
                 onProgress({
-                    stage: "Projecting panorama",
+                    stage: t("Projecting panorama"),
                     progress: 58 + Math.round(((y + 1) / targetHeight) * 40),
-                    detail: `${y + 1} / ${targetHeight} rows`,
+                    detail: t("{current} / {total} rows", { current: y + 1, total: targetHeight }),
                 });
                 await new Promise(resolve => requestAnimationFrame(resolve));
             }
         }
         context.putImageData(image, 0, 0);
-        onProgress({ stage: "Encoding PNG", progress: 99, detail: `${targetWidth} × ${targetHeight}` });
+        onProgress({ stage: t("Encoding PNG"), progress: 99, detail: `${targetWidth} × ${targetHeight}` });
         return await new Promise((resolve, reject) => {
             panorama.toBlob(
                 blob => blob
                     ? resolve(blob)
-                    : reject(new Error("Could not encode the 360° panorama")),
+                    : reject(new Error(t("Could not encode the 360° panorama"))),
                 "image/png",
             );
         });
@@ -6899,7 +6899,7 @@ export class Factory3DViewer {
         height = 640,
     } = {}) {
         const entry = this.objects.get(objectId);
-        if (!entry) throw new Error("The selected 3D object is not loaded");
+        if (!entry) throw new Error(t("The selected 3D object is not loaded"));
         const cameraState = {
             position: this.camera.position.clone(),
             quaternion: this.camera.quaternion.clone(),

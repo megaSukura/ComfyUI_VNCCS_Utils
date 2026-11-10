@@ -1,3 +1,5 @@
+import { t } from "../i18n/index.mjs";
+
 const SHADOW_BUDGETS = Object.freeze({ low: 2, medium: 4, high: 6, ultra: 8 });
 
 /** Allocate shadows in stored scene order, independently of illumination. */
@@ -35,7 +37,7 @@ export function allocateLocalLightShadows(lighting = {}, scene = {}, {
 }
 
 export function localLightStatusLabel(state) {
-    return {
+    const label = {
         hidden: "Hidden",
         zero: "Zero intensity",
         building_hidden: "Building hidden",
@@ -43,5 +45,6 @@ export function localLightStatusLabel(state) {
         shadows_off: "Light on · Shadows off",
         shadow_active: "Light on · Shadows active",
         shadow_deferred: "Light on · Shadows deferred",
-    }[state?.status] || "";
+    }[state?.status];
+    return label ? t(label) : "";
 }

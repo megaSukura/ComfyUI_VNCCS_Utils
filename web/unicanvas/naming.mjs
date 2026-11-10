@@ -9,6 +9,8 @@
  * the first use downloads it and the status line says so.
  */
 
+import { t } from "../i18n/index.mjs";
+
 export const DESCRIBE_LAYERS_ROUTE = "/vnccs/unicanvas/describe_layers";
 export const AUTO_NAME_SETTING = "auto_name_layers";
 export const AUTO_NAME_MODEL_SETTING = "auto_name_model";
@@ -35,15 +37,15 @@ export async function autoNameLayers(uc, layers, { automatic = false } = {}) {
   const targets = layers.filter((layer) => layer && layer.type !== "mask" && !(automatic && layer.nameSource === "user"));
   const items = targets.map((layer) => ({ id: layer.id, image: layerImageDataURL(uc, layer) })).filter((item) => item.image);
   if (!items.length) {
-    if (!automatic) uc.setStatus("[VNCCS UniCanvas] Auto-name: the layer is empty.", true);
+    if (!automatic) uc.setStatus(t("[VNCCS UniCanvas] Auto-name: the layer is empty."), true);
     return;
   }
   // The content can change while the model runs: an answer only applies to the pixels it saw.
   const tokens = new Map(items.map((item) => [item.id, (uc._vnccsNameTokens ||= new Map()).set(item.id, Symbol("name")).get(item.id)]));
   const states = new Map(targets.map(layer => [layer.id, { pixels: uc.captureLayerEditState(layer), name: layer.name }]));
   const model = resolveAutoNameModel(uc.settings);
-  const label = AUTO_NAME_MODELS.find(([key]) => key === model)[1].split(" (")[0];
-  uc.setStatus(`[VNCCS UniCanvas] Naming layers with ${label} (first use downloads ${AUTO_NAME_DOWNLOAD[model]})...`);
+  const label = t(AUTO_NAME_MODELS.find(([key]) => key === model)[1].split(" (")[0]);
+  uc.setStatus(t("[VNCCS UniCanvas] Naming layers with {model} (first use downloads {size})...", { model: label, size: AUTO_NAME_DOWNLOAD[model] }));
   try {
     const res = await fetch(DESCRIBE_LAYERS_ROUTE, {
       method: "POST",
@@ -66,9 +68,11 @@ export async function autoNameLayers(uc, layers, { automatic = false } = {}) {
       renamed += 1;
     }
     if (renamed) uc.syncLightStateToWidget?.();
-    uc.setStatus(renamed ? `[VNCCS UniCanvas] Named ${renamed} layer${renamed === 1 ? "" : "s"}.` : "[VNCCS UniCanvas] Auto-name found no name.");
+    uc.setStatus(renamed ? (renamed === 1
+      ? t("[VNCCS UniCanvas] Named {count} layer.", { count: renamed })
+      : t("[VNCCS UniCanvas] Named {count} layers.", { count: renamed })) : t("[VNCCS UniCanvas] Auto-name found no name."));
   } catch (err) {
-    if (!uc._disposed) uc.setStatus(`[VNCCS UniCanvas] Auto-name failed: ${err.message || err}`, true);
+    if (!uc._disposed) uc.setStatus(t("[VNCCS UniCanvas] Auto-name failed: {message}", { message: err.message || err }), true);
   } finally {
     for (const [id, token] of tokens) if (uc._vnccsNameTokens.get(id) === token) uc._vnccsNameTokens.delete(id);
   }

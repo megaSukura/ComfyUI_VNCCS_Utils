@@ -1,4 +1,6 @@
 // Preset and Custom selections share the server-owned model file catalog.
+import { t } from "../i18n/index.mjs";
+
 export const MODEL_DEPENDENCIES_CSS = `
 .vnccs-uc-dependencies .vnccs-uc-modal { width:min(620px, calc(100% - 32px)); max-height:calc(100% - 32px); box-sizing:border-box; font-size:13px; gap:12px; }
 .vnccs-uc-dependency-list { overflow:auto; min-height:0; display:flex; flex-direction:column; gap:10px; }
@@ -30,10 +32,10 @@ export function openModelDependencies(widget, catalog, selection) {
   const title = document.createElement("div");
   title.className = "vnccs-uc-modal-title";
   title.id = `vnccs-uc-dependencies-${++nextDialogId}`;
-  title.textContent = `${catalog.label} — missing model files`;
+  title.textContent = t("{label} — missing model files", { label: catalog.label });
   modal.setAttribute("aria-labelledby", title.id);
   const message = document.createElement("div");
-  message.textContent = "Model files are missing. Choose which files to download. All missing required and optional parts are listed below.";
+  message.textContent = t("Model files are missing. Choose which files to download. All missing required and optional parts are listed below.");
   const list = document.createElement("div");
   list.className = "vnccs-uc-dependency-list";
   const rows = catalog.assets.filter(asset => !asset.installed).map(asset => {
@@ -48,7 +50,7 @@ export function openModelDependencies(widget, catalog, selection) {
     label.append(checkbox, name);
     const description = document.createElement("div");
     description.className = "vnccs-uc-dependency-description";
-    description.textContent = `${asset.required ? "Required" : "Optional"} · ${asset.description || asset.role || "Related file"}`;
+    description.textContent = t("{kind} · {description}", { kind: asset.required ? t("Required") : t("Optional"), description: asset.description || asset.role || t("Related file") });
     const progress = document.createElement("progress");
     progress.max = 100;
     progress.setAttribute("aria-label", name.textContent);
@@ -64,9 +66,9 @@ export function openModelDependencies(widget, catalog, selection) {
   const actions = document.createElement("div");
   actions.className = "vnccs-uc-modal-actions";
   const closeButton = document.createElement("button");
-  closeButton.type = "button"; closeButton.className = "vnccs-uc-btn"; closeButton.textContent = "Later";
+  closeButton.type = "button"; closeButton.className = "vnccs-uc-btn"; closeButton.textContent = t("Later");
   const downloadButton = document.createElement("button");
-  downloadButton.type = "button"; downloadButton.className = "vnccs-uc-btn primary"; downloadButton.textContent = "Download selected";
+  downloadButton.type = "button"; downloadButton.className = "vnccs-uc-btn primary"; downloadButton.textContent = t("Download selected");
   actions.append(closeButton, downloadButton);
   modal.append(title, message, list, summary, actions);
   overlay.append(modal);
@@ -95,17 +97,17 @@ export function openModelDependencies(widget, catalog, selection) {
       if (state.total_bytes || state.status === "queued") progress.value = Number(state.progress || 0);
       else progress.removeAttribute("value");
       status.dataset.error = String(state.status === "error");
-      status.textContent = installed ? "Installed" : state.status === "queued" ? "Queued"
-        : state.status === "downloading" ? `${state.message || "Downloading"}${state.total_bytes ? ` — ${Math.floor(state.progress || 0)}% (${(state.downloaded_bytes / 1048576).toFixed(1)} / ${(state.total_bytes / 1048576).toFixed(1)} MB)` : ""}`
-        : state.status === "error" ? `Download failed: ${state.message || "Please retry"}`
-        : asset.downloadable === false ? "Missing — manual installation required" : "Missing";
+      status.textContent = installed ? t("Installed") : state.status === "queued" ? t("Queued")
+        : state.status === "downloading" ? `${state.message || t("Downloading")}${state.total_bytes ? ` — ${Math.floor(state.progress || 0)}% (${(state.downloaded_bytes / 1048576).toFixed(1)} / ${(state.total_bytes / 1048576).toFixed(1)} MB)` : ""}`
+        : state.status === "error" ? t("Download failed: {message}", { message: state.message || t("Please retry") })
+        : asset.downloadable === false ? t("Missing — manual installation required") : t("Missing");
     }
     if (!missing) { close(); return; }
-    summary.textContent = active ? `${active} file(s) downloading or queued. Downloads continue if you close this dialog.`
-      : `${missing} file(s) missing.`;
-    closeButton.textContent = missing && !active ? "Later" : "Close";
+    summary.textContent = active ? t("{count} file(s) downloading or queued. Downloads continue if you close this dialog.", { count: active })
+      : t("{count} file(s) missing.", { count: missing });
+    closeButton.textContent = missing && !active ? t("Later") : t("Close");
     downloadButton.disabled = submitting || !missingSelected().length;
-    downloadButton.textContent = rows.some(({ status }) => status.dataset.error === "true") ? "Retry selected" : "Download selected";
+    downloadButton.textContent = rows.some(({ status }) => status.dataset.error === "true") ? t("Retry selected") : t("Download selected");
     if (overlay.contains(focused) && focused.disabled) closeButton.focus();
   };
   const close = () => {
@@ -142,12 +144,12 @@ export function openModelDependencies(widget, catalog, selection) {
       });
       const result = await response.json();
       if (widget._disposed) return;
-      if (!response.ok) throw new Error(result.error || "Download failed");
+      if (!response.ok) throw new Error(result.error || t("Download failed"));
       for (const key of result.queued || []) widget.presetDownloads[key] = { status:"queued", progress:0 };
       submitting = false; update(widget.presetDownloads);
       widget.startPresetDownloadPolling();
     } catch (err) {
-      submitting = false; update(); error(`Download failed: ${err.message || err}`);
+      submitting = false; update(); error(t("Download failed: {message}", { message: err.message || err }));
     }
   });
   update();
@@ -179,10 +181,10 @@ export async function checkModelDependencies(widget, preset = null) {
     const response = await fetch(`/vnccs/unicanvas/dependencies?${new URLSearchParams(selection)}`, { signal:abort.signal, cache:"no-store" });
     const catalog = await response.json();
     if (!current()) return;
-    if (!response.ok) throw new Error(catalog.error || "Dependency check failed");
+    if (!response.ok) throw new Error(catalog.error || t("Dependency check failed"));
     if (catalog.assets?.some(asset => !asset.installed)) openModelDependencies(widget, catalog, selection);
   } catch (err) {
-    if (current()) widget.setStatus(`Dependency check failed: ${err.message || err}`, true);
+    if (current()) widget.setStatus(t("Dependency check failed: {message}", { message: err.message || err }), true);
   }
 }
 

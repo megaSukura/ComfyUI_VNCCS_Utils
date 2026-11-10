@@ -9,6 +9,7 @@ import {
   createSwitch,
 } from "./config/ui.mjs";
 import { referenceConventionHint, referenceSlotName } from "./unicanvas/prompt_guide.mjs";
+import { t } from "./i18n/index.mjs";
 
 // MiniMax H3 (<Picture N>) and Qwen-Image-2.1 (<image N>) accept up to 10
 // reference images beyond the working area. Inputs appear one at a time:
@@ -45,10 +46,10 @@ class UniCanvasConfigWidget {
     intro.className = "vnccs-cfg-intro";
     const introTitle = document.createElement("div");
     introTitle.className = "vnccs-cfg-intro-title";
-    introTitle.textContent = "Overrides UniCanvas";
+    introTitle.textContent = t("Overrides UniCanvas");
     const introText = document.createElement("div");
     introText.className = "vnccs-cfg-intro-text";
-    introText.textContent = "When linked to a UniCanvas node, its model, CLIP, VAE, LoRAs and reference images come from here; those UniCanvas controls are greyed out.";
+    introText.textContent = t("When linked to a UniCanvas node, its model, CLIP, VAE, LoRAs and reference images come from here; those UniCanvas controls are greyed out.");
     this.statusRow = document.createElement("div");
     this.statusRow.className = "vnccs-cfg-status";
     this.statusDots = {};
@@ -62,7 +63,7 @@ class UniCanvasConfigWidget {
 
     // --- LoRA stack section ---------------------------------------------
     this.loraSection = createCollapsibleSection({
-      title: "LoRA stack",
+      title: t("LoRA stack"),
       open: this.state.open.loras !== false,
       onToggle: (open) => {
         this.state.open.loras = open;
@@ -75,21 +76,21 @@ class UniCanvasConfigWidget {
     toolbar.className = "vnccs-cfg-row";
     this.filterInput = document.createElement("input");
     this.filterInput.className = "vnccs-cfg-input vnccs-cfg-grow";
-    this.filterInput.placeholder = "Filter by name";
+    this.filterInput.placeholder = t("Filter by name");
     this.filterInput.addEventListener("input", () => {
       this.filter = this.filterInput.value.trim().toLowerCase();
       this.renderLoras();
     });
-    const addBtn = this._toolbarButton("+ Add LoRA", "add-lora");
+    const addBtn = this._toolbarButton(t("+ Add LoRA"), "add-lora");
     addBtn.classList.add("primary");
     toolbar.append(this.filterInput, addBtn);
     const bulk = document.createElement("div");
     bulk.className = "vnccs-cfg-row";
     bulk.append(
-      this._toolbarButton("All on", "enable-all"),
-      this._toolbarButton("All off", "disable-all"),
-      this._toolbarButton("Sort", "sort"),
-      this._toolbarButton("Clear", "clear-all"),
+      this._toolbarButton(t("All on"), "enable-all"),
+      this._toolbarButton(t("All off"), "disable-all"),
+      this._toolbarButton(t("Sort"), "sort"),
+      this._toolbarButton(t("Clear"), "clear-all"),
     );
     this.loraList = document.createElement("div");
     this.loraList.className = "vnccs-cfg-lora-list";
@@ -100,7 +101,7 @@ class UniCanvasConfigWidget {
 
     // --- Edit model & references section --------------------------------
     this.editSection = createCollapsibleSection({
-      title: "Edit model & references",
+      title: t("Edit model & references"),
       open: this.state.open.edit !== false,
       onToggle: (open) => {
         this.state.open.edit = open;
@@ -414,13 +415,13 @@ class UniCanvasConfigWidget {
     this._renderedReferenceSignature = this._referenceSignature();
     this.fitNode();
     if (!this.state.edit_model) {
-      this.refHint.textContent = "Turn on Edit model to attach reference images.";
+      this.refHint.textContent = t("Turn on Edit model to attach reference images.");
       this._syncSocketLabels();
       return;
     }
     const naming = this._referenceNaming();
     this.refHint.textContent = referenceConventionHint(naming.index, naming.mode) +
-      " Connecting one reveals the next slot, up to " + REFERENCE_LIMIT + ".";
+      " " + t("Connecting one reveals the next slot, up to {count}.", { count: REFERENCE_LIMIT });
     // Always show the next free slot, so the first reference socket is discoverable too.
     const visible = Math.max(1, this._connectedReferenceCount());
     for (let n = 1; n <= visible; n++) {
@@ -435,8 +436,8 @@ class UniCanvasConfigWidget {
       index.className = "vnccs-cfg-refindex" + (slot.natural ? " natural" : "");
       index.textContent = slot.text;
       index.title = slot.natural
-        ? "This model family has no reference tag: describe the image in words"
-        : "Name this reference with " + slot.text + " in the prompt";
+        ? t("This model family has no reference tag: describe the image in words")
+        : t("Name this reference with {tag} in the prompt", { tag: slot.text });
       chip.appendChild(index);
       if (connected && preview) {
         if (preview.url) {
@@ -452,7 +453,7 @@ class UniCanvasConfigWidget {
         chip.appendChild(label);
         const disconnect = document.createElement("button");
         disconnect.className = "vnccs-cfg-x";
-        disconnect.title = "Disconnect " + name;
+        disconnect.title = t("Disconnect {name}", { name });
         disconnect.textContent = "\u2715";
         disconnect.addEventListener("click", () => {
           const index2 = (this.node.inputs || []).findIndex((item) => item?.name === name);
@@ -464,7 +465,7 @@ class UniCanvasConfigWidget {
       } else {
         const label = document.createElement("span");
         label.className = "vnccs-cfg-reflabel";
-        label.textContent = connected ? name : name + " (optional, next slot)";
+        label.textContent = connected ? name : t("{name} (optional, next slot)", { name });
         chip.appendChild(label);
       }
       this.refList.appendChild(chip);
@@ -502,7 +503,7 @@ class UniCanvasConfigWidget {
     if (!this.state.loras.length) {
       const empty = document.createElement("div");
       empty.className = "vnccs-cfg-empty";
-      empty.textContent = "No LoRAs: the connected model is used as is.";
+      empty.textContent = t("No LoRAs: the connected model is used as is.");
       this.loraList.appendChild(empty);
     }
     this.state.loras.forEach((entry, index) => {
@@ -516,7 +517,7 @@ class UniCanvasConfigWidget {
       row.className = "vnccs-cfg-lora" + (entry.enabled ? "" : " off");
       row.draggable = true;
       row.dataset.index = String(index);
-      row.title = "Drag to reorder";
+      row.title = t("Drag to reorder");
       if (this.filter && !String(entry.name).toLowerCase().includes(this.filter)) {
         row.style.display = "none";
       }
@@ -545,12 +546,12 @@ class UniCanvasConfigWidget {
       }
 
       const strength = createSliderNumber({
-        min: 0, max: 2, step: 0.05, value: entry.strength, label: "Model",
+        min: 0, max: 2, step: 0.05, value: entry.strength, label: t("Model"),
         onInput: (value) => { entry.strength = value; this._writeState(); },
         onChange: (value) => { entry.strength = value; this._writeState(); },
         onReset: (value) => { entry.strength = value; this._writeState(); },
       });
-      strength.root.title = "Strength (double-click resets to 1.0)";
+      strength.root.title = t("Strength (double-click resets to 1.0)");
 
       const clip = createSliderNumber({
         min: 0, max: 2, step: 0.05, value: entry.clip_strength == null ? 1 : entry.clip_strength, label: "CLIP",
@@ -558,7 +559,7 @@ class UniCanvasConfigWidget {
         onChange: (value) => { entry.clip_strength = value; this._writeState(); },
         onReset: (value) => { entry.clip_strength = value; this._writeState(); },
       });
-      clip.root.title = "Clip strength (double-click resets to 1.0)";
+      clip.root.title = t("Clip strength (double-click resets to 1.0)");
       const strengths = document.createElement("div");
       strengths.className = "vnccs-cfg-lora-strengths";
       strengths.append(strength.root, clip.root);
@@ -566,7 +567,7 @@ class UniCanvasConfigWidget {
       const enabled = document.createElement("input");
       enabled.type = "checkbox";
       enabled.checked = entry.enabled;
-      enabled.title = "Enable LoRA";
+      enabled.title = t("Enable LoRA");
       enabled.dataset.field = "enabled";
       enabled.dataset.index = String(index);
 
@@ -574,7 +575,7 @@ class UniCanvasConfigWidget {
       remove.className = "vnccs-cfg-x";
       remove.dataset.loraAction = "remove-lora";
       remove.dataset.index = String(index);
-      remove.title = "Remove LoRA";
+      remove.title = t("Remove LoRA");
       remove.textContent = "\u2715";
 
       row.append(enabled, select, remove, strengths);

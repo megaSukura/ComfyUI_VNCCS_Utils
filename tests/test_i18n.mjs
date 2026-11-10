@@ -22,14 +22,21 @@ test("t returns English text outside a Chinese ComfyUI and fills placeholders", 
 
 test("t follows the ComfyUI language setting", () => {
     TRANSLATIONS.zh["Test {count} poses"] = "测试 {count} 个姿势";
+    TRANSLATIONS.zh["Test focus"] = "聚焦";
+    TRANSLATIONS.zh["camera::Test focus"] = "对焦";
     try {
         assert.equal(withLocale("zh", () => t("Test {count} poses", { count: 3 })), "测试 3 个姿势");
         assert.equal(withLocale("zh-CN", currentLocale), "zh");
         assert.equal(withLocale("zh-TW", currentLocale), "en");
         assert.equal(withLocale("ja", () => t("Test {count} poses", { count: 3 })), "Test 3 poses");
         assert.equal(withLocale("zh", () => t("Untranslated text")), "Untranslated text");
+        assert.equal(withLocale("zh", () => t("Test focus", null, "camera")), "对焦");
+        assert.equal(withLocale("zh", () => t("Test focus", null, "timeline")), "聚焦");
+        assert.equal(t("Test focus", null, "camera"), "Test focus");
     } finally {
         delete TRANSLATIONS.zh["Test {count} poses"];
+        delete TRANSLATIONS.zh["Test focus"];
+        delete TRANSLATIONS.zh["camera::Test focus"];
     }
 });
 

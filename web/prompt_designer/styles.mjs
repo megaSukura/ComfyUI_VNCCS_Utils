@@ -1,3 +1,5 @@
+import { t } from "../i18n/index.mjs";
+
 export function ensureStyles() {
     if (document.getElementById("vnccs-prompt-designer-style")) return;
     const style = document.createElement("style");
@@ -66,7 +68,7 @@ export function ensureStyles() {
 .vnccs-pd-doc-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
 .vnccs-pd-doc-head input { flex:1; }
 .vnccs-pd-editor { flex:1; min-height:100px; overflow:auto; margin:0; padding:16px; border:1px solid var(--pd-border); border-radius:8px; background:#0d0d14; color:var(--pd-text); font:14px/1.9 'JetBrains Mono','SFMono-Regular',Consolas,monospace; white-space:pre-wrap; overflow-wrap:anywhere; tab-size:4; caret-color:var(--pd-pink); }
-.vnccs-pd-editor:empty::before { content:'Write your prompt. Drag blocks here from the library.'; color:var(--pd-muted); pointer-events:none; }
+.vnccs-pd-editor:empty::before { content:'${t("Write your prompt. Drag blocks here from the library.")}'; color:var(--pd-muted); pointer-events:none; }
 .vnccs-pd-source-text { width:100%; resize:none; background:var(--pd-panel); caret-color:var(--pd-text); }
 .vnccs-pd-variants-head { display:flex; align-items:center; gap:12px; }
 .vnccs-pd-variants { flex:1; min-height:70px; overflow:auto; margin:0; padding:0; list-style:none; border:1px solid var(--pd-border); border-radius:8px; background:var(--pd-panel); }
@@ -113,7 +115,7 @@ export function ensureStyles() {
 .vnccs-pd-condition-panel textarea { min-height:55px; resize:vertical; border:1px solid var(--pd-border); border-radius:7px; padding:7px 10px; background:var(--pd-raised); }
 .vnccs-pd-condition-panel .vnccs-pd-editor { flex:none; min-height:64px; max-height:none; overflow:visible; padding:8px 10px; color:var(--pd-text); }
 .vnccs-pd-condition-source { cursor:default; }
-.vnccs-pd-condition-source:empty::before { content:'Drop block here'; }
+.vnccs-pd-condition-source:empty::before { content:'${t("Drop block here")}'; }
 .vnccs-pd-condition-panel button { margin-right:6px; }
 .vnccs-pd-tools { display:flex; gap:8px; flex-shrink:0; padding-top:4px; }
 .vnccs-pd-multi { border-color:var(--pd-lavender); }

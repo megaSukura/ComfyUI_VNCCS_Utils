@@ -1,3 +1,5 @@
+import { t as tr } from "../../i18n/index.mjs";
+
 const THREE_VERSION = "0.160.0";
 
 const MIXAMO_TO_MH_BONE_MAP = {
@@ -652,8 +654,8 @@ function buildSampleTimes(duration, fps, maxFrames) {
 }
 
 export async function importMixamoFBXAnimation(file, viewer, options = {}) {
-    if (!file) throw new Error('No FBX file was selected.');
-    if (!viewer?.isInitialized?.() || !viewer.THREE) throw new Error('Pose viewer is not ready.');
+    if (!file) throw new Error(tr('No FBX file was selected.'));
+    if (!viewer?.isInitialized?.() || !viewer.THREE) throw new Error(tr('Pose viewer is not ready.'));
 
     const { THREE, FBXLoader } = await loadMixamoModules();
     if (options.isCurrent && !options.isCurrent()) return null;
@@ -665,7 +667,7 @@ export async function importMixamoFBXAnimation(file, viewer, options = {}) {
         const root = await loader.loadAsync(fileUrl);
         if (options.isCurrent && !options.isCurrent()) return null;
         const clip = root?.animations?.[0];
-        if (!clip) throw new Error('The FBX file does not contain any animation clips.');
+        if (!clip) throw new Error(tr('The FBX file does not contain any animation clips.'));
 
         const sourceBones = collectSourceBones(root);
         // Debug logging: print discovered bone names to browser console to aid mapping
@@ -681,7 +683,7 @@ export async function importMixamoFBXAnimation(file, viewer, options = {}) {
             (sourceBones.normalizedBones && Object.keys(sourceBones.normalizedBones).length > 0)
         );
         if (!hasAnyBones) {
-            throw new Error('FBX file contains no skeleton bones or skinned meshes.');
+            throw new Error(tr('FBX file contains no skeleton bones or skinned meshes.'));
         }
 
         root.updateMatrixWorld(true);
@@ -829,7 +831,7 @@ export async function importMixamoFBXAnimation(file, viewer, options = {}) {
         }
 
         if (!poses.length) {
-            throw new Error('The FBX clip loaded, but no pose frames could be retargeted onto the MH rig.');
+            throw new Error(tr('The FBX clip loaded, but no pose frames could be retargeted onto the MH rig.'));
         }
 
         return {

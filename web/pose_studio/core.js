@@ -5,7 +5,8 @@
  */
 
 
-import { normalizeCaptureLens } from "./animation.mjs?v=20261105.1";
+import { normalizeCaptureLens } from "./animation.mjs?v=20261110.1";
+import { t as tr } from "../i18n/index.mjs";
 import { JointLimiter } from "./joint_limits.mjs?v=20261110.1";
 
 // Determine the extension's base URL dynamically to support varied directory names
@@ -1373,7 +1374,7 @@ export class PoseViewerCore {
             if (this._referenceTextureError) throw new Error(this._referenceTextureError);
             return true;
         }
-        throw new Error("Pose Studio was disposed.");
+        throw new Error(tr("Pose Studio was disposed."));
     }
 
     dispose() {
@@ -1504,7 +1505,7 @@ export class PoseViewerCore {
             this.requestRender(); // Initial render
         } catch (e) {
             this.initialized = false;
-            this.initializationError = new Error(`Pose Studio viewer initialization failed: ${e?.message || e}`);
+            this.initializationError = new Error(tr("Pose Studio viewer initialization failed: {message}", { message: e?.message || e }));
             console.error('Pose Studio: Init failed', e);
         }
     }
@@ -4732,7 +4733,7 @@ export class PoseViewerCore {
         }, undefined, () => {
             if (generation === this._referenceGeneration && !this._disposed) {
                 this._referenceTextureReady = true;
-                this._referenceTextureError = "Failed to load background image. Replace or remove it before capturing.";
+                this._referenceTextureError = tr("Failed to load background image. Replace or remove it before capturing.");
             }
             resolveReady(false);
         });

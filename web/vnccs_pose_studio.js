@@ -10,13 +10,13 @@ import {
     POSE_STUDIO_CAPTURE_FOV,
     PoseViewerCore,
     buildEquivalentPerspectiveProjectionFrame,
-} from "./pose_studio/core.js?v=20261110.1";
+} from "./pose_studio/core.js?v=20261110.2";
 import {
     cameraPromptToSkydomeRotation,
 } from "./camera_control/utils.mjs";
 import { HAND_PRESETS } from "./pose_studio/hand_presets.js";
-import { importMixamoFBXAnimation } from "./pose_studio/imports/mixamo.js?v=1791754604000";
-import { detectAndParseJSON, convertOpenPoseToPose, roundTripTest } from "./pose_studio/imports/openpose.js?v=1791754604000";
+import { importMixamoFBXAnimation } from "./pose_studio/imports/mixamo.js?v=1794326400000";
+import { detectAndParseJSON, convertOpenPoseToPose, roundTripTest } from "./pose_studio/imports/openpose.js?v=1794326400000";
 import { installCustomSelects } from "./shared/custom_select.mjs?v=20261104-scaled-menu";
 import {
     DEFAULT_CHARACTER_COLORS,
@@ -34,9 +34,9 @@ import {
     normalizePoseStudioCharacters,
     normalizeSAMProjectionFrame,
     serializePoseStudioCharacter,
-} from "./pose_studio/characters.mjs?v=20261107.1";
+} from "./pose_studio/characters.mjs?v=20261110.1";
 import { CHARACTER_POSITION_LIMITS, clampCharacterPosition, modelRotationQuaternion, wrapDegrees } from "./pose_studio/character_transform.mjs?v=20261107.1";
-import { PoseCharacterTransformController } from "./pose_studio/character_transform_controller.mjs?v=20261107.4";
+import { PoseCharacterTransformController } from "./pose_studio/character_transform_controller.mjs?v=20261110.1";
 import {
     MAX_VIDEO_POSE_SAMPLES,
     canvasToBlob,
@@ -93,7 +93,8 @@ import {
     serializeAnimationStateSnapshot,
     setCharacterTransformKeyframe,
     setTrackKeyframeFromEuler,
-} from "./pose_studio/animation.mjs?v=20261107.1";
+} from "./pose_studio/animation.mjs?v=20261110.1";
+import { t as tr } from "./i18n/index.mjs";
 
 const VNCCS_POSE_MORPH_WORKER_URL = new URL("./pose_studio/morph_worker.js", import.meta.url);
 let VNCCS_SHARED_MORPH_WORKER = null;
@@ -4730,14 +4731,14 @@ class PoseStudioWidget {
 
         const title = document.createElement("div");
         title.className = "vnccs-ps-manager-title";
-        title.textContent = "VNCCS Pose Manager";
+        title.textContent = tr("VNCCS Pose Manager");
 
         const actions = document.createElement("div");
         actions.className = "vnccs-ps-manager-actions";
 
         const autoAnalyzeLabel = document.createElement("label");
         autoAnalyzeLabel.className = "vnccs-ps-manager-auto-analysis";
-        autoAnalyzeLabel.title = "Analyze the connected pose image and apply only its body proportions to every managed pose.";
+        autoAnalyzeLabel.title = tr("Analyze the connected pose image and apply only its body proportions to every managed pose.");
         const autoAnalyzeCheckbox = document.createElement("input");
         autoAnalyzeCheckbox.type = "checkbox";
         autoAnalyzeCheckbox.checked = this.exportParams.manager_auto_analyze_proportions !== false;
@@ -4746,14 +4747,14 @@ class PoseStudioWidget {
             this.syncToNode(false, { skipCapture: true });
         });
         const autoAnalyzeText = document.createElement("span");
-        autoAnalyzeText.textContent = "Auto-analyze proportions";
+        autoAnalyzeText.textContent = tr("Auto-analyze proportions");
         autoAnalyzeLabel.append(autoAnalyzeCheckbox, autoAnalyzeText);
         this.managerAutoAnalyzeCheckbox = autoAnalyzeCheckbox;
 
         const addBtn = document.createElement("button");
         addBtn.className = "vnccs-ps-btn primary";
         addBtn.type = "button";
-        addBtn.textContent = "Add Pose";
+        addBtn.textContent = tr("Add Pose");
         addBtn.addEventListener("click", () => {
             this.addTab({ capturePreview: true });
             this.setInterfaceMode("manager");
@@ -4796,18 +4797,18 @@ class PoseStudioWidget {
         genderField.className = "vnccs-ps-field";
         const genderLabel = document.createElement("div");
         genderLabel.className = "vnccs-ps-label";
-        genderLabel.innerText = "Gender";
+        genderLabel.innerText = tr("Gender");
         const genderToggle = document.createElement("div");
         genderToggle.className = "vnccs-ps-toggle";
 
         const btnMale = document.createElement("button");
         btnMale.className = "vnccs-ps-toggle-btn male";
         btnMale.type = "button";
-        btnMale.innerText = "Male";
+        btnMale.innerText = tr("Male");
         const btnFemale = document.createElement("button");
         btnFemale.className = "vnccs-ps-toggle-btn female";
         btnFemale.type = "button";
-        btnFemale.innerText = "Female";
+        btnFemale.innerText = tr("Female");
         this.managerGenderBtns = { male: btnMale, female: btnFemale };
 
         btnMale.addEventListener("click", () => this.setManagerGender(1.0));
@@ -4853,7 +4854,7 @@ class PoseStudioWidget {
 
         const label = document.createElement("span");
         label.className = "vnccs-ps-label";
-        label.innerText = def.label;
+        label.innerText = tr(def.label);
 
         const wrap = document.createElement("div");
         wrap.className = "vnccs-ps-slider-wrap";
@@ -4864,7 +4865,7 @@ class PoseStudioWidget {
         slider.min = def.min;
         slider.max = def.max;
         slider.step = def.step;
-        const number = this.createSliderNumber(slider, def.label, def.key === "age" ? 0 : 2);
+        const number = this.createSliderNumber(slider, tr(def.label), def.key === "age" ? 0 : 2);
 
         this.trackPoseGesture(slider, { recordPose: true });
         slider.addEventListener("input", () => {
@@ -4895,7 +4896,7 @@ class PoseStudioWidget {
 
         const label = document.createElement("span");
         label.className = "vnccs-ps-label";
-        label.innerText = def.label;
+        label.innerText = tr(def.label);
 
         const input = document.createElement("input");
         input.type = "number";
@@ -5086,7 +5087,7 @@ class PoseStudioWidget {
         this.managerBackBtn = document.createElement("button");
         this.managerBackBtn.className = "vnccs-ps-btn primary vnccs-ps-manager-back";
         this.managerBackBtn.type = "button";
-        this.managerBackBtn.textContent = "Back to Pose Manager";
+        this.managerBackBtn.textContent = tr("Back to Pose Manager");
         this.managerBackBtn.addEventListener("click", () => this.setInterfaceMode("manager"));
         managerBackWrap.appendChild(this.managerBackBtn);
         leftPanel.appendChild(managerBackWrap);
@@ -5101,7 +5102,7 @@ class PoseStudioWidget {
 
         const genderLabel = document.createElement("div");
         genderLabel.className = "vnccs-ps-label";
-        genderLabel.innerText = "Gender";
+        genderLabel.innerText = tr("Gender");
         genderField.appendChild(genderLabel);
 
         const genderToggle = document.createElement("div");
@@ -5109,11 +5110,11 @@ class PoseStudioWidget {
 
         const btnMale = document.createElement("button");
         btnMale.className = "vnccs-ps-toggle-btn male";
-        btnMale.innerText = "Male";
+        btnMale.innerText = tr("Male");
 
         const btnFemale = document.createElement("button");
         btnFemale.className = "vnccs-ps-toggle-btn female";
-        btnFemale.innerText = "Female";
+        btnFemale.innerText = tr("Female");
 
         this.genderBtns = { male: btnMale, female: btnFemale };
 
@@ -5210,7 +5211,7 @@ class PoseStudioWidget {
         genitalsCheckbox.checked = this.meshParams.show_genitals === true;
         const genitalsLabel = document.createElement("span");
         genitalsLabel.className = "vnccs-ps-label";
-        genitalsLabel.innerText = "Show Genitals";
+        genitalsLabel.innerText = tr("Show Genitals");
         genitalsCheckbox.addEventListener("change", () => {
             this.meshParams.show_genitals = genitalsCheckbox.checked;
             this.onMeshParamsChanged("show_genitals");
@@ -5246,7 +5247,7 @@ class PoseStudioWidget {
             const resetBtn = document.createElement("button");
             resetBtn.className = "vnccs-ps-reset-btn";
             resetBtn.innerHTML = "↺";
-            resetBtn.title = "Reset to 0°";
+            resetBtn.title = tr("Reset to 0°");
             resetBtn.onclick = (e) => {
                 e.stopPropagation();
                 this.setNumericControlValue(slider, 0);
@@ -5273,7 +5274,7 @@ class PoseStudioWidget {
             slider.max = 180;
             slider.step = 1;
             slider.value = 0;
-            valueRow.append(this.createSliderNumber(slider, `Model Rotation ${axis.toUpperCase()}`), resetBtn);
+            valueRow.append(this.createSliderNumber(slider, tr("Model Rotation {axis}", { axis: axis.toUpperCase() })), resetBtn);
 
             this.trackPoseGesture(slider, { recordPose: true });
             slider.addEventListener("input", () => {
@@ -5320,17 +5321,17 @@ class PoseStudioWidget {
         modeField.className = "vnccs-ps-field";
         const modeLabel = document.createElement("div");
         modeLabel.className = "vnccs-ps-label";
-        modeLabel.innerText = "Output Mode";
+        modeLabel.innerText = tr("Output Mode");
 
         const modeToggle = document.createElement("div");
         modeToggle.className = "vnccs-ps-toggle";
 
         const btnList = document.createElement("button");
         btnList.className = "vnccs-ps-toggle-btn list";
-        btnList.innerText = "List";
+        btnList.innerText = tr("List");
         const btnGrid = document.createElement("button");
         btnGrid.className = "vnccs-ps-toggle-btn grid";
-        btnGrid.innerText = "Grid";
+        btnGrid.innerText = tr("Grid");
 
         const updateModeUI = () => {
             const isGrid = this.exportParams.output_mode === 'GRID';
@@ -5385,7 +5386,7 @@ class PoseStudioWidget {
         this.tabScrollLeft = document.createElement("button");
         this.tabScrollLeft.className = "vnccs-ps-tab-scroll left";
         this.tabScrollLeft.type = "button";
-        this.tabScrollLeft.title = "Scroll tabs left";
+        this.tabScrollLeft.title = tr("Scroll tabs left");
         this.tabScrollLeft.textContent = "<";
         this.tabScrollLeft.addEventListener("click", () => this.scrollTabs(-1));
 
@@ -5396,7 +5397,7 @@ class PoseStudioWidget {
         this.tabScrollRight = document.createElement("button");
         this.tabScrollRight.className = "vnccs-ps-tab-scroll right";
         this.tabScrollRight.type = "button";
-        this.tabScrollRight.title = "Scroll tabs right";
+        this.tabScrollRight.title = tr("Scroll tabs right");
         this.tabScrollRight.textContent = ">";
         this.tabScrollRight.addEventListener("click", () => this.scrollTabs(1));
 
@@ -5429,8 +5430,8 @@ class PoseStudioWidget {
         this._samCamBanner.className = 'vnccs-ps-sam-cam-banner';
         this._samCamBanner.innerHTML =
             '<span class="vnccs-sam-dot"></span>' +
-            '<span class="vnccs-sam-label">SAM Camera Applied</span>' +
-            '<small style="opacity:0.65;font-weight:400">· click to toggle</small>';
+            '<span class="vnccs-sam-label">' + tr("SAM Camera Applied") + '</span>' +
+            '<small style="opacity:0.65;font-weight:400">' + tr("· click to toggle") + '</small>';
         this._samCamBanner.addEventListener('click', () => this._toggleSAMCameraDisplay());
         this.canvasContainer.appendChild(this._samCamBanner);
 
@@ -5445,44 +5446,44 @@ class PoseStudioWidget {
 
         const undoBtn = document.createElement("button");
         undoBtn.className = "vnccs-ps-btn";
-        undoBtn.innerHTML = '<span class="vnccs-ps-btn-icon">↩</span> Undo';
+        undoBtn.innerHTML = '<span class="vnccs-ps-btn-icon">↩</span> ' + tr("Undo");
         undoBtn.onclick = () => this.isAnimationMode() ? this.undoAnimation() : (this.viewer && this.viewer.undo());
 
         const redoBtn = document.createElement("button");
         redoBtn.className = "vnccs-ps-btn";
-        redoBtn.innerHTML = '<span class="vnccs-ps-btn-icon">↪</span> Redo';
+        redoBtn.innerHTML = '<span class="vnccs-ps-btn-icon">↪</span> ' + tr("Redo");
         redoBtn.onclick = () => this.isAnimationMode() ? this.redoAnimation() : (this.viewer && this.viewer.redo());
 
         const resetBtn = document.createElement("button");
         resetBtn.className = "vnccs-ps-btn";
-        resetBtn.innerHTML = '<span class="vnccs-ps-btn-icon">↺</span> Reset';
-        resetBtn.title = "Reset pose and Mesh Proportions; in Animation mode clear the entire animation and all keyframes";
+        resetBtn.innerHTML = '<span class="vnccs-ps-btn-icon">↺</span> ' + tr("Reset");
+        resetBtn.title = tr("Reset pose and Mesh Proportions; in Animation mode clear the entire animation and all keyframes");
         resetBtn.addEventListener("click", () => this.resetCurrentPose());
 
         const resetJointBtn = document.createElement("button");
         resetJointBtn.className = "vnccs-ps-btn";
-        resetJointBtn.innerHTML = '<span class="vnccs-ps-btn-icon">⟲</span> Reset Joint';
-        resetJointBtn.title = "Reset the selected joint's rotation (Alt+R). Shift+click or Alt+Shift+R also resets every joint below it";
+        resetJointBtn.innerHTML = '<span class="vnccs-ps-btn-icon">⟲</span> ' + tr("Reset Joint");
+        resetJointBtn.title = tr("Reset the selected joint's rotation (Alt+R). Shift+click or Alt+Shift+R also resets every joint below it");
         resetJointBtn.disabled = true;
         resetJointBtn.addEventListener("click", event => this.resetSelectedBone({ includeChildren: event.shiftKey }));
         this.resetJointBtn = resetJointBtn;
 
         const snapBtn = document.createElement("button");
         snapBtn.className = "vnccs-ps-btn primary";
-        snapBtn.innerHTML = '<span class="vnccs-ps-btn-icon">👁</span> Preview';
-        snapBtn.title = "Snap viewport camera to output camera";
+        snapBtn.innerHTML = '<span class="vnccs-ps-btn-icon">👁</span> ' + tr("Preview");
+        snapBtn.title = tr("Snap viewport camera to output camera");
         snapBtn.addEventListener("click", () => {
             this.applyCameraToViewer(true);
         });
 
         const copyBtn = document.createElement("button");
         copyBtn.className = "vnccs-ps-btn";
-        copyBtn.innerHTML = '<span class="vnccs-ps-btn-icon">📋</span> Copy';
+        copyBtn.innerHTML = '<span class="vnccs-ps-btn-icon">📋</span> ' + tr("Copy");
         copyBtn.addEventListener("click", () => this.copyPose());
 
         const pasteBtn = document.createElement("button");
         pasteBtn.className = "vnccs-ps-btn";
-        pasteBtn.innerHTML = '<span class="vnccs-ps-btn-icon">📋</span> Paste';
+        pasteBtn.innerHTML = '<span class="vnccs-ps-btn-icon">📋</span> ' + tr("Paste");
         pasteBtn.addEventListener("click", () => this.pastePose());
 
         actions.appendChild(undoBtn);
@@ -5499,25 +5500,25 @@ class PoseStudioWidget {
 
         const exportBtn = document.createElement("button");
         exportBtn.className = "vnccs-ps-btn";
-        exportBtn.innerHTML = '<span class="vnccs-ps-btn-icon">📥</span> Export';
+        exportBtn.innerHTML = '<span class="vnccs-ps-btn-icon">📥</span> ' + tr("Export");
         exportBtn.addEventListener("click", () => this.showExportModal());
 
         const importBtn = document.createElement("button");
         importBtn.className = "vnccs-ps-btn";
-        importBtn.innerHTML = '<span class="vnccs-ps-btn-icon">📤</span> Import';
+        importBtn.innerHTML = '<span class="vnccs-ps-btn-icon">📤</span> ' + tr("Import");
         importBtn.addEventListener("click", () => this.importPose());
 
         const refBtn = document.createElement("button");
         refBtn.className = "vnccs-ps-btn";
-        refBtn.innerHTML = '<span class="vnccs-ps-btn-icon">🖼️</span> Background';
-        refBtn.title = "Load or Remove Background Image";
+        refBtn.innerHTML = '<span class="vnccs-ps-btn-icon">🖼️</span> ' + tr("Background");
+        refBtn.title = tr("Load or Remove Background Image");
         refBtn.onclick = () => {
             if (this.viewer && this.viewer.hasReferenceImage()) {
                 this._referenceReadToken = (this._referenceReadToken || 0) + 1;
                 this.viewer.removeReferenceImage();
                 this.exportParams.background_url = null;
                 this.syncToNode(false);
-                refBtn.innerHTML = '<span class="vnccs-ps-btn-icon">🖼️</span> Background';
+                refBtn.innerHTML = '<span class="vnccs-ps-btn-icon">🖼️</span> ' + tr("Background");
                 refBtn.classList.remove('danger');
             } else {
                 this.loadReference();
@@ -5528,7 +5529,7 @@ class PoseStudioWidget {
         const settingsBtn = document.createElement("button");
         settingsBtn.className = "vnccs-ps-btn";
         settingsBtn.innerHTML = '<span class="vnccs-ps-btn-icon">⚙️</span>';
-        settingsBtn.title = "Settings (Debug)";
+        settingsBtn.title = tr("Settings (Debug)");
         settingsBtn.onclick = () => this.showSettingsModal();
         this.settingsBtn = settingsBtn;
 
@@ -6001,7 +6002,7 @@ class PoseStudioWidget {
                 console.warn("[VNCCS PoseStudio] Animation cache upload failed:", error);
                 if (!this._animationCacheUploadWarned) {
                     this._animationCacheUploadWarned = true;
-                    this.showMessage?.("Animation cache upload failed. Pending tracks are preserved in the workflow.", true);
+                    this.showMessage?.(tr("Animation cache upload failed. Pending tracks are preserved in the workflow."), true);
                 }
                 return false;
             }
@@ -6145,7 +6146,7 @@ class PoseStudioWidget {
                 this._deferredAnimationReference = reference;
                 this._animationInitialized = false;
                 console.warn("[VNCCS PoseStudio] Animation cache restore failed:", error);
-                if (this.isAnimationMode()) this.showMessage?.("Animation cache is missing. The workflow contains only the compact animation reference.", true);
+                if (this.isAnimationMode()) this.showMessage?.(tr("Animation cache is missing. The workflow contains only the compact animation reference."), true);
             }
             return false;
         } finally {
@@ -6355,7 +6356,7 @@ class PoseStudioWidget {
         libBtn.className = "vnccs-ps-btn primary";
         libBtn.style.width = "100%";
         libBtn.style.padding = "10px";
-        libBtn.innerHTML = '<span class="vnccs-ps-btn-icon">📚</span> Pose Library';
+        libBtn.innerHTML = '<span class="vnccs-ps-btn-icon">📚</span> ' + tr("Pose Library");
         libBtn.onclick = () => this.showLibraryModal();
         libBtnWrap.appendChild(libBtn);
         rightSidebar.appendChild(libBtnWrap);
@@ -6376,8 +6377,8 @@ class PoseStudioWidget {
         this.updateOverrideBtn = () => {
             const active = this.exportParams.keepOriginalLighting;
             overrideBtn.innerHTML = active ?
-                '<span style="margin-right:8px;">🧼</span> KEEPING ORIGINAL LIGHTING' :
-                '<span style="margin-right:8px;">💡</span> KEEP ORIGINAL LIGHTING';
+                '<span style="margin-right:8px;">🧼</span> ' + tr('KEEPING ORIGINAL LIGHTING') :
+                '<span style="margin-right:8px;">💡</span> ' + tr('KEEP ORIGINAL LIGHTING');
 
             if (active) {
                 overrideBtn.style.background = "#2ea043";
@@ -6404,7 +6405,7 @@ class PoseStudioWidget {
 
         const lightLabel = document.createElement("span");
         lightLabel.className = "vnccs-ps-label";
-        lightLabel.innerText = "Scene Lights";
+        lightLabel.innerText = tr("Scene Lights");
 
         const resetLightBtn = document.createElement("button");
         resetLightBtn.className = "vnccs-ps-reset-btn";
@@ -6428,7 +6429,7 @@ class PoseStudioWidget {
         const promptSection = this.createSection("Prompt", true);
         const promptArea = document.createElement("textarea");
         promptArea.className = "vnccs-ps-textarea";
-        promptArea.placeholder = "Describe your scene/character details...";
+        promptArea.placeholder = tr("Describe your scene/character details...");
         promptArea.value = this.getPosePrompt(this.activeTab);
 
         const autoExpand = () => {
@@ -6465,7 +6466,7 @@ class PoseStudioWidget {
         this.loadingOverlay.className = "vnccs-ps-loading-overlay";
         this.loadingOverlay.innerHTML = `
             <div class="vnccs-ps-loading-spinner"></div>
-            <div class="vnccs-ps-loading-text">Loading Model...</div>
+            <div class="vnccs-ps-loading-text">${tr("Loading Model...")}</div>
         `;
         this.container.appendChild(this.loadingOverlay);
 
@@ -6554,7 +6555,7 @@ class PoseStudioWidget {
         const header = document.createElement("div");
         header.className = "vnccs-ps-section-header";
         header.innerHTML = `
-            <span class="vnccs-ps-section-title">${title}</span>
+            <span class="vnccs-ps-section-title">${tr(title)}</span>
             <span class="vnccs-ps-section-toggle">▼</span>
         `;
 
@@ -6989,15 +6990,15 @@ class PoseStudioWidget {
             await new Promise(resolve => setTimeout(resolve, 16));
         }
         if (this._morphSolveInFlight || this._pendingMorphSolve || this._morphLoadTasks?.size) {
-            throw new Error("Pose Studio model morph is still in progress.");
+            throw new Error(tr("Pose Studio model morph is still in progress."));
         }
-        if (this._morphWorkerFailed) throw new Error("Pose Studio body update failed. Reload ComfyUI to retry.");
+        if (this._morphWorkerFailed) throw new Error(tr("Pose Studio body update failed. Reload ComfyUI to retry."));
     }
 
     async awaitReadyForCompositeCapture(timeoutMs = 120000) {
         const deadline = Date.now() + timeoutMs;
         while (Date.now() < deadline) {
-            if (this._disposed) throw new Error("Pose Studio was disposed");
+            if (this._disposed) throw new Error(tr("Pose Studio was disposed"));
             const hydration = this._sceneModelHydrationPromise;
             if (hydration) {
                 await hydration;
@@ -7033,7 +7034,7 @@ class PoseStudioWidget {
                 return true;
             }
         }
-        throw new Error("Pose Studio character scene is still loading.");
+        throw new Error(tr("Pose Studio character scene is still loading."));
     }
 
     async selectCharacter(id, { sync = true, rebuildScene = true } = {}) {
@@ -7208,7 +7209,10 @@ class PoseStudioWidget {
         const active = this.getActiveCharacter();
         if (!active) return;
         if (this.charactersSectionTitle) {
-            this.charactersSectionTitle.textContent = `Characters · ${this.characters.length}/${MAX_POSE_STUDIO_CHARACTERS}`;
+            this.charactersSectionTitle.textContent = tr("Characters · {count}/{max}", {
+                count: this.characters.length,
+                max: MAX_POSE_STUDIO_CHARACTERS,
+            });
         }
         content.innerHTML = "";
 
@@ -7222,9 +7226,9 @@ class PoseStudioWidget {
             button.className = "vnccs-ps-character-slot";
             if (character) {
                 const isActive = character.id === active.id;
-                const slotLabel = `Character ${index + 1}`;
+                const slotLabel = tr("Character {index}", { index: index + 1 });
                 button.classList.toggle("active", isActive);
-                button.title = isActive ? `${slotLabel} selected` : `Select ${slotLabel}`;
+                button.title = isActive ? tr("{name} selected", { name: slotLabel }) : tr("Select {name}", { name: slotLabel });
                 button.setAttribute("aria-label", button.title);
                 button.setAttribute("aria-pressed", String(isActive));
                 const dot = document.createElement("span");
@@ -7238,7 +7242,7 @@ class PoseStudioWidget {
             } else {
                 button.classList.add("empty");
                 button.textContent = "+";
-                button.title = `Add Character ${index + 1}`;
+                button.title = tr("Add Character {index}", { index: index + 1 });
                 button.setAttribute("aria-label", button.title);
                 button.disabled = this.characters.length >= MAX_POSE_STUDIO_CHARACTERS;
                 button.addEventListener("click", () => this.addCharacter(index));
@@ -7255,11 +7259,11 @@ class PoseStudioWidget {
         colorInput.type = "color";
         colorInput.className = "vnccs-ps-character-color-input";
         colorInput.value = normalizeCharacterColor(active.color);
-        colorInput.title = `Character ${active.slot + 1} model color`;
+        colorInput.title = tr("Character {index} model color", { index: active.slot + 1 });
         colorInput.setAttribute("aria-label", colorInput.title);
         const colorLabel = document.createElement("span");
         colorLabel.className = "vnccs-ps-character-color-label";
-        colorLabel.textContent = "Model color";
+        colorLabel.textContent = tr("Model color");
         colorInput.addEventListener("input", () => {
             active.color = normalizeCharacterColor(colorInput.value);
             this.viewer?.setActiveCharacterAppearance?.({ color: active.color, transform: active.transform });
@@ -7278,11 +7282,11 @@ class PoseStudioWidget {
         const remove = document.createElement("button");
         remove.type = "button";
         remove.className = "vnccs-ps-character-remove";
-        remove.textContent = "Remove";
+        remove.textContent = tr("Remove");
         remove.disabled = this.characters.length <= 1;
         remove.title = remove.disabled
-            ? "The only character cannot be removed"
-            : `Remove Character ${active.slot + 1}`;
+            ? tr("The only character cannot be removed")
+            : tr("Remove Character {index}", { index: active.slot + 1 });
         remove.setAttribute("aria-label", remove.title);
         remove.addEventListener("click", () => this.showCharacterRemoveConfirm(active));
         toolbar.append(colorField, remove);
@@ -7323,25 +7327,25 @@ class PoseStudioWidget {
         warning.setAttribute("aria-hidden", "true");
         warning.textContent = "!";
         const titleText = document.createElement("span");
-        titleText.textContent = `Remove Character ${characterNumber}?`;
+        titleText.textContent = tr("Remove Character {index}?", { index: characterNumber });
         title.append(warning, titleText);
 
         const content = document.createElement("div");
         content.className = "vnccs-ps-modal-content vnccs-ps-character-remove-content";
         const description = document.createElement("p");
         description.id = "vnccs-character-remove-description";
-        description.textContent = "This character will be removed from the scene. This cannot be undone.";
+        description.textContent = tr("This character will be removed from the scene. This cannot be undone.");
         content.appendChild(description);
 
         const removeBtn = document.createElement("button");
         removeBtn.type = "button";
         removeBtn.className = "vnccs-ps-modal-btn danger";
-        removeBtn.textContent = "Remove";
+        removeBtn.textContent = tr("Remove");
 
         const cancelBtn = document.createElement("button");
         cancelBtn.type = "button";
         cancelBtn.className = "vnccs-ps-modal-btn cancel";
-        cancelBtn.textContent = "Cancel";
+        cancelBtn.textContent = tr("Cancel");
 
         const actions = document.createElement("div");
         actions.className = "vnccs-ps-character-remove-actions";
@@ -7694,14 +7698,14 @@ class PoseStudioWidget {
             const card = cards[i];
             card.classList.toggle("active", i === this.activeTab);
             card.dataset.poseIndex = String(i);
-            card.title = `Open Pose ${i + 1}`;
+            card.title = tr("Open Pose {index}", { index: i + 1 });
 
             const name = card.querySelector(".vnccs-ps-pose-card-name");
-            if (name) name.textContent = `Pose ${i + 1}`;
+            if (name) name.textContent = tr("Pose {index}", { index: i + 1 });
 
             const del = card.querySelector(".vnccs-ps-pose-card-delete");
             if (del) {
-                del.title = `Delete Pose ${i + 1}`;
+                del.title = tr("Delete Pose {index}", { index: i + 1 });
                 del.disabled = this.poses.length <= 1;
             }
 
@@ -7726,7 +7730,7 @@ class PoseStudioWidget {
         if (!this.poses.length) {
             const empty = document.createElement("div");
             empty.className = "vnccs-ps-manager-empty";
-            empty.textContent = "No poses";
+            empty.textContent = tr("No poses");
             this.managerGrid.appendChild(empty);
             return;
         }
@@ -7738,7 +7742,7 @@ class PoseStudioWidget {
             card.dataset.poseIndex = String(i);
             card.tabIndex = 0;
             card.role = "button";
-            card.title = `Open Pose ${i + 1}`;
+            card.title = tr("Open Pose {index}", { index: i + 1 });
 
             const preview = document.createElement("div");
             preview.className = "vnccs-ps-pose-preview";
@@ -7748,7 +7752,7 @@ class PoseStudioWidget {
                 img.loading = "lazy";
                 img.decoding = "async";
                 img.src = capture;
-                img.alt = `Pose ${i + 1}`;
+                img.alt = tr("Pose {index}", { index: i + 1 });
                 preview.appendChild(img);
             } else {
                 const placeholder = document.createElement("div");
@@ -7761,13 +7765,13 @@ class PoseStudioWidget {
 
             const name = document.createElement("div");
             name.className = "vnccs-ps-pose-card-name";
-            name.textContent = `Pose ${i + 1}`;
+            name.textContent = tr("Pose {index}", { index: i + 1 });
 
             const del = document.createElement("button");
             del.className = "vnccs-ps-btn danger vnccs-ps-pose-card-delete";
             del.type = "button";
             del.textContent = "X";
-            del.title = `Delete Pose ${i + 1}`;
+            del.title = tr("Delete Pose {index}", { index: i + 1 });
             del.disabled = this.poses.length <= 1;
             del.addEventListener("click", (event) => {
                 event.stopPropagation();
@@ -7861,7 +7865,7 @@ class PoseStudioWidget {
 
     setPoseCapture(index, capture, requireCapture = false) {
         if (typeof capture !== "string" || !capture) {
-            if (requireCapture) throw new Error(`Pose capture failed for frame ${index + 1}.`);
+            if (requireCapture) throw new Error(tr("Pose capture failed for frame {index}.", { index: index + 1 }));
             return false;
         }
         if (!this.poseCaptures) this.poseCaptures = [];
@@ -7961,7 +7965,7 @@ class PoseStudioWidget {
                 img = document.createElement("img");
                 img.loading = "lazy";
                 img.decoding = "async";
-                img.alt = `Pose ${index + 1}`;
+                img.alt = tr("Pose {index}", { index: index + 1 });
                 preview.appendChild(img);
             }
             if (img.getAttribute("src") !== capture) img.src = capture;
@@ -8007,7 +8011,7 @@ class PoseStudioWidget {
             if (!generation) return;
             await this.awaitManagerPreviewRefresh(generation, Math.max(1, deadline - Date.now()));
             if (generation === this._managerPreviewRefreshGeneration) return;
-            if (Date.now() >= deadline) throw new Error("Pose Manager previews are still refreshing.");
+            if (Date.now() >= deadline) throw new Error(tr("Pose Manager previews are still refreshing."));
         }
     }
 
@@ -8037,7 +8041,7 @@ class PoseStudioWidget {
         if (!generation) return false;
         const deadline = Date.now() + timeoutMs;
         while (Date.now() < deadline) {
-            if (this._disposed) throw new Error("Pose Studio was disposed.");
+            if (this._disposed) throw new Error(tr("Pose Studio was disposed."));
             if (this._managerPreviewRefreshError?.generation === generation) {
                 throw new Error(this._managerPreviewRefreshError.message);
             }
@@ -8046,7 +8050,7 @@ class PoseStudioWidget {
             }
             await new Promise(resolve => setTimeout(resolve, 16));
         }
-        throw new Error("Pose Manager previews are still refreshing.");
+        throw new Error(tr("Pose Manager previews are still refreshing."));
     }
 
     computePoseManagerCaptureFraming(width, height, poseCamera) {
@@ -8127,7 +8131,7 @@ class PoseStudioWidget {
                 // Do not replace a visible manager card with a neutral camera
                 // when fitting is temporarily unavailable. The last valid
                 // card stays visible, but RUN must wait for a fresh capture.
-                if (!framing) throw new Error(`Pose ${i + 1} framing is not ready.`);
+                if (!framing) throw new Error(tr("Pose {index} framing is not ready.", { index: i + 1 }));
                 const nextCapture = this.viewer.capture(
                     w,
                     h,
@@ -8195,14 +8199,14 @@ class PoseStudioWidget {
             const card = cards[i];
             card.classList.toggle("active", i === this.activeTab);
             card.dataset.poseIndex = String(i);
-            card.title = `Open Pose ${i + 1}`;
+            card.title = tr("Open Pose {index}", { index: i + 1 });
 
             const name = card.querySelector(".vnccs-ps-detail-card-name");
-            if (name) name.textContent = `Pose ${i + 1}`;
+            if (name) name.textContent = tr("Pose {index}", { index: i + 1 });
 
             const del = card.querySelector(".vnccs-ps-detail-card-delete");
             if (del) {
-                del.title = `Delete Pose ${i + 1}`;
+                del.title = tr("Delete Pose {index}", { index: i + 1 });
                 del.disabled = this.poses.length <= 1;
             }
 
@@ -8233,7 +8237,7 @@ class PoseStudioWidget {
             card.dataset.poseIndex = String(i);
             card.tabIndex = 0;
             card.role = "button";
-            card.title = `Open Pose ${i + 1}`;
+            card.title = tr("Open Pose {index}", { index: i + 1 });
 
             const preview = document.createElement("div");
             preview.className = "vnccs-ps-detail-card-preview";
@@ -8243,7 +8247,7 @@ class PoseStudioWidget {
                 img.loading = "lazy";
                 img.decoding = "async";
                 img.src = capture;
-                img.alt = `Pose ${i + 1}`;
+                img.alt = tr("Pose {index}", { index: i + 1 });
                 preview.appendChild(img);
             } else {
                 const placeholder = document.createElement("div");
@@ -8256,13 +8260,13 @@ class PoseStudioWidget {
 
             const name = document.createElement("div");
             name.className = "vnccs-ps-detail-card-name";
-            name.textContent = `Pose ${i + 1}`;
+            name.textContent = tr("Pose {index}", { index: i + 1 });
 
             const del = document.createElement("button");
             del.className = "vnccs-ps-btn danger vnccs-ps-detail-card-delete";
             del.type = "button";
             del.textContent = "X";
-            del.title = `Delete Pose ${i + 1}`;
+            del.title = tr("Delete Pose {index}", { index: i + 1 });
             del.disabled = this.poses.length <= 1;
             del.addEventListener("click", (event) => {
                 event.stopPropagation();
@@ -8426,13 +8430,13 @@ class PoseStudioWidget {
 
         const maintainField = document.createElement("label");
         maintainField.className = "vnccs-ps-field vnccs-ps-checkbox-field";
-        maintainField.title = "Move the camera when FOV changes so the subject keeps its size and only the perspective changes.";
+        maintainField.title = tr("Move the camera when FOV changes so the subject keeps its size and only the perspective changes.");
         const maintainCheckbox = document.createElement("input");
         maintainCheckbox.type = "checkbox";
         maintainCheckbox.checked = this.exportParams.cam_maintain_subject_size === true;
         const maintainLabel = document.createElement("span");
         maintainLabel.className = "vnccs-ps-label";
-        maintainLabel.innerText = "Maintain Subject Size";
+        maintainLabel.innerText = tr("Maintain Subject Size");
         maintainCheckbox.addEventListener("change", () => {
             if (!this.isAnimationMode()) this.viewer?.recordState?.();
             this.exportParams.cam_maintain_subject_size = maintainCheckbox.checked;
@@ -8447,7 +8451,7 @@ class PoseStudioWidget {
         const samNote = document.createElement("div");
         samNote.className = "vnccs-ps-label";
         samNote.style.display = "none";
-        samNote.innerText = "SAM camera is applied: its projection sets the lens. FOV and Distance apply again when SAM camera is paused or cleared.";
+        samNote.innerText = tr("SAM camera is applied: its projection sets the lens. FOV and Distance apply again when SAM camera is paused or cleared.");
         section.content.appendChild(samNote);
         this._captureLensSamNote = samNote;
 
@@ -8455,13 +8459,13 @@ class PoseStudioWidget {
         viewRow.className = "vnccs-ps-row";
         const alignButton = document.createElement("button");
         alignButton.className = "vnccs-ps-btn";
-        alignButton.innerText = "Align Camera to View";
-        alignButton.title = "Copy the editor view (position, rotation, FOV and zoom) to the capture camera (Ctrl+Shift+F)";
+        alignButton.innerText = tr("Align Camera to View");
+        alignButton.title = tr("Copy the editor view (position, rotation, FOV and zoom) to the capture camera (Ctrl+Shift+F)");
         alignButton.addEventListener("click", () => this.alignCaptureCameraToView());
         const resetButton = document.createElement("button");
         resetButton.className = "vnccs-ps-btn";
-        resetButton.innerText = "Reset Camera";
-        resetButton.title = "Reset the scene camera to Yaw 0, Pitch 0, FOV 30 and Distance 45";
+        resetButton.innerText = tr("Reset Camera");
+        resetButton.title = tr("Reset the scene camera to Yaw 0, Pitch 0, FOV 30 and Distance 45");
         resetButton.addEventListener("click", () => this.resetCaptureCamera());
         viewRow.append(alignButton, resetButton);
         section.content.appendChild(viewRow);
@@ -8470,7 +8474,7 @@ class PoseStudioWidget {
         const viewNote = document.createElement("div");
         viewNote.className = "vnccs-ps-label";
         viewNote.style.display = "none";
-        viewNote.innerText = "Capture camera is aligned to a saved view. Yaw and Pitch orbit it around its pivot; Reset Camera restores the default scene camera.";
+        viewNote.innerText = tr("Capture camera is aligned to a saved view. Yaw and Pitch orbit it around its pivot; Reset Camera restores the default scene camera.");
         section.content.appendChild(viewNote);
         this._captureViewNote = viewNote;
         this.syncCaptureLensControls();
@@ -8502,10 +8506,10 @@ class PoseStudioWidget {
         const label = this._samCamBanner.querySelector('.vnccs-sam-label');
         if (this._samCamDisplayActive) {
             this._samCamBanner.classList.remove('vnccs-sam-paused');
-            if (label) label.textContent = 'SAM Camera Applied';
+            if (label) label.textContent = tr('SAM Camera Applied');
         } else {
             this._samCamBanner.classList.add('vnccs-sam-paused');
-            if (label) label.textContent = 'SAM Camera (paused)';
+            if (label) label.textContent = tr('SAM Camera (paused)');
         }
     }
 
@@ -8678,7 +8682,7 @@ class PoseStudioWidget {
         input.max = slider.max;
         input.step = slider.step;
         input.setAttribute("aria-label", label);
-        slider.setAttribute("aria-label", label + " slider");
+        slider.setAttribute("aria-label", tr("{label} slider", { label }));
 
         let displayValue;
         let editing = false;
@@ -8749,12 +8753,12 @@ class PoseStudioWidget {
         const resetBtn = document.createElement("button");
         resetBtn.className = "vnccs-ps-reset-btn";
         resetBtn.innerHTML = "↺";
-        resetBtn.title = `Reset to ${defaultValue}`;
+        resetBtn.title = tr("Reset to {value}", { value: defaultValue });
 
         // Label Side
         const labelEl = document.createElement("span");
         labelEl.className = "vnccs-ps-label";
-        labelEl.innerText = label;
+        labelEl.innerText = tr(label);
 
         labelRow.innerHTML = '';
         labelRow.appendChild(labelEl);
@@ -8770,7 +8774,7 @@ class PoseStudioWidget {
         slider.max = max;
         slider.step = step;
         slider.value = value;
-        valueRow.append(this.createSliderNumber(slider, label, key === "age" ? 0 : 2), resetBtn);
+        valueRow.append(this.createSliderNumber(slider, tr(label), key === "age" ? 0 : 2), resetBtn);
         this.trackPoseGesture(slider, { recordPose: true });
         const isLiveMorphSlider = !isExport && this.isLiveMorphKey?.(key);
 
@@ -8865,7 +8869,7 @@ class PoseStudioWidget {
 
         const labelEl = document.createElement("span");
         labelEl.className = "vnccs-ps-label";
-        labelEl.innerText = label;
+        labelEl.innerText = tr(label);
 
         const input = document.createElement("input");
         input.type = type;
@@ -8910,7 +8914,7 @@ class PoseStudioWidget {
 
         const labelEl = document.createElement("div");
         labelEl.className = "vnccs-ps-label";
-        labelEl.innerText = label;
+        labelEl.innerText = tr(label);
 
         const select = document.createElement("select");
         select.className = "vnccs-ps-select";
@@ -9044,7 +9048,7 @@ class PoseStudioWidget {
             slider.value = this.exportParams[key];
             if (axis === "y") slider.setAttribute("aria-orientation", "vertical");
 
-            const number = this.createSliderNumber(slider, `Camera ${label.textContent}`);
+            const number = this.createSliderNumber(slider, tr("Camera {label}", { label: label.textContent }));
             const record = this.trackPoseGesture(slider);
             slider.addEventListener("input", () => {
                 const moved = this.applyCharacterPosition({
@@ -9244,7 +9248,7 @@ class PoseStudioWidget {
         recenterBtn.className = "vnccs-ps-btn";
         recenterBtn.style.marginTop = "8px";
         recenterBtn.style.width = "100%";
-        recenterBtn.innerHTML = '<span class="vnccs-ps-btn-icon">⌖</span> Re-center';
+        recenterBtn.innerHTML = '<span class="vnccs-ps-btn-icon">⌖</span> ' + tr('Re-center');
         recenterBtn.onclick = () => {
             this.clearSAMCameraMode();
             this.applyCameraToViewer(true);
@@ -9260,8 +9264,8 @@ class PoseStudioWidget {
         linkBtn.className = "vnccs-ps-btn";
         linkBtn.style.marginTop = "6px";
         linkBtn.style.width = "100%";
-        linkBtn.textContent = "Move & Rotate All";
-        linkBtn.title = "Move all characters together and link the Model Rotation controls";
+        linkBtn.textContent = tr("Move & Rotate All");
+        linkBtn.title = tr("Move all characters together and link the Model Rotation controls");
         linkBtn.setAttribute("aria-pressed", "false");
         linkBtn.onclick = () => {
             this._finishPoseGesture?.();
@@ -9275,7 +9279,7 @@ class PoseStudioWidget {
         syncTabsBtn.className = "vnccs-ps-btn vnccs-ps-btn--sync-tabs";
         syncTabsBtn.style.marginTop = "6px";
         syncTabsBtn.style.width = "100%";
-        syncTabsBtn.innerHTML = '<span class="vnccs-ps-btn-icon">⇄</span> Sync Zoom to All Tabs';
+        syncTabsBtn.innerHTML = '<span class="vnccs-ps-btn-icon">⇄</span> ' + tr('Sync Zoom to All Tabs');
         syncTabsBtn.style.display = "none"; // Hidden by default
         syncTabsBtn.onclick = () => {
             const currentZoom = this.exportParams.cam_zoom;
@@ -9367,8 +9371,8 @@ class PoseStudioWidget {
             ctx.fillStyle = "#444";
             ctx.font = "8px monospace";
             ctx.textAlign = "center";
-            ctx.fillText("BACK", cx, 10);
-            ctx.fillText("FRONT", cx, size - 4);
+            ctx.fillText(tr("BACK"), cx, 10);
+            ctx.fillText(tr("FRONT"), cx, size - 4);
         };
 
         const updateFromMouse = (e) => {
@@ -9440,7 +9444,7 @@ class PoseStudioWidget {
 
         const labelEl = document.createElement("div");
         labelEl.className = "vnccs-ps-label";
-        labelEl.innerText = label;
+        labelEl.innerText = tr(label);
 
         const input = document.createElement("input");
         input.type = "color";
@@ -9603,7 +9607,7 @@ class PoseStudioWidget {
 
         const title = document.createElement("div");
         title.className = "vnccs-ps-hand-popover-title";
-        title.textContent = "Hand Control";
+        title.textContent = tr("Hand Control");
 
         const closeBtn = document.createElement("button");
         closeBtn.className = "vnccs-ps-hand-popover-close";
@@ -9620,7 +9624,7 @@ class PoseStudioWidget {
 
             const lbl = document.createElement("span");
             lbl.style.cssText = "font-size:10px;color:var(--ps-text-muted);";
-            lbl.textContent = label;
+            lbl.textContent = tr(label);
 
             const slider = document.createElement("input");
             slider.type = "range";
@@ -9630,7 +9634,7 @@ class PoseStudioWidget {
             slider.value = "0";
             slider.className = "vnccs-ps-slider";
 
-            const value = this.createSliderNumber(slider, label);
+            const value = this.createSliderNumber(slider, tr(label));
 
             this.trackPoseGesture(slider, { recordPose: true });
             slider.addEventListener("input", () => {
@@ -9682,7 +9686,7 @@ class PoseStudioWidget {
         const resetBtn = document.createElement("button");
         resetBtn.className = "vnccs-ps-btn";
         resetBtn.style.width = "100%";
-        resetBtn.textContent = "Reset Hand Sliders";
+        resetBtn.textContent = tr("Reset Hand Sliders");
         resetBtn.addEventListener("click", () => {
             this.resetHandSliders();
             this._handBiasValues = [1.0, 1.0, 1.0];
@@ -9774,7 +9778,7 @@ class PoseStudioWidget {
         this._activeHandSide = side;
         this.calibrateHandSliderDefaults(side);
         if (this._handPopoverTitle) {
-            this._handPopoverTitle.textContent = side === "l" ? "Left Hand" : "Right Hand";
+            this._handPopoverTitle.textContent = side === "l" ? tr("Left Hand") : tr("Right Hand");
         }
         this._handPopover.classList.add("visible");
         this.positionHandControlPopover(side);
@@ -9921,7 +9925,7 @@ class PoseStudioWidget {
             tab.className = "vnccs-ps-tab" + (i === this.activeTab ? " active" : "");
 
             const text = document.createElement("span");
-            text.innerText = `Pose ${i + 1}`;
+            text.innerText = tr("Pose {index}", { index: i + 1 });
             tab.appendChild(text);
 
             if (this.poses.length > 1) {
@@ -10212,9 +10216,9 @@ class PoseStudioWidget {
 
     fitActiveRestPoseToFrame({ resetAnimationBase = true } = {}) {
         const active = this.getActiveCharacter();
-        if (!active) throw new Error("Cannot fit rest pose without an active character.");
+        if (!active) throw new Error(tr("Cannot fit rest pose without an active character."));
         if (!this.viewer?.isInitialized?.() || !this.viewer.sceneCameraTarget) {
-            throw new Error("Cannot fit rest pose before the model camera target is ready.");
+            throw new Error(tr("Cannot fit rest pose before the model camera target is ready."));
         }
 
         const previousTransform = { ...active.transform };
@@ -10231,7 +10235,7 @@ class PoseStudioWidget {
                 this.exportParams.cam_pitch_deg || 0,
                 0.08,
             );
-            if (!framing) throw new Error("Cannot measure rest-pose framing.");
+            if (!framing) throw new Error(tr("Cannot measure rest-pose framing."));
 
             const transform = cameraFramingToCharacterTransform({
                 zoom: framing.zoom,
@@ -10453,7 +10457,7 @@ class PoseStudioWidget {
 
         const title = document.createElement("div");
         title.className = "vnccs-ps-modal-title";
-        title.innerText = this.isAnimationMode() ? "Export Animation" : "Export Pose Data";
+        title.innerText = this.isAnimationMode() ? tr("Export Animation") : tr("Export Pose Data");
 
         const content = document.createElement("div");
         content.className = "vnccs-ps-modal-content";
@@ -10463,7 +10467,7 @@ class PoseStudioWidget {
 
         const nameInput = document.createElement("input");
         nameInput.type = "text";
-        nameInput.placeholder = "Filename (optional)";
+        nameInput.placeholder = tr("Filename (optional)");
         nameInput.className = "vnccs-ps-input";
         nameInput.style.width = "100%";
         nameInput.style.marginBottom = "5px";
@@ -10472,7 +10476,7 @@ class PoseStudioWidget {
 
         const btnSingle = document.createElement("button");
         btnSingle.className = "vnccs-ps-modal-btn";
-        btnSingle.innerText = "Current Pose Only";
+        btnSingle.innerText = tr("Current Pose Only");
         btnSingle.onclick = () => {
             this.exportPose('single', nameInput.value);
             this.container.removeChild(overlay);
@@ -10480,7 +10484,7 @@ class PoseStudioWidget {
 
         const btnSet = document.createElement("button");
         btnSet.className = "vnccs-ps-modal-btn";
-        btnSet.innerText = "All Poses (Set)";
+        btnSet.innerText = tr("All Poses (Set)");
         btnSet.onclick = () => {
             this.exportPose('set', nameInput.value);
             this.container.removeChild(overlay);
@@ -10488,7 +10492,7 @@ class PoseStudioWidget {
 
         const btnCancel = document.createElement("button");
         btnCancel.className = "vnccs-ps-modal-btn cancel";
-        btnCancel.innerText = "Cancel";
+        btnCancel.innerText = tr("Cancel");
         btnCancel.onclick = () => {
             this.container.removeChild(overlay);
         };
@@ -10497,7 +10501,7 @@ class PoseStudioWidget {
         if (this.isAnimationMode()) {
             const btnAnimation = document.createElement("button");
             btnAnimation.className = "vnccs-ps-modal-btn";
-            btnAnimation.innerText = "Animation Clip (.json)";
+            btnAnimation.innerText = tr("Animation Clip (.json)");
             btnAnimation.onclick = () => {
                 this.exportPose('animation', nameInput.value);
                 this.container.removeChild(overlay);
@@ -10518,7 +10522,7 @@ class PoseStudioWidget {
 
     exportPose(type, customName) {
         if (type === "animation" && (this._animationCacheRestorePending || this._deferredAnimationReference)) {
-            this.showMessage("Animation tracks are not loaded. Restore the animation before exporting it.", true);
+            this.showMessage(tr("Animation tracks are not loaded. Restore the animation before exporting it."), true);
             return false;
         }
         let data, filename;
@@ -10620,7 +10624,7 @@ class PoseStudioWidget {
         const content = document.createElement('div');
         content.className = 'vnccs-ps-modal-content';
         content.style.textAlign = 'center';
-        content.textContent = 'Preparing image...';
+        content.textContent = tr('Preparing image...');
 
         const progressTrack = document.createElement('div');
         progressTrack.className = 'vnccs-ps-import-progress';
@@ -10655,7 +10659,7 @@ class PoseStudioWidget {
                 if (status.message) content.textContent = status.message;
                 if (status.progress !== undefined) setProgress(status.progress);
                 if (status.message && /download/i.test(status.message) && !/repository/i.test(titleText)) {
-                    title.textContent = "Downloading SAM 3D Body Models";
+                    title.textContent = tr("Downloading SAM 3D Body Models");
                 } else {
                     title.textContent = titleText;
                 }
@@ -10732,13 +10736,13 @@ class PoseStudioWidget {
             throw Object.assign(new Error(result?.error || `HTTP ${response.status}`), { status: response.status });
         }
         const poseData = result.pose_data || (result.pose_json ? JSON.parse(result.pose_json) : null);
-        if (!poseData) throw new Error("SAM 3D Body returned empty pose JSON.");
+        if (!poseData) throw new Error(tr("SAM 3D Body returned empty pose JSON."));
         return poseData;
     }
 
     async importSAM3DImageAsPose(file) {
         if (!this.viewer || !this.viewer.isInitialized()) {
-            throw new Error("Pose viewer is not ready.");
+            throw new Error(tr("Pose viewer is not ready."));
         }
         const token = this._libraryLoadToken = (this._libraryLoadToken || 0) + 1;
         const characterId = this.activeCharacterId;
@@ -10746,7 +10750,7 @@ class PoseStudioWidget {
         const isCurrent = () => !this._disposed && token === this._libraryLoadToken
             && characterId === this.activeCharacterId && tab === this.activeTab;
 
-        const progress = this.showImportProgressModal("SAM 3D Body Import");
+        const progress = this.showImportProgressModal(tr("SAM 3D Body Import"));
         const taskId = (
             globalThis.crypto?.randomUUID?.()
             || `sam3d-${Date.now()}-${Math.random().toString(16).slice(2)}`
@@ -10755,8 +10759,8 @@ class PoseStudioWidget {
         let modelSessionId = null;
         try {
             progress.setProgress(1);
-            progress.setText("Step 1/6: Uploading image to SAM 3D Body...");
-            progress.setText("Step 1/6: Waiting for SAM 3D Body to start processing...");
+            progress.setText(tr("Step 1/6: Uploading image to SAM 3D Body..."));
+            progress.setText(tr("Step 1/6: Waiting for SAM 3D Body to start processing..."));
             modelSessionId = await this.openSAM3DModelSession();
             if (!isCurrent()) return;
             stopPolling = this.watchSAM3DImportProgress(taskId, progress.update, isCurrent);
@@ -10768,19 +10772,19 @@ class PoseStudioWidget {
             if (!isCurrent()) return;
             stopPolling();
             progress.setProgress(92);
-            progress.setText("Step 6/6: Building SAM render fit...");
+            progress.setText(tr("Step 6/6: Building SAM render fit..."));
             const fitData = await this.prepareSAM3DRenderFit(poseData, { modelSessionId });
             if (!isCurrent()) return;
             const poseForImport = fitData?.poseData || poseData;
 
             progress.setProgress(96);
-            progress.setText("Step 6/6: Applying fitted pose to MakeHuman skeleton...");
+            progress.setText(tr("Step 6/6: Applying fitted pose to MakeHuman skeleton..."));
             const ok = this.viewer.applySAM3DImport(
                 poseForImport,
                 this._shoulderYOffset || 0
             );
             if (!ok) {
-                throw new Error("Failed to apply SAM 3D Body pose to Pose Studio.");
+                throw new Error(tr("Failed to apply SAM 3D Body pose to Pose Studio."));
             }
             this.syncMeshProportionSlidersFromViewer();
 
@@ -10799,8 +10803,8 @@ class PoseStudioWidget {
             // capture (and its server-side cache copy) would still be output.
             this.commitViewerPoseToCurrentEditor({ fullCapture: true, syncOptions: { skipCapture: false } });
             progress.setProgress(100);
-            progress.setText("Step 6/6: Pose applied to Pose Studio.");
-            this.showMessage("SAM 3D Body image imported successfully.");
+            progress.setText(tr("Step 6/6: Pose applied to Pose Studio."));
+            this.showMessage(tr("SAM 3D Body image imported successfully."));
         } catch (error) {
             if (isCurrent()) throw error;
         } finally {
@@ -10834,7 +10838,7 @@ class PoseStudioWidget {
         } catch (err) {
             if (!isCurrent()) return false;
             console.error("[VNCCS] Failed to build SAM mesh overlay:", err);
-            this.showMessage?.(`Failed to build SAM mesh overlay: ${err?.message || err}`, true);
+            this.showMessage?.(tr("Failed to build SAM mesh overlay: {error}", { error: err?.message || err }), true);
             return false;
         }
     }
@@ -10879,7 +10883,7 @@ class PoseStudioWidget {
         } catch (err) {
             if (err?.name === "AbortError" || err?.status === 409) throw err;
             console.error("[VNCCS] Failed to build SAM render fit:", err);
-            if (reportError) this.showMessage?.(`Failed to build SAM render fit: ${err?.message || err}`, true);
+            if (reportError) this.showMessage?.(tr("Failed to build SAM render fit: {error}", { error: err?.message || err }), true);
             return null;
         }
     }
@@ -10894,7 +10898,7 @@ class PoseStudioWidget {
             this._shoulderYOffset || 0
         );
         if (!ok) {
-            throw new Error("Failed to apply SAM 3D Body pose to Pose Studio.");
+            throw new Error(tr("Failed to apply SAM 3D Body pose to Pose Studio."));
         }
         this._lastSAM3DPoseData = poseForImport;
         this._lastSAM3DMeshData = fitData?.meshData || null;
@@ -10910,7 +10914,7 @@ class PoseStudioWidget {
 
     async applySAM3DProportionsToPoseManager(poseData, modelSessionId = null) {
         if (!this.viewer?.isInitialized?.()) {
-            throw new Error("Pose viewer is not ready.");
+            throw new Error(tr("Pose viewer is not ready."));
         }
         if (this.exportParams.manager_auto_analyze_proportions === false) {
             return false;
@@ -10948,7 +10952,7 @@ class PoseStudioWidget {
                 },
             );
             if (!applied) {
-                throw new Error("Failed to fit SAM 3D Body proportions.");
+                throw new Error(tr("Failed to fit SAM 3D Body proportions."));
             }
             if (fitData?.meshData) {
                 this.applySAM3DMeshOverlayFit(
@@ -11290,8 +11294,8 @@ class PoseStudioWidget {
         keyframeStep = 2,
         keyReduction = "off",
     } = {}) {
-        if (!this.viewer?.isInitialized?.()) throw new Error("Pose viewer is not ready.");
-        if (!plan || plan.duration <= 0 || !plan.times?.length) throw new Error("Select a non-empty video segment.");
+        if (!this.viewer?.isInitialized?.()) throw new Error(tr("Pose viewer is not ready."));
+        if (!plan || plan.duration <= 0 || !plan.times?.length) throw new Error(tr("Select a non-empty video segment."));
 
         const viewer = this.viewer;
         const restoreToken = this._poseDataRestoreToken;
@@ -11302,7 +11306,7 @@ class PoseStudioWidget {
             && restoreToken === this._poseDataRestoreToken && loadToken === this._libraryLoadToken
             && characterId === this.activeCharacterId && tab === this.activeTab;
         const assertCurrent = () => {
-            if (signal?.aborted || !isCurrent()) throw new DOMException("Video import cancelled.", "AbortError");
+            if (signal?.aborted || !isCurrent()) throw new DOMException(tr("Video import cancelled."), "AbortError");
         };
         const originalPose = this.viewer.getPose();
         const originalBoneLengthParams = { ...(this.viewer.boneLengthParams || {}) };
@@ -11321,7 +11325,7 @@ class PoseStudioWidget {
         // source frame that will not become a key.
         const captureStep = keyReduction === "off" ? fixedStep : 1;
         const captureSchedule = computeVideoCaptureSchedule(plan, captureStep);
-        if (captureSchedule.sampleCount < 2) throw new Error("Video capture requires at least two pose samples.");
+        if (captureSchedule.sampleCount < 2) throw new Error(tr("Video capture requires at least two pose samples."));
 
         let modelSessionId = null;
         try {
@@ -11392,7 +11396,7 @@ class PoseStudioWidget {
                     this._shoulderYOffset || 0,
                     { recordState: false },
                 );
-                if (!applied) throw new Error(`Failed to apply captured pose at ${this.formatVideoTime(time)}.`);
+                if (!applied) throw new Error(tr("Failed to apply captured pose at {time}.", { time: this.formatVideoTime(time) }));
                 if (fitData?.meshData) this.applySAM3DMeshOverlayFit(fitData.meshData, poseForImport);
 
                 poseSamples.push(poseForImport);
@@ -11416,7 +11420,7 @@ class PoseStudioWidget {
             }
 
             assertCurrent();
-            if (poseSamples.length < 2) throw new Error("Video capture produced fewer than two pose frames.");
+            if (poseSamples.length < 2) throw new Error(tr("Video capture produced fewer than two pose frames."));
             const stableBoneLengths = stableVideoBoneLengthParams(
                 boneLengthSamples,
                 originalBoneLengthParams,
@@ -11442,7 +11446,7 @@ class PoseStudioWidget {
                     },
                 );
                 if (!applied) {
-                    throw new Error(`Failed to reapply captured pose ${index + 1} on the stable video rig.`);
+                    throw new Error(tr("Failed to reapply captured pose {index} on the stable video rig.", { index: index + 1 }));
                 }
                 const capturedPose = this.stripSceneCameraFromPose(this.viewer.getPose());
                 capturedPose.prompt = prompt;
@@ -11551,7 +11555,7 @@ class PoseStudioWidget {
         modal.className = "vnccs-ps-modal vnccs-ps-video-modal";
         modal.innerHTML = `
             <div class="vnccs-ps-modal-title">
-                <span>Video Pose Capture</span>
+                <span>${tr("Video Pose Capture")}</span>
                 <span class="vnccs-ps-video-file-name"></span>
             </div>
             <div class="vnccs-ps-modal-content vnccs-ps-video-content">
@@ -11559,14 +11563,14 @@ class PoseStudioWidget {
                     <video class="vnccs-ps-video-preview" controls playsinline preload="metadata"></video>
                 </div>
                 <div class="vnccs-ps-video-timeline-toolbar">
-                    <button class="vnccs-ps-video-view-full" type="button">FULL</button>
-                    <button class="vnccs-ps-video-view-selection" type="button">FIT SELECTION</button>
-                    <button class="vnccs-ps-video-zoom-out" type="button" title="Zoom out">−</button>
-                    <input class="vnccs-ps-video-zoom-range" type="range" min="0" max="100" step="1" value="0" title="Timeline zoom">
-                    <button class="vnccs-ps-video-zoom-in" type="button" title="Zoom in">+</button>
-                    <span class="vnccs-ps-video-view-label">Full video</span>
+                    <button class="vnccs-ps-video-view-full" type="button">${tr("FULL")}</button>
+                    <button class="vnccs-ps-video-view-selection" type="button">${tr("FIT SELECTION")}</button>
+                    <button class="vnccs-ps-video-zoom-out" type="button" title="${tr("Zoom out")}">−</button>
+                    <input class="vnccs-ps-video-zoom-range" type="range" min="0" max="100" step="1" value="0" title="${tr("Timeline zoom")}">
+                    <button class="vnccs-ps-video-zoom-in" type="button" title="${tr("Zoom in")}">+</button>
+                    <span class="vnccs-ps-video-view-label">${tr("Full video")}</span>
                 </div>
-                <div class="vnccs-ps-video-timeline" title="Click to seek. Drag IN and OUT. Mouse wheel zooms around the cursor.">
+                <div class="vnccs-ps-video-timeline" title="${tr("Click to seek. Drag IN and OUT. Mouse wheel zooms around the cursor.")}">
                     <canvas class="vnccs-ps-video-thumbnails"></canvas>
                     <div class="vnccs-ps-video-dim vnccs-ps-video-dim--left"></div>
                     <div class="vnccs-ps-video-dim vnccs-ps-video-dim--right"></div>
@@ -11575,23 +11579,23 @@ class PoseStudioWidget {
                     <div class="vnccs-ps-video-handle vnccs-ps-video-handle--in"></div>
                     <div class="vnccs-ps-video-handle vnccs-ps-video-handle--out"></div>
                 </div>
-                <div class="vnccs-ps-video-pan-row"><span>PAN</span><input class="vnccs-ps-video-pan" type="range" min="0" value="0" disabled></div>
+                <div class="vnccs-ps-video-pan-row"><span>${tr("PAN")}</span><input class="vnccs-ps-video-pan" type="range" min="0" value="0" disabled></div>
                 <div class="vnccs-ps-video-controls">
-                    <label class="vnccs-ps-video-field">IN (SECONDS)<input class="vnccs-ps-video-in" type="number" min="0" step="0.01"></label>
-                    <label class="vnccs-ps-video-field">OUT (SECONDS)<input class="vnccs-ps-video-out" type="number" min="0" step="0.01"></label>
-                    <label class="vnccs-ps-video-field">CAPTURE FPS<span class="vnccs-ps-video-source-fps">Detecting source FPS…</span><input class="vnccs-ps-video-fps" type="number" min="0.01" max="60" step="0.001" value="12"></label>
-                    <label class="vnccs-ps-video-field">KEY EVERY N FRAMES<input class="vnccs-ps-video-key-step" type="number" min="1" max="60" step="1" value="2"></label>
-                    <label class="vnccs-ps-video-field">STABILIZATION<select class="vnccs-ps-video-stabilization"><option value="off">Off</option><option value="light">Light</option><option value="medium" selected>Medium</option><option value="strong">Strong</option></select></label>
-                    <label class="vnccs-ps-video-field">ADAPTIVE KEY REDUCTION<select class="vnccs-ps-video-key-reduction"><option value="off" selected>Off (fixed interval)</option><option value="conservative">Conservative (≤0.35°)</option><option value="balanced">Balanced (≤1°)</option><option value="aggressive">Aggressive (≤2.5°)</option></select></label>
+                    <label class="vnccs-ps-video-field">${tr("IN (SECONDS)")}<input class="vnccs-ps-video-in" type="number" min="0" step="0.01"></label>
+                    <label class="vnccs-ps-video-field">${tr("OUT (SECONDS)")}<input class="vnccs-ps-video-out" type="number" min="0" step="0.01"></label>
+                    <label class="vnccs-ps-video-field">${tr("CAPTURE FPS")}<span class="vnccs-ps-video-source-fps">${tr("Detecting source FPS…")}</span><input class="vnccs-ps-video-fps" type="number" min="0.01" max="60" step="0.001" value="12"></label>
+                    <label class="vnccs-ps-video-field">${tr("KEY EVERY N FRAMES")}<input class="vnccs-ps-video-key-step" type="number" min="1" max="60" step="1" value="2"></label>
+                    <label class="vnccs-ps-video-field">${tr("STABILIZATION")}<select class="vnccs-ps-video-stabilization"><option value="off">${tr("Off")}</option><option value="light">${tr("Light")}</option><option value="medium" selected>${tr("Medium")}</option><option value="strong">${tr("Strong")}</option></select></label>
+                    <label class="vnccs-ps-video-field">${tr("ADAPTIVE KEY REDUCTION")}<select class="vnccs-ps-video-key-reduction"><option value="off" selected>${tr("Off (fixed interval)")}</option><option value="conservative">${tr("Conservative (≤0.35°)")}</option><option value="balanced">${tr("Balanced (≤1°)")}</option><option value="aggressive">${tr("Aggressive (≤2.5°)")}</option></select></label>
                 </div>
-                <div class="vnccs-ps-video-summary">Reading video metadata…</div>
+                <div class="vnccs-ps-video-summary">${tr("Reading video metadata…")}</div>
                 <div class="vnccs-ps-video-progress">
                     <div class="vnccs-ps-import-progress"><div class="vnccs-ps-import-progress-fill"></div></div>
                     <div class="vnccs-ps-import-progress-percent">0%</div>
                 </div>
                 <div class="vnccs-ps-video-actions">
-                    <button class="vnccs-ps-modal-btn cancel">Cancel</button>
-                    <button class="vnccs-ps-modal-btn primary" disabled>Capture animation</button>
+                    <button class="vnccs-ps-modal-btn cancel">${tr("Cancel")}</button>
+                    <button class="vnccs-ps-modal-btn primary" disabled>${tr("Capture animation")}</button>
                 </div>
             </div>`;
         overlay.appendChild(modal);
@@ -11626,7 +11630,7 @@ class PoseStudioWidget {
         const progressPercent = modal.querySelector(".vnccs-ps-import-progress-percent");
         const cancelButton = modal.querySelector(".cancel");
         const importButton = modal.querySelector(".primary");
-        modal.querySelector(".vnccs-ps-video-file-name").textContent = file.name || "video";
+        modal.querySelector(".vnccs-ps-video-file-name").textContent = file.name || tr("video");
 
         const thumbnailVideo = document.createElement("video");
         thumbnailVideo.className = "vnccs-ps-video-fps-probe";
@@ -11736,15 +11740,31 @@ class PoseStudioWidget {
             summary.classList.toggle("is-limited", plan.limited);
             const effective = Number(plan.effectiveFps.toFixed(3));
             const sourceSummary = sourceFrameRate
-                ? ` · source ${Number(sourceFrameRate.toFixed(3))} FPS`
+                ? tr(" · source {fps} FPS", { fps: Number(sourceFrameRate.toFixed(3)) })
                 : "";
             const keySummary = adaptiveReduction
-                ? `adaptive ${keyReductionSelect.value} keys after capture`
-                : `${keyedFrameCount} fixed key positions per track`;
-            const captureSummary = `${captureSchedule.sampleCount} pose parses · ${plan.sampleCount} timeline frames`;
+                ? tr("adaptive {mode} keys after capture", { mode: keyReductionSelect.value })
+                : tr("{count} fixed key positions per track", { count: keyedFrameCount });
+            const captureSummary = tr("{parses} pose parses · {frames} timeline frames", {
+                parses: captureSchedule.sampleCount,
+                frames: plan.sampleCount,
+            });
             summary.textContent = plan.limited
-                ? `${this.formatVideoTime(plan.duration)} selected · ${captureSummary} · ${keySummary} · effective ${effective} FPS${sourceSummary} (limited from ${plan.requestedSamples})`
-                : `${this.formatVideoTime(plan.duration)} selected · ${captureSummary} at ${effective} FPS · ${keySummary}${sourceSummary}`;
+                ? tr("{duration} selected · {capture} · {keys} · effective {fps} FPS{source} (limited from {requested})", {
+                    duration: this.formatVideoTime(plan.duration),
+                    capture: captureSummary,
+                    keys: keySummary,
+                    fps: effective,
+                    source: sourceSummary,
+                    requested: plan.requestedSamples,
+                })
+                : tr("{duration} selected · {capture} at {fps} FPS · {keys}{source}", {
+                    duration: this.formatVideoTime(plan.duration),
+                    capture: captureSummary,
+                    fps: effective,
+                    keys: keySummary,
+                    source: sourceSummary,
+                });
             importButton.disabled = processing || plan.duration <= 0;
             updateViewportControls();
         };
@@ -11933,7 +11953,7 @@ class PoseStudioWidget {
             zoomRange.disabled = true;
             updateViewportControls();
             progressWrap.classList.add("is-active");
-            cancelButton.textContent = "Cancel import";
+            cancelButton.textContent = tr("Cancel import");
             summary.classList.remove("is-limited");
             try {
                 const result = await this.importVideoPoseSegment(preview, plan, {
@@ -11947,25 +11967,29 @@ class PoseStudioWidget {
                         progressFill.style.width = `${value}%`;
                         progressPercent.textContent = `${Math.round(value)}%`;
                         const action = status.phase === "stabilize"
-                            ? "Stabilizing captured poses"
+                            ? tr("Stabilizing captured poses")
                             : (status.phase === "reduce"
-                                ? "Removing redundant per-bone keys"
-                                : (status.phase === "pose" ? "Capturing pose" : "Reading frame"));
+                                ? tr("Removing redundant per-bone keys")
+                                : (status.phase === "pose" ? tr("Capturing pose") : tr("Reading frame")));
                         summary.textContent = `${action} ${Math.min(status.index + 1, status.count)}/${status.count} · ${this.formatVideoTime(status.time)}`;
                     },
                 });
                 if (closed) return;
                 progressFill.style.width = "100%";
                 progressPercent.textContent = "100%";
-                this.showMessage(`Video imported: ${result.sampleCount} poses → ${result.keyedFrameCount} keys across ${result.keyedTrackCount} tracks.`);
+                this.showMessage(tr("Video imported: {poses} poses → {keys} keys across {tracks} tracks.", {
+                    poses: result.sampleCount,
+                    keys: result.keyedFrameCount,
+                    tracks: result.keyedTrackCount,
+                }));
                 close({ abort: false });
             } catch (error) {
                 if (closed) return;
                 if (error?.name === "AbortError") { close(); return; }
                 console.error("Error importing video animation:", error);
-                summary.textContent = `Import failed: ${error?.message || error}`;
+                summary.textContent = tr("Import failed: {error}", { error: error?.message || error });
                 summary.classList.add("is-limited");
-                this.showMessage(`Failed to import video animation: ${error?.message || error}`, true);
+                this.showMessage(tr("Failed to import video animation: {error}", { error: error?.message || error }), true);
                 processing = false;
                 importController = null;
                 importButton.disabled = false;
@@ -11977,7 +12001,7 @@ class PoseStudioWidget {
                 zoomRange.disabled = false;
                 keyframeStepInput.disabled = keyReductionSelect.value !== "off";
                 updateViewportControls();
-                cancelButton.textContent = "Cancel";
+                cancelButton.textContent = tr("Cancel");
             }
         });
 
@@ -11988,15 +12012,15 @@ class PoseStudioWidget {
             ]);
             if (closed) return;
             duration = Number(preview.duration);
-            if (!Number.isFinite(duration) || duration <= 0) throw new Error("Video has no readable duration.");
+            if (!Number.isFinite(duration) || duration <= 0) throw new Error(tr("Video has no readable duration."));
             inTime = 0;
             outTime = duration;
             viewStart = 0;
             viewEnd = duration;
             inInput.max = String(duration);
             outInput.max = String(duration);
-            sourceFpsLabel.textContent = "Detecting source FPS…";
-            summary.textContent = "Analyzing decoded video frames to detect the source FPS…";
+            sourceFpsLabel.textContent = tr("Detecting source FPS…");
+            summary.textContent = tr("Analyzing decoded video frames to detect the source FPS…");
             fpsInput.disabled = true;
             const detectedFrameRate = await detectVideoFrameRate(thumbnailVideo, {
                 signal: mediaController.signal,
@@ -12007,11 +12031,11 @@ class PoseStudioWidget {
                 const maximumCaptureFps = clampVideoCaptureFps(60, sourceFrameRate);
                 fpsInput.max = String(Number(maximumCaptureFps.toFixed(3)));
                 applyCaptureFpsLimit();
-                sourceFpsLabel.textContent = `Source: ${Number(sourceFrameRate.toFixed(3))} FPS · capture ≤ source`;
-                fpsInput.title = `Capture FPS cannot exceed the detected source rate of ${Number(sourceFrameRate.toFixed(3))} FPS.`;
+                sourceFpsLabel.textContent = tr("Source: {fps} FPS · capture ≤ source", { fps: Number(sourceFrameRate.toFixed(3)) });
+                fpsInput.title = tr("Capture FPS cannot exceed the detected source rate of {fps} FPS.", { fps: Number(sourceFrameRate.toFixed(3)) });
             } else {
-                sourceFpsLabel.textContent = "Source FPS could not be measured";
-                fpsInput.title = "Source FPS detection was unavailable for this codec.";
+                sourceFpsLabel.textContent = tr("Source FPS could not be measured");
+                fpsInput.title = tr("Source FPS detection was unavailable for this codec.");
             }
             fpsInput.disabled = false;
             setViewport({ start: 0, end: duration });
@@ -12055,11 +12079,14 @@ class PoseStudioWidget {
                     this.resetCameraParams();
                     this.replaceAnimationFromPoses(result.poseSamples, { duration: result.duration });
                     this.updateCaptureCameraPreview();
-                    this.showMessage(`Mixamo FBX imported as one animation: ${result.poseSamples.length} keyed frames from ${result.clipName}.`);
+                    this.showMessage(tr("Mixamo FBX imported as one animation: {frames} keyed frames from {clip}.", {
+                        frames: result.poseSamples.length,
+                        clip: result.clipName,
+                    }));
                 } catch (err) {
                     if (!isCurrent()) return;
                     console.error('Error importing Mixamo FBX:', err);
-                    this.showMessage(`Failed to import FBX animation: ${err?.message || err}`, true);
+                    this.showMessage(tr("Failed to import FBX animation: {error}", { error: err?.message || err }), true);
                 } finally {
                     input.value = '';
                 }
@@ -12075,7 +12102,7 @@ class PoseStudioWidget {
                     await this.showVideoImportModal(file);
                 } catch (err) {
                     console.error("Error opening video import:", err);
-                    this.showMessage(`Failed to open video: ${err?.message || err}`, true);
+                    this.showMessage(tr("Failed to open video: {error}", { error: err?.message || err }), true);
                 } finally {
                     input.value = '';
                 }
@@ -12090,7 +12117,7 @@ class PoseStudioWidget {
                     await this.importSAM3DImageAsPose(file);
                 } catch (err) {
                     console.error("Error importing SAM 3D Body image:", err);
-                    this.showMessage(`Failed to import image with SAM 3D Body: ${err?.message || err}`, true);
+                    this.showMessage(tr("Failed to import image with SAM 3D Body: {error}", { error: err?.message || err }), true);
                 } finally {
                     input.value = '';
                 }
@@ -12110,7 +12137,7 @@ class PoseStudioWidget {
                         await this.loadCharacterSceneLibraryAsset(data, { animation: true });
                         if (this._disposed || token !== this._libraryLoadToken) return;
                     } else this.loadAnimationLibraryAsset(data);
-                    this.showMessage(`Animation imported: ${this.animationState.frameCount} frames.`);
+                    this.showMessage(tr("Animation imported: {frames} frames.", { frames: this.animationState.frameCount }));
                     input.value = '';
                     return;
                 }
@@ -12140,9 +12167,9 @@ class PoseStudioWidget {
                             this.applySAM3DFrameCameraParams(poseForImport, fitData?.meshData || null);
                             this.updateRotationSliders();
                             this.commitViewerPoseToCurrentEditor();
-                            this.showMessage("SAM3D JSON imported successfully.");
+                            this.showMessage(tr("SAM3D JSON imported successfully."));
                         } else {
-                            this.showMessage("Failed to apply SAM3D JSON.", true);
+                            this.showMessage(tr("Failed to apply SAM3D JSON."), true);
                         }
                     }
                     input.value = '';
@@ -12162,9 +12189,9 @@ class PoseStudioWidget {
                             this.updateRotationSliders();
                             this.applyCameraToViewer(true);
                             this.commitViewerPoseToCurrentEditor();
-                            this.showMessage("HMR2/pose3d JSON imported successfully.");
+                            this.showMessage(tr("HMR2/pose3d JSON imported successfully."));
                         } else {
-                            this.showMessage("Failed to apply HMR2/pose3d JSON.", true);
+                            this.showMessage(tr("Failed to apply HMR2/pose3d JSON."), true);
                         }
                     }
                     input.value = '';
@@ -12184,17 +12211,17 @@ class PoseStudioWidget {
                             this.applyCameraToViewer(true);
                             this.commitViewerPoseToCurrentEditor();
 
-                            let msg = "OpenPose JSON imported successfully.";
-                            if (openPoseKeypoints.source === 'hmr2') msg = "HMR2/pose3d JSON imported successfully.";
-                            else if (openPoseKeypoints.source === 'rtmw') msg = "RTMW JSON imported successfully.";
-                            else if (openPoseKeypoints.source === 'metrabs') msg = "MeTRAbs JSON imported successfully.";
-                            else if (openPoseKeypoints.source === 'vnccs') msg = "VNCCS skeleton JSON imported successfully.";
+                            let msg = tr("OpenPose JSON imported successfully.");
+                            if (openPoseKeypoints.source === 'hmr2') msg = tr("HMR2/pose3d JSON imported successfully.");
+                            else if (openPoseKeypoints.source === 'rtmw') msg = tr("RTMW JSON imported successfully.");
+                            else if (openPoseKeypoints.source === 'metrabs') msg = tr("MeTRAbs JSON imported successfully.");
+                            else if (openPoseKeypoints.source === 'vnccs') msg = tr("VNCCS skeleton JSON imported successfully.");
                             this.showMessage(msg);
 
                             // Debug: round-trip angle test
                             roundTripTest(openPoseKeypoints, this.viewer, poseData);
                         } else {
-                            this.showMessage("Failed to convert OpenPose data to pose.", true);
+                            this.showMessage(tr("Failed to convert OpenPose data to pose."), true);
                         }
                     }
                 } else if (data.type === "pose_set" || Array.isArray(data.poses)) {
@@ -12227,13 +12254,13 @@ class PoseStudioWidget {
                     this.updateCaptureCameraPreview();
                     this.commitViewerPoseToCurrentEditor();
                 } else {
-                    this.showMessage("No usable pose data was found in this file.", true);
+                    this.showMessage(tr("No usable pose data was found in this file."), true);
                 }
 
             } catch (err) {
                 if (!isCurrent()) return;
                 console.error("Error importing pose:", err);
-                this.showMessage("Failed to load pose file. Invalid JSON.", true);
+                this.showMessage(tr("Failed to load pose file. Invalid JSON."), true);
             }
 
             // Reset input so same file can be selected again
@@ -12264,7 +12291,7 @@ class PoseStudioWidget {
                 this.syncToNode(false);
 
                 if (this.refBtn) {
-                    this.refBtn.innerHTML = '<span class="vnccs-ps-btn-icon">🗑️</span> Remove Background';
+                    this.refBtn.innerHTML = '<span class="vnccs-ps-btn-icon">🗑️</span> ' + tr('Remove Background');
                     this.refBtn.classList.add('danger');
                 }
             }
@@ -12273,7 +12300,7 @@ class PoseStudioWidget {
         reader.onerror = () => {
             if (token !== this._referenceReadToken) return;
             e.target.value = '';
-            this.showMessage("Failed to read background image.", true);
+            this.showMessage(tr("Failed to read background image."), true);
         };
         reader.readAsDataURL(file);
     }
@@ -12328,21 +12355,21 @@ class PoseStudioWidget {
         modal.className = 'vnccs-ps-library-modal';
         modal.innerHTML = `
             <div class="vnccs-ps-library-modal-header">
-                <div class="vnccs-ps-library-modal-title">📚 Pose Library</div>
+                <div class="vnccs-ps-library-modal-title">📚 ${tr("Pose Library")}</div>
                 <div class="vnccs-ps-library-header-actions">
                     <button class="vnccs-ps-btn primary vnccs-ps-library-save-current">
-                        <span class="vnccs-ps-btn-icon">💾</span> Save Current ${animationMode ? "Animation" : "Pose"}
+                        <span class="vnccs-ps-btn-icon">💾</span> ${tr("Save Current {type}", { type: animationMode ? tr("Animation") : tr("Pose") })}
                     </button>
                 </div>
                 <button class="vnccs-ps-modal-close">✕</button>
             </div>
             <div class="vnccs-ps-library-toolbar">
-                <input class="vnccs-ps-library-search" type="search" placeholder="Search poses, animations, and tags...">
-                <div class="vnccs-ps-library-size-control" title="Preview size">
-                    <span>Preview</span>
+                <input class="vnccs-ps-library-search" type="search" placeholder="${tr("Search poses, animations, and tags...")}">
+                <div class="vnccs-ps-library-size-control" title="${tr("Preview size")}">
+                    <span>${tr("Preview")}</span>
                     <input class="vnccs-ps-library-size-slider" type="range" min="160" max="520" step="10">
                 </div>
-                <button class="vnccs-ps-library-menu-btn" title="Pose library settings">⚙️</button>
+                <button class="vnccs-ps-library-menu-btn" title="${tr("Pose library settings")}">⚙️</button>
             </div>
             <div class="vnccs-ps-library-categories"></div>
             <div class="vnccs-ps-library-workspace">
@@ -12365,7 +12392,7 @@ class PoseStudioWidget {
         this.libraryActiveCategory = "All";
         if (this.librarySizeInput) {
             const slider = this.librarySizeInput;
-            slider.parentElement.appendChild(this.createSliderNumber(slider, "Preview Size (px)", 0));
+            slider.parentElement.appendChild(this.createSliderNumber(slider, tr("Preview Size (px)"), 0));
             slider.addEventListener('input', () => this.saveLibraryThumbnailSize(slider.value));
         }
         this.applyLibraryThumbnailSize(this.libraryWorkspace);
@@ -12476,8 +12503,8 @@ class PoseStudioWidget {
                 if (this._disposed || token !== this._libraryRefreshToken) return;
                 console.error("Failed to load library:", err);
                 if (this.libraryGrid) {
-                    if (this.libraryPoses?.length) this.showMessage(`Failed to load library: ${err?.message || err}`, true);
-                    else this.libraryGrid.innerHTML = '<div class="vnccs-ps-library-empty">Failed to load library.</div>';
+                    if (this.libraryPoses?.length) this.showMessage(tr("Failed to load library: {error}", { error: err?.message || err }), true);
+                    else this.libraryGrid.innerHTML = `<div class="vnccs-ps-library-empty">${tr("Failed to load library.")}</div>`;
                 }
                 return { error: String(err?.message || err) };
             }
@@ -12546,7 +12573,7 @@ class PoseStudioWidget {
         if (this.libraryCategoriesEl) this.libraryCategoriesEl.style.display = this.librarySettingsMode ? 'none' : '';
         if (this.librarySearchInput) {
             this.librarySearchInput.disabled = this.librarySettingsMode;
-            this.librarySearchInput.placeholder = this.librarySettingsMode ? "Repository settings" : "Search poses, animations, and tags...";
+            this.librarySearchInput.placeholder = this.librarySettingsMode ? tr("Repository settings") : tr("Search poses, animations, and tags...");
         }
         if (this.librarySettingsMode) {
             await this.refreshPoseRepositories();
@@ -12560,21 +12587,21 @@ class PoseStudioWidget {
         const panel = this.librarySettingsEl;
         const token = this._repositoryRefreshToken = (this._repositoryRefreshToken || 0) + 1;
         const isCurrent = () => !this._disposed && panel === this.librarySettingsEl && token === this._repositoryRefreshToken;
-        panel.innerHTML = '<div class="vnccs-ps-library-empty">Loading repositories...</div>';
+        panel.innerHTML = `<div class="vnccs-ps-library-empty">${tr("Loading repositories...")}</div>`;
         try {
             const url = '/vnccs/pose_library/repositories';
             const res = await fetch(url);
             const data = await res.json();
             if (!isCurrent()) return;
             if (!res.ok || !Array.isArray(data?.repositories)) {
-                throw new Error(data?.error || "Repositories could not be loaded.");
+                throw new Error(data?.error || tr("Repositories could not be loaded."));
             }
             this.localPoseRepository = data.local_repository || null;
             this.poseRepositories = data.repositories || [];
             this.renderPoseRepositorySettings();
             if (forceRepoId) await this.refreshSinglePoseRepository(forceRepoId);
         } catch (err) {
-            if (isCurrent()) panel.innerHTML = `<div class="vnccs-ps-library-empty">Failed to load repositories.<br>${this.escapeHtml(err?.message || err)}</div>`;
+            if (isCurrent()) panel.innerHTML = `<div class="vnccs-ps-library-empty">${tr("Failed to load repositories.")}<br>${this.escapeHtml(err?.message || err)}</div>`;
         }
     }
 
@@ -12584,16 +12611,16 @@ class PoseStudioWidget {
         this.librarySettingsEl.innerHTML = `
             <div class="vnccs-ps-library-settings-head">
                 <div>
-                    <div class="vnccs-ps-library-settings-title">Library Repositories</div>
-                    <div class="vnccs-ps-library-settings-subtitle">Pose and animation libraries on Hugging Face can be enabled, disabled, refreshed, or removed.</div>
+                    <div class="vnccs-ps-library-settings-title">${tr("Library Repositories")}</div>
+                    <div class="vnccs-ps-library-settings-subtitle">${tr("Pose and animation libraries on Hugging Face can be enabled, disabled, refreshed, or removed.")}</div>
                 </div>
-                <button class="vnccs-ps-btn vnccs-ps-library-settings-back">Back to library</button>
+                <button class="vnccs-ps-btn vnccs-ps-library-settings-back">${tr("Back to library")}</button>
             </div>
             <div class="vnccs-ps-library-local-repo"></div>
             <div class="vnccs-ps-library-repo-notice"></div>
             <div class="vnccs-ps-library-repo-add">
-                <input class="vnccs-ps-input vnccs-ps-library-repo-input" type="text" placeholder="owner/repository or Hugging Face URL">
-                <button class="vnccs-ps-btn primary vnccs-ps-library-repo-add-btn">Add Repository</button>
+                <input class="vnccs-ps-input vnccs-ps-library-repo-input" type="text" placeholder="${tr("owner/repository or Hugging Face URL")}">
+                <button class="vnccs-ps-btn primary vnccs-ps-library-repo-add-btn">${tr("Add Repository")}</button>
             </div>
             <div class="vnccs-ps-library-repo-list"></div>
         `;
@@ -12607,7 +12634,7 @@ class PoseStudioWidget {
 
         const list = this.librarySettingsEl.querySelector('.vnccs-ps-library-repo-list');
         if (repos.length === 0) {
-            list.innerHTML = '<div class="vnccs-ps-library-empty">No repositories configured.</div>';
+            list.innerHTML = `<div class="vnccs-ps-library-empty">${tr("No repositories configured.")}</div>`;
             return;
         }
         for (const repo of repos) {
@@ -12615,22 +12642,34 @@ class PoseStudioWidget {
             card.className = 'vnccs-ps-library-repo-card';
             const progressKey = `repo:${repo.repo_id}`;
             card.dataset.repoProgressKey = progressKey;
-            const status = repo.status === 'error' ? `Error: ${repo.last_error || 'refresh failed'}` : (repo.status || 'not checked');
-            const checked = repo.last_checked ? new Date(repo.last_checked * 1000).toLocaleString() : 'never';
+            const status = repo.status === 'error' ? tr("Error: {error}", { error: repo.last_error || tr('refresh failed') }) : (repo.status || tr('not checked'));
+            const checked = repo.last_checked ? new Date(repo.last_checked * 1000).toLocaleString() : tr('never');
             const syncMeta = repo.downloaded_count !== undefined
-                ? ` · ${Number(repo.downloaded_count || 0)} downloaded · ${Number(repo.skipped_count || 0)} unchanged · ${Number(repo.removed_count || 0)} removed`
+                ? tr(" · {downloaded} downloaded · {skipped} unchanged · {removed} removed", {
+                    downloaded: Number(repo.downloaded_count || 0),
+                    skipped: Number(repo.skipped_count || 0),
+                    removed: Number(repo.removed_count || 0),
+                })
                 : '';
-            const transportMeta = repo.transport ? ` · via ${repo.transport}` : '';
+            const transportMeta = repo.transport ? tr(" · via {transport}", { transport: repo.transport }) : '';
             card.innerHTML = `
                 <div>
                     <div class="vnccs-ps-library-repo-title">${this.escapeHtml(repo.title || repo.repo_id)}</div>
                     <div class="vnccs-ps-library-repo-id">${this.escapeHtml(repo.repo_id)}</div>
-                    <div class="vnccs-ps-library-repo-meta">${Number(repo.pose_count || 0)} poses · ${Number(repo.animation_count || 0)} animations · ${repo.enabled ? 'enabled' : 'disabled'} · ${this.escapeHtml(status)} · checked ${this.escapeHtml(checked)}${this.escapeHtml(syncMeta)}${this.escapeHtml(transportMeta)}</div>
+                    <div class="vnccs-ps-library-repo-meta">${tr("{poses} poses · {animations} animations · {state} · {status} · checked {checked}{sync}{transport}", {
+                        poses: Number(repo.pose_count || 0),
+                        animations: Number(repo.animation_count || 0),
+                        state: repo.enabled ? tr('enabled') : tr('disabled'),
+                        status: this.escapeHtml(status),
+                        checked: this.escapeHtml(checked),
+                        sync: this.escapeHtml(syncMeta),
+                        transport: this.escapeHtml(transportMeta),
+                    })}</div>
                 </div>
                 <div class="vnccs-ps-library-repo-actions">
-                    <button class="vnccs-ps-library-repo-action toggle">${repo.enabled ? 'Disable' : 'Enable'}</button>
-                    <button class="vnccs-ps-library-repo-action refresh">Refresh</button>
-                    <button class="vnccs-ps-library-repo-action danger remove" ${repo.builtin ? 'disabled title="Default repositories can be disabled, not deleted"' : ''}>Remove</button>
+                    <button class="vnccs-ps-library-repo-action toggle">${repo.enabled ? tr('Disable') : tr('Enable')}</button>
+                    <button class="vnccs-ps-library-repo-action refresh">${tr("Refresh")}</button>
+                    <button class="vnccs-ps-library-repo-action danger remove" ${repo.builtin ? `disabled title="${tr('Default repositories can be disabled, not deleted')}"` : ''}>${tr("Remove")}</button>
                 </div>
                 ${this.repositoryProgressMarkup()}
             `;
@@ -12650,21 +12689,30 @@ class PoseStudioWidget {
         const activePublishRepo = this._localPoseRepositoryPublishActive
             ? (publishState?.repoId || "")
             : "";
-        const publishRepo = activePublishRepo || repo.publish_repo_id || "Not linked";
-        const lastPublish = repo.last_publish ? new Date(repo.last_publish * 1000).toLocaleString() : "never";
+        const publishRepo = activePublishRepo || repo.publish_repo_id || tr("Not linked");
+        const lastPublish = repo.last_publish ? new Date(repo.last_publish * 1000).toLocaleString() : tr("never");
         const lastResult = repo.last_publish_result
-            ? `${Number(repo.last_publish_result.uploaded_count || 0)} uploaded · ${Number(repo.last_publish_result.deleted_count || 0)} deleted · ${Number(repo.last_publish_result.skipped_count || 0)} unchanged`
-            : "not published yet";
+            ? tr("{uploaded} uploaded · {deleted} deleted · {skipped} unchanged", {
+                uploaded: Number(repo.last_publish_result.uploaded_count || 0),
+                deleted: Number(repo.last_publish_result.deleted_count || 0),
+                skipped: Number(repo.last_publish_result.skipped_count || 0),
+            })
+            : tr("not published yet");
         holder.innerHTML = `
             <div class="vnccs-ps-library-repo-card" data-repo-progress-key="local:publish">
                 <div>
-                    <div class="vnccs-ps-library-repo-title">Local Pose Library</div>
+                    <div class="vnccs-ps-library-repo-title">${tr("Local Pose Library")}</div>
                     <div class="vnccs-ps-library-repo-id">local_user_poses → ${this.escapeHtml(publishRepo)}</div>
-                    <div class="vnccs-ps-library-repo-meta">${Number(repo.pose_count || 0)} poses · ${Number(repo.animation_count || 0)} animations · last publish ${this.escapeHtml(lastPublish)} · ${this.escapeHtml(lastResult)}</div>
+                    <div class="vnccs-ps-library-repo-meta">${tr("{poses} poses · {animations} animations · last publish {date} · {result}", {
+                        poses: Number(repo.pose_count || 0),
+                        animations: Number(repo.animation_count || 0),
+                        date: this.escapeHtml(lastPublish),
+                        result: this.escapeHtml(lastResult),
+                    })}</div>
                 </div>
                 <div class="vnccs-ps-library-repo-actions">
-                    <button class="vnccs-ps-library-repo-action primary publish" ${this._localPoseRepositoryPublishActive ? "disabled" : ""}>Publish</button>
-                    ${repo.publish_repo_id ? `<button class="vnccs-ps-library-repo-action relink" ${this._localPoseRepositoryPublishActive ? "disabled" : ""}>Change target</button>` : ''}
+                    <button class="vnccs-ps-library-repo-action primary publish" ${this._localPoseRepositoryPublishActive ? "disabled" : ""}>${tr("Publish")}</button>
+                    ${repo.publish_repo_id ? `<button class="vnccs-ps-library-repo-action relink" ${this._localPoseRepositoryPublishActive ? "disabled" : ""}>${tr("Change target")}</button>` : ''}
                 </div>
                 ${this.repositoryProgressMarkup()}
             </div>
@@ -12703,36 +12751,36 @@ class PoseStudioWidget {
         modal.className = 'vnccs-ps-modal vnccs-ps-publish-modal';
         modal.setAttribute('role', 'dialog');
         modal.setAttribute('aria-modal', 'true');
-        modal.setAttribute('aria-label', 'Publish Local Pose Repository');
+        modal.setAttribute('aria-label', tr('Publish Local Pose Repository'));
         modal.innerHTML = `
-            <div class="vnccs-ps-modal-title">Publish Local Pose Repository</div>
+            <div class="vnccs-ps-modal-title">${tr("Publish Local Pose Repository")}</div>
             <div class="vnccs-ps-modal-content">
                 <label class="vnccs-ps-publish-field">
-                    <span>Target</span>
+                    <span>${tr("Target")}</span>
                     <select class="vnccs-ps-input vnccs-ps-publish-mode">
-                        <option value="create">Create new repository</option>
-                        <option value="existing">Use existing repository</option>
+                        <option value="create">${tr("Create new repository")}</option>
+                        <option value="existing">${tr("Use existing repository")}</option>
                     </select>
                 </label>
                 <label class="vnccs-ps-publish-field">
-                    <span>Hugging Face repo</span>
-                    <input class="vnccs-ps-input vnccs-ps-publish-repo" type="text" placeholder="owner/repository" value="${this.escapeHtml(current.publish_repo_id || "")}">
+                    <span>${tr("Hugging Face repo")}</span>
+                    <input class="vnccs-ps-input vnccs-ps-publish-repo" type="text" placeholder="${tr("owner/repository")}" value="${this.escapeHtml(current.publish_repo_id || "")}">
                 </label>
                 <div class="vnccs-ps-publish-field vnccs-ps-publish-private-row">
-                    <span>Visibility</span>
+                    <span>${tr("Visibility")}</span>
                     <label class="vnccs-ps-publish-check">
-                        <input class="vnccs-ps-publish-private" type="checkbox"> Private repository
+                        <input class="vnccs-ps-publish-private" type="checkbox"> ${tr("Private repository")}
                     </label>
                 </div>
                 <label class="vnccs-ps-publish-field">
-                    <span>Hugging Face write token</span>
-                    <input class="vnccs-ps-input vnccs-ps-publish-token" type="password" autocomplete="off" placeholder="Write access to this repository">
+                    <span>${tr("Hugging Face write token")}</span>
+                    <input class="vnccs-ps-input vnccs-ps-publish-token" type="password" autocomplete="off" placeholder="${tr("Write access to this repository")}">
                 </label>
-                <p class="vnccs-ps-publish-help">The token is used for this publish only and is not saved.</p>
+                <p class="vnccs-ps-publish-help">${tr("The token is used for this publish only and is not saved.")}</p>
             </div>
             <div class="vnccs-ps-publish-actions">
-                <button class="vnccs-ps-modal-btn cancel">Cancel</button>
-                <button class="vnccs-ps-modal-btn primary">Publish</button>
+                <button class="vnccs-ps-modal-btn cancel">${tr("Cancel")}</button>
+                <button class="vnccs-ps-modal-btn primary">${tr("Publish")}</button>
             </div>
         `;
 
@@ -12752,7 +12800,7 @@ class PoseStudioWidget {
             if (previousMode === "existing") existingRepoDraft = repoEl.value.trim();
             else newRepoDraft = repoEl.value.trim();
             repoEl.value = modeEl.value === "create" ? newRepoDraft : existingRepoDraft;
-            repoEl.placeholder = modeEl.value === "create" ? "owner/new-repository" : "owner/repository";
+            repoEl.placeholder = modeEl.value === "create" ? tr("owner/new-repository") : tr("owner/repository");
             privateRow.style.display = modeEl.value === "create" ? "" : "none";
             previousMode = modeEl.value;
         };
@@ -12767,14 +12815,14 @@ class PoseStudioWidget {
             if (!repoId) {
                 const repoInput = modal.querySelector('.vnccs-ps-publish-repo');
                 repoInput.style.borderColor = "rgba(255,71,87,0.7)";
-                repoInput.setCustomValidity("Enter owner/repository or a Hugging Face repository URL.");
+                repoInput.setCustomValidity(tr("Enter owner/repository or a Hugging Face repository URL."));
                 repoInput.reportValidity();
                 repoInput.focus();
                 return;
             }
             repoEl.setCustomValidity("");
             if (!token) {
-                tokenInput.setCustomValidity("A Hugging Face write token is required.");
+                tokenInput.setCustomValidity(tr("A Hugging Face write token is required."));
                 tokenInput.reportValidity();
                 tokenInput.focus();
                 return;
@@ -12799,18 +12847,18 @@ class PoseStudioWidget {
     async runLocalPoseRepositoryPublish(payload) {
         const repoId = String(payload?.repo_id || "").trim();
         if (!repoId) {
-            this.showRepositoryNotice("Repository id is required.", true);
+            this.showRepositoryNotice(tr("Repository id is required."), true);
             return;
         }
         if (this._localPoseRepositoryPublishActive) {
-            this.showRepositoryNotice("A local Pose Library publish is already running.", true);
+            this.showRepositoryNotice(tr("A local Pose Library publish is already running."), true);
             return;
         }
 
         this._localPoseRepositoryPublishActive = true;
         const progressKey = "local:publish";
         const taskId = this.createRepositoryTaskId("repo-publish");
-        const progress = this.createInlineRepositoryProgress(progressKey, `Publishing local library to ${repoId}...`);
+        const progress = this.createInlineRepositoryProgress(progressKey, tr("Publishing local library to {repo}...", { repo: repoId }));
         this.setRepositoryProgressState(progressKey, { repoId });
         this.renderPoseRepositorySettings();
         let pollTimer = null;
@@ -12830,13 +12878,17 @@ class PoseStudioWidget {
             progress.update({
                 status: "success",
                 progress: 100,
-                message: `Published ${Number(result.uploaded_count || 0)} files. Deleted ${Number(result.deleted_count || 0)} stale files. ${Number(result.skipped_count || 0)} library items unchanged.`,
+                message: tr("Published {files} files. Deleted {deleted} stale files. {skipped} library items unchanged.", {
+                    files: Number(result.uploaded_count || 0),
+                    deleted: Number(result.deleted_count || 0),
+                    skipped: Number(result.skipped_count || 0),
+                }),
             });
         } catch (err) {
             progress.update({
                 status: "error",
                 progress: 100,
-                message: `Failed to publish local library: ${err?.message || err}`,
+                message: tr("Failed to publish local library: {error}", { error: err?.message || err }),
             });
             this.renderPoseRepositorySettings();
         } finally {
@@ -12868,7 +12920,7 @@ class PoseStudioWidget {
         const input = this.librarySettingsEl?.querySelector('.vnccs-ps-library-repo-input');
         const repoId = this.normalizePoseRepositoryInput(input?.value);
         if (!repoId) {
-            this.showRepositoryNotice("Enter owner/repository or a Hugging Face model repository URL.", true);
+            this.showRepositoryNotice(tr("Enter owner/repository or a Hugging Face model repository URL."), true);
             input?.focus();
             return;
         }
@@ -12887,7 +12939,7 @@ class PoseStudioWidget {
             },
         ];
         this.renderPoseRepositorySettings();
-        const progress = this.createInlineRepositoryProgress(progressKey, `Adding and downloading ${repoId}...`);
+        const progress = this.createInlineRepositoryProgress(progressKey, tr("Adding and downloading {repo}...", { repo: repoId }));
         let pollTimer = null;
         try {
             pollTimer = setInterval(() => this.pollRepositoryProgress(taskId, progress), 350);
@@ -12904,14 +12956,18 @@ class PoseStudioWidget {
             this.renderPoseRepositorySettings();
             const refreshed = data.refreshed || {};
             if (refreshed.status === "error") {
-                const message = refreshed.last_error || `Failed to download ${repoId}`;
+                const message = refreshed.last_error || tr("Failed to download {repo}", { repo: repoId });
                 progress.update({ status: "error", progress: 100, message });
-                this.showRepositoryNotice(`Repository was added, but its data could not be downloaded: ${message}`, true);
+                this.showRepositoryNotice(tr("Repository was added, but its data could not be downloaded: {error}", { error: message }), true);
             } else {
                 progress.update({
                     status: "success",
                     progress: 100,
-                    message: `${repoId} added: ${Number(refreshed.downloaded_count || 0)} downloaded, ${Number(refreshed.skipped_count || 0)} unchanged.`,
+                    message: tr("{repo} added: {downloaded} downloaded, {skipped} unchanged.", {
+                        repo: repoId,
+                        downloaded: Number(refreshed.downloaded_count || 0),
+                        skipped: Number(refreshed.skipped_count || 0),
+                    }),
                     transport: refreshed.transport || "",
                 });
                 this.clearRepositoryNotice();
@@ -12923,7 +12979,7 @@ class PoseStudioWidget {
         } catch (err) {
             this.poseRepositories = previousRepositories;
             this.renderPoseRepositorySettings();
-            this.showRepositoryNotice(`Failed to add repository: ${err?.message || err}`, true);
+            this.showRepositoryNotice(tr("Failed to add repository: {error}", { error: err?.message || err }), true);
         } finally {
             if (pollTimer) clearInterval(pollTimer);
             progress.close();
@@ -12982,12 +13038,12 @@ class PoseStudioWidget {
         const messageEl = progress.querySelector('.vnccs-ps-library-repo-progress-message');
         const percentEl = progress.querySelector('.vnccs-ps-library-repo-progress-percent');
         const fillEl = progress.querySelector('.vnccs-ps-library-repo-progress-fill');
-        if (messageEl) messageEl.textContent = state.message || "Working...";
+        if (messageEl) messageEl.textContent = state.message || tr("Working...");
         if (percentEl) percentEl.textContent = `${Math.round(percent)}%`;
         if (fillEl) fillEl.style.width = `${percent}%`;
     }
 
-    createInlineRepositoryProgress(key, initialText = "Starting...") {
+    createInlineRepositoryProgress(key, initialText = tr("Starting...")) {
         const token = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
         this.setRepositoryProgressState(key, {
             token,
@@ -13038,10 +13094,10 @@ class PoseStudioWidget {
     async togglePoseRepository(repoId, enabled) {
         const taskId = this.createRepositoryTaskId("repo-toggle");
         const progressKey = `repo:${repoId}`;
-        const progress = this.createInlineRepositoryProgress(progressKey, `${enabled ? "Enabling" : "Disabling"} ${repoId}...`);
+        const progress = this.createInlineRepositoryProgress(progressKey, tr("{action} {repo}...", { action: enabled ? tr("Enabling") : tr("Disabling"), repo: repoId }));
         let pollTimer = null;
         try {
-            progress.setText(`${enabled ? "Enabling" : "Disabling"} ${repoId}...`);
+            progress.setText(tr("{action} {repo}...", { action: enabled ? tr("Enabling") : tr("Disabling"), repo: repoId }));
             progress.setProgress(1);
             pollTimer = setInterval(() => this.pollRepositoryProgress(taskId, progress), 350);
             const res = await fetch('/vnccs/pose_library/repositories/toggle', {
@@ -13052,7 +13108,7 @@ class PoseStudioWidget {
             await this.pollRepositoryProgress(taskId, progress);
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
-                progress.update({ status: "error", progress: 100, message: data?.error || `Failed to update ${repoId}` });
+                progress.update({ status: "error", progress: 100, message: data?.error || tr("Failed to update {repo}", { repo: repoId }) });
                 return;
             }
             this.poseRepositories = data.repositories || [];
@@ -13060,7 +13116,7 @@ class PoseStudioWidget {
             progress.update({
                 status: "success",
                 progress: 100,
-                message: `${repoId} ${enabled ? "enabled" : "disabled"}.`,
+                message: tr("{repo} {state}.", { repo: repoId, state: enabled ? tr("enabled") : tr("disabled") }),
             });
             await this.refreshLibrary(false);
             if (enabled) {
@@ -13079,10 +13135,10 @@ class PoseStudioWidget {
     async refreshSinglePoseRepository(repoId) {
         const taskId = this.createRepositoryTaskId("repo-refresh");
         const progressKey = `repo:${repoId}`;
-        const progress = this.createInlineRepositoryProgress(progressKey, `Checking ${repoId}...`);
+        const progress = this.createInlineRepositoryProgress(progressKey, tr("Checking {repo}...", { repo: repoId }));
         let pollTimer = null;
         try {
-            progress.setText(`Checking ${repoId}...`);
+            progress.setText(tr("Checking {repo}...", { repo: repoId }));
             progress.setProgress(1);
             pollTimer = setInterval(() => this.pollRepositoryProgress(taskId, progress), 350);
             const res = await fetch('/vnccs/pose_library/repositories/refresh', {
@@ -13093,7 +13149,7 @@ class PoseStudioWidget {
             await this.pollRepositoryProgress(taskId, progress);
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
-                progress.update({ status: "error", progress: 100, message: data?.error || `Failed to refresh ${repoId}` });
+                progress.update({ status: "error", progress: 100, message: data?.error || tr("Failed to refresh {repo}", { repo: repoId }) });
                 return;
             }
             this.poseRepositories = data.repositories || [];
@@ -13103,8 +13159,12 @@ class PoseStudioWidget {
                 status: refreshed.status === "error" ? "error" : "success",
                 progress: 100,
                 message: refreshed.status === "error"
-                    ? `Error: ${refreshed.last_error || "refresh failed"}`
-                    : `Repository sync complete: ${Number(refreshed.downloaded_count || 0)} downloaded, ${Number(refreshed.skipped_count || 0)} unchanged, ${Number(refreshed.removed_count || 0)} removed.`,
+                    ? tr("Error: {error}", { error: refreshed.last_error || tr("refresh failed") })
+                    : tr("Repository sync complete: {downloaded} downloaded, {skipped} unchanged, {removed} removed.", {
+                        downloaded: Number(refreshed.downloaded_count || 0),
+                        skipped: Number(refreshed.skipped_count || 0),
+                        removed: Number(refreshed.removed_count || 0),
+                    }),
                 transport: refreshed.transport || "",
             });
             await this.refreshLibrary(false);
@@ -13118,13 +13178,16 @@ class PoseStudioWidget {
         const res = await fetch(`/vnccs/pose_library/repositories/delete/${encodeURIComponent(repoId)}`, { method: 'DELETE' });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-            this.showRepositoryNotice(data?.error || `Failed to remove ${repoId}`, true);
+            this.showRepositoryNotice(data?.error || tr("Failed to remove {repo}", { repo: repoId }), true);
             return;
         }
         this.poseRepositories = data.repositories || [];
         this.renderPoseRepositorySettings();
         this.clearRepositoryNotice();
-        this.showRepositoryNotice(`Removed ${repoId}. Deleted ${Number(data.removed_count || 0)} cached files.`);
+        this.showRepositoryNotice(tr("Removed {repo}. Deleted {files} cached files.", {
+            repo: repoId,
+            files: Number(data.removed_count || 0),
+        }));
         await this.refreshLibrary(false);
     }
 
@@ -13226,7 +13289,7 @@ class PoseStudioWidget {
             const btn = document.createElement('button');
             btn.className = 'vnccs-ps-library-category-chip';
             if (category === this.libraryActiveCategory) btn.classList.add('active');
-            btn.textContent = category;
+            btn.textContent = category === "All" ? tr("All") : category;
             btn.onclick = () => {
                 this.libraryActiveCategory = category;
                 this.renderLibrary();
@@ -13248,12 +13311,12 @@ class PoseStudioWidget {
         const filtered = this.getFilteredLibraryPoses();
 
         if ((this.libraryPoses || []).length === 0) {
-            this.libraryGrid.innerHTML = '<div class="vnccs-ps-library-empty">No saved poses or animations.<br>Use Save Current to add one.</div>';
+            this.libraryGrid.innerHTML = `<div class="vnccs-ps-library-empty">${tr("No saved poses or animations.")}<br>${tr("Use Save Current to add one.")}</div>`;
             this.renderLibraryInspector(null);
             return;
         }
         if (filtered.length === 0) {
-            this.libraryGrid.innerHTML = '<div class="vnccs-ps-library-empty">No library items match this search.</div>';
+            this.libraryGrid.innerHTML = `<div class="vnccs-ps-library-empty">${tr("No library items match this search.")}</div>`;
             this.renderLibraryInspector(null);
             return;
         }
@@ -13277,7 +13340,7 @@ class PoseStudioWidget {
             if (pose.has_preview) {
                 const previewUrl = this.getLibraryPreviewUrl(pose);
                 preview.innerHTML = this.isLibraryVideoPreview(pose)
-                    ? `<video src="${previewUrl}" muted loop playsinline preload="none" aria-label="${this.escapeHtml(pose.name)} animation preview"></video>`
+                    ? `<video src="${previewUrl}" muted loop playsinline preload="none" aria-label="${tr("{name} animation preview", { name: this.escapeHtml(pose.name) })}"></video>`
                     : `<img src="${previewUrl}" alt="${this.escapeHtml(pose.name)}" loading="lazy" decoding="async">`;
             } else {
                 preview.innerHTML = this.isLibraryAnimation(pose) ? '<span>🎞️</span>' : '<span>🦴</span>';
@@ -13311,7 +13374,7 @@ class PoseStudioWidget {
             if (this.isLibraryAnimation(pose)) {
                 const typeBadge = document.createElement("div");
                 typeBadge.className = "vnccs-ps-library-item-type";
-                typeBadge.textContent = "Animation";
+                typeBadge.textContent = tr("Animation");
                 item.appendChild(typeBadge);
             }
             item.appendChild(name);
@@ -13340,25 +13403,25 @@ class PoseStudioWidget {
         if (!pose) {
             this.libraryInspector.classList.remove('visible');
             if (this.libraryWorkspace) this.libraryWorkspace.classList.remove('has-inspector');
-            this.libraryInspector.innerHTML = '<div class="vnccs-ps-library-inspector-empty">Select a pose or animation to preview and edit it.</div>';
+            this.libraryInspector.innerHTML = `<div class="vnccs-ps-library-inspector-empty">${tr("Select a pose or animation to preview and edit it.")}</div>`;
             this.updateLibraryInspectorScale();
             return;
         }
         this.libraryInspector.classList.add('visible');
         if (this.libraryWorkspace) this.libraryWorkspace.classList.add('has-inspector');
         if (!pose.data) {
-            this.libraryInspector.textContent = "Loading library item...";
+            this.libraryInspector.textContent = tr("Loading library item...");
             try {
                 const response = await fetch(`/vnccs/pose_library/get/${encodeURIComponent(pose.name)}${this.getLibraryPoseQuery(pose)}`);
                 const result = await response.json();
                 if (token !== this._libraryInspectorLoadToken || this._disposed) return;
                 if (!response.ok || !result.pose || typeof result.pose !== "object") {
-                    throw new Error(result.error || "Library item could not be loaded.");
+                    throw new Error(result.error || tr("Library item could not be loaded."));
                 }
                 pose.data = result.pose;
             } catch (error) {
                 if (token === this._libraryInspectorLoadToken && !this._disposed) {
-                    this.libraryInspector.textContent = `Failed to load library item: ${error?.message || error}`;
+                    this.libraryInspector.textContent = tr("Failed to load library item: {error}", { error: error?.message || error });
                 }
                 return;
             }
@@ -13369,7 +13432,7 @@ class PoseStudioWidget {
         const previewSrc = this.getLibraryPreviewUrl(pose);
         const previewMarkup = previewSrc
             ? (this.isLibraryVideoPreview(pose)
-                ? `<video src="${previewSrc}" controls muted loop playsinline preload="metadata" aria-label="${this.escapeHtml(pose.name)} animation preview"></video>`
+                ? `<video src="${previewSrc}" controls muted loop playsinline preload="metadata" aria-label="${tr("{name} animation preview", { name: this.escapeHtml(pose.name) })}"></video>`
                 : `<img src="${previewSrc}" alt="${this.escapeHtml(pose.name)}" decoding="async">`)
             : (isAnimation ? '<span>🎞️</span>' : '<span>🦴</span>');
         const editableTags = meta.tags.filter(tag => tag.toLowerCase() !== "animation");
@@ -13382,35 +13445,35 @@ class PoseStudioWidget {
                     ${previewMarkup}
                 </div>
                 <div class="vnccs-ps-library-inspector-actions">
-                    <button class="vnccs-ps-btn primary vnccs-ps-library-apply">Apply ${isAnimation ? "Animation" : "Pose"}</button>
-                    <button class="vnccs-ps-btn danger vnccs-ps-library-delete">Delete</button>
+                    <button class="vnccs-ps-btn primary vnccs-ps-library-apply">${tr("Apply {type}", { type: isAnimation ? tr("Animation") : tr("Pose") })}</button>
+                    <button class="vnccs-ps-btn danger vnccs-ps-library-delete">${tr("Delete")}</button>
                 </div>
                 <label class="vnccs-ps-library-field">
-                    <span>Name</span>
+                    <span>${tr("Name")}</span>
                     <input class="vnccs-ps-input vnccs-ps-library-edit-name" type="text" value="${this.escapeHtml(pose.name)}">
                 </label>
                 <label class="vnccs-ps-library-field">
-                    <span>Category</span>
+                    <span>${tr("Category")}</span>
                     <input class="vnccs-ps-input vnccs-ps-library-edit-category" type="text" value="${this.escapeHtml(meta.category)}">
                 </label>
                 <label class="vnccs-ps-library-field">
-                    <span>Repository</span>
+                    <span>${tr("Repository")}</span>
                     <input class="vnccs-ps-input" type="text" value="${this.escapeHtml(meta.repository)}" disabled>
                 </label>
                 <label class="vnccs-ps-library-field">
-                    <span>Tags</span>
-                    ${isAnimation ? '<span class="vnccs-ps-library-system-tag">Animation · system tag</span>' : ''}
-                    <input class="vnccs-ps-input vnccs-ps-library-edit-tags" type="text" value="${this.escapeHtml(editableTags.join(', '))}" placeholder="standing, hands, portrait">
+                    <span>${tr("Tags")}</span>
+                    ${isAnimation ? `<span class="vnccs-ps-library-system-tag">${tr("Animation · system tag")}</span>` : ''}
+                    <input class="vnccs-ps-input vnccs-ps-library-edit-tags" type="text" value="${this.escapeHtml(editableTags.join(', '))}" placeholder="${tr("standing, hands, portrait")}">
                 </label>
                 <label class="vnccs-ps-library-field">
-                    <span>Prompt</span>
-                    <textarea class="vnccs-ps-textarea vnccs-ps-library-edit-prompt" placeholder="${isAnimation ? "Animation" : "Pose"} prompt..." style="width:100%;min-height:60px;resize:vertical;">${this.escapeHtml(assetPrompt)}</textarea>
+                    <span>${tr("Prompt")}</span>
+                    <textarea class="vnccs-ps-textarea vnccs-ps-library-edit-prompt" placeholder="${tr("{type} prompt...", { type: isAnimation ? tr("Animation") : tr("Pose") })}" style="width:100%;min-height:60px;resize:vertical;">${this.escapeHtml(assetPrompt)}</textarea>
                 </label>
                 <label class="vnccs-ps-library-field">
-                    <span>Custom ${isAnimation ? "Video Preview" : "Image"}</span>
+                    <span>${tr("Custom {type}", { type: isAnimation ? tr("Video Preview") : tr("Image") })}</span>
                     <input class="vnccs-ps-library-preview-input" type="file" accept="${isAnimation ? "video/*" : "image/*"}">
                 </label>
-                <button class="vnccs-ps-btn primary vnccs-ps-library-save-edit">${localCopy ? "Save Local Copy" : "Save Changes"}</button>
+                <button class="vnccs-ps-btn primary vnccs-ps-library-save-edit">${localCopy ? tr("Save Local Copy") : tr("Save Changes")}</button>
             </div>
         `;
         requestAnimationFrame(() => this.updateLibraryInspectorScale());
@@ -13458,7 +13521,7 @@ class PoseStudioWidget {
                 .map(tag => tag.trim())
                 .filter(Boolean);
             if (!newName) {
-                this.showMessage(`${isAnimation ? "Animation" : "Pose"} name is required.`, true);
+                this.showMessage(tr("{type} name is required.", { type: isAnimation ? tr("Animation") : tr("Pose") }), true);
                 return;
             }
             const posePromptValue = this.libraryInspector.querySelector('.vnccs-ps-library-edit-prompt').value;
@@ -13501,7 +13564,7 @@ class PoseStudioWidget {
                 this.librarySelectedName = result.id || `local_user_poses/${category}/${newName}`;
                 await this.refreshLibrary(false);
             } catch (error) {
-                this.showMessage(`Failed to save library item: ${error?.message || error}`, true);
+                this.showMessage(tr("Failed to save library item: {error}", { error: error?.message || error }), true);
             }
         };
     }
@@ -13549,16 +13612,16 @@ class PoseStudioWidget {
     readLibraryFileAsDataUrl(file, maxBytes = 40 * 1024 * 1024) {
         return new Promise((resolve, reject) => {
             if (!(file instanceof Blob)) {
-                reject(new Error("Preview file is invalid."));
+                reject(new Error(tr("Preview file is invalid.")));
                 return;
             }
             if (file.size > maxBytes) {
-                reject(new Error(`Preview video must be smaller than ${Math.floor(maxBytes / (1024 * 1024))} MB.`));
+                reject(new Error(tr("Preview video must be smaller than {size} MB.", { size: Math.floor(maxBytes / (1024 * 1024)) })));
                 return;
             }
             const reader = new FileReader();
             reader.onload = () => resolve(String(reader.result || ""));
-            reader.onerror = () => reject(reader.error || new Error("Failed to read preview file."));
+            reader.onerror = () => reject(reader.error || new Error(tr("Failed to read preview file.")));
             reader.readAsDataURL(file);
         });
     }
@@ -13582,43 +13645,43 @@ class PoseStudioWidget {
         modal.setAttribute('aria-modal', 'true');
         modal.setAttribute('aria-labelledby', `${dialogId}-title`);
         modal.innerHTML = `
-            <div class="vnccs-ps-modal-title" id="${dialogId}-title">Save ${animationMode ? "Animation" : "Scene"}</div>
+            <div class="vnccs-ps-modal-title" id="${dialogId}-title">${tr("Save {type}", { type: animationMode ? tr("Animation") : tr("Scene") })}</div>
             <div class="vnccs-ps-modal-content">
                 <label class="vnccs-ps-save-library-field vnccs-ps-save-library-name-field">
-                    <span>Name</span>
-                    <input data-role="name" type="text" placeholder="${animationMode ? "Animation" : "Scene"} name" class="vnccs-ps-input" maxlength="96" autocomplete="off">
-                    <span class="vnccs-ps-save-library-error" hidden>Name is required.</span>
+                    <span>${tr("Name")}</span>
+                    <input data-role="name" type="text" placeholder="${tr("{type} name", { type: animationMode ? tr("Animation") : tr("Scene") })}" class="vnccs-ps-input" maxlength="96" autocomplete="off">
+                    <span class="vnccs-ps-save-library-error" hidden>${tr("Name is required.")}</span>
                 </label>
                 <div class="vnccs-ps-save-library-meta">
                     <label class="vnccs-ps-save-library-field">
-                        <span>Category</span>
+                        <span>${tr("Category")}</span>
                         <input data-role="category" type="text" class="vnccs-ps-input" value="Uncategorized" autocomplete="off">
                     </label>
                     <label class="vnccs-ps-save-library-field">
-                        <span>Tags</span>
-                        <input data-role="tags" type="text" placeholder="Comma separated" class="vnccs-ps-input" autocomplete="off">
+                        <span>${tr("Tags")}</span>
+                        <input data-role="tags" type="text" placeholder="${tr("Comma separated")}" class="vnccs-ps-input" autocomplete="off">
                     </label>
                 </div>
-                ${animationMode ? '<span class="vnccs-ps-library-system-tag">Animation · system tag</span>' : ''}
+                ${animationMode ? `<span class="vnccs-ps-library-system-tag">${tr("Animation · system tag")}</span>` : ''}
                 <label class="vnccs-ps-save-library-field">
-                    <span>Prompt</span>
-                    <textarea class="vnccs-ps-textarea vnccs-ps-save-prompt" placeholder="Optional prompt">${this.escapeHtml(currentPrompt)}</textarea>
+                    <span>${tr("Prompt")}</span>
+                    <textarea class="vnccs-ps-textarea vnccs-ps-save-prompt" placeholder="${tr("Optional prompt")}">${this.escapeHtml(currentPrompt)}</textarea>
                 </label>
                 ${animationMode ? `
                     <label class="vnccs-ps-save-library-field">
-                        <span>Video preview <span style="font-weight:400">(optional)</span></span>
+                        <span>${tr("Video preview")} <span style="font-weight:400">${tr("(optional)")}</span></span>
                         <input class="vnccs-ps-animation-preview-input" type="file" accept="video/*">
-                        <small class="vnccs-ps-save-library-preview-help">Preview video is resized and compressed before saving.</small>
+                        <small class="vnccs-ps-save-library-preview-help">${tr("Preview video is resized and compressed before saving.")}</small>
                     </label>
                 ` : `
                     <label class="vnccs-ps-save-library-check">
-                        <input type="checkbox" checked> Include preview image
+                        <input type="checkbox" checked> ${tr("Include preview image")}
                     </label>
                 `}
             </div>
             <div class="vnccs-ps-save-library-actions">
-                <button type="button" class="vnccs-ps-modal-btn cancel">Cancel</button>
-                <button type="button" class="vnccs-ps-modal-btn primary">Save</button>
+                <button type="button" class="vnccs-ps-modal-btn cancel">${tr("Cancel")}</button>
+                <button type="button" class="vnccs-ps-modal-btn primary">${tr("Save")}</button>
             </div>
         `;
 
@@ -13690,7 +13753,7 @@ class PoseStudioWidget {
             saving = true;
             saveButton.disabled = true;
             cancelButton.disabled = true;
-            saveButton.textContent = animationMode ? "Encoding…" : "Saving…";
+            saveButton.textContent = animationMode ? tr("Encoding…") : tr("Saving…");
             try {
                 const saved = await this.saveToLibrary(name, animationMode ? false : previewCheck.checked, {
                     category: categoryInput.value.trim() || "Uncategorized",
@@ -13837,7 +13900,7 @@ class PoseStudioWidget {
 
         try {
             if (animationMode && (this._animationCacheRestorePending || this._deferredAnimationReference)) {
-                throw new Error("Animation tracks are not loaded. Restore the animation before saving it.");
+                throw new Error(tr("Animation tracks are not loaded. Restore the animation before saving it."));
             }
             assetData = this.buildLibraryAsset(metadata.prompt ?? this.getPosePrompt(this.activeTab));
             if (animationMode && metadata.previewFile) {
@@ -13874,14 +13937,17 @@ class PoseStudioWidget {
             return true;
         } catch (err) {
             console.error(`Failed to save ${animationMode ? "animation" : "pose"}:`, err);
-            this.showMessage(`Failed to save ${animationMode ? "animation" : "pose"}: ${err?.message || err}`, true);
+            this.showMessage(tr("Failed to save {type}: {error}", {
+                type: animationMode ? tr("animation") : tr("pose"),
+                error: err?.message || err,
+            }), true);
             return false;
         }
     }
 
     applyLibraryPoseFraming(cameraParams) {
         if (!this.viewer?.sceneCameraTarget) {
-            throw new Error("Cannot apply pose framing before the model camera target is ready.");
+            throw new Error(tr("Cannot apply pose framing before the model camera target is ready."));
         }
         const transform = cameraFramingToCharacterTransform(
             cameraParams,
@@ -13892,12 +13958,12 @@ class PoseStudioWidget {
 
     applyLibraryPoseTransform(transformSource, cameraParams = {}) {
         const character = this.getActiveCharacter();
-        if (!character) throw new Error("Cannot apply pose transform without an active character.");
+        if (!character) throw new Error(tr("Cannot apply pose transform without an active character."));
         const transform = normalizeCharacterTransform(transformSource);
         const yaw = Number(cameraParams.yaw_deg ?? 0);
         const pitch = Number(cameraParams.pitch_deg ?? 0);
         if (!Number.isFinite(yaw) || !Number.isFinite(pitch)) {
-            throw new TypeError("Pose framing requires finite camera angles.");
+            throw new TypeError(tr("Pose framing requires finite camera angles."));
         }
         character.transform = transform;
 
@@ -13945,7 +14011,7 @@ class PoseStudioWidget {
 
     applyLibrarySAMProjection(frameSource) {
         const frame = normalizeSAMProjectionFrame(frameSource);
-        if (!frame) throw new TypeError("Library pose contains an invalid SAM projection camera.");
+        if (!frame) throw new TypeError(tr("Library pose contains an invalid SAM projection camera."));
         const cameraParams = this.currentCameraParams();
         const storedParams = {
             cam_zoom: cameraParams.zoom,
@@ -13990,24 +14056,24 @@ class PoseStudioWidget {
 
     validateImportedPose(pose) {
         if (!pose || typeof pose !== "object" || Array.isArray(pose)) {
-            throw new TypeError("Invalid pose: expected an object.");
+            throw new TypeError(tr("Invalid pose: expected an object."));
         }
         if (pose.modelRotation != null && !this.isValidPoseVector(pose.modelRotation)) {
-            throw new TypeError("Invalid pose model rotation.");
+            throw new TypeError(tr("Invalid pose model rotation."));
         }
         for (const key of ["bones", "bonePositions", "ikEffectorPositions", "poleTargetPositions", "hipBonePosition"]) {
             const coordinates = pose[key];
             if (coordinates == null) continue;
             if (typeof coordinates !== "object" || Array.isArray(coordinates)
                 || !Object.values(coordinates).every(value => this.isValidPoseVector(value))) {
-                throw new TypeError(`Invalid pose coordinates in ${key}.`);
+                throw new TypeError(tr("Invalid pose coordinates in {key}.", { key }));
             }
         }
     }
 
     normalizeImportedMesh(mesh) {
         if (!mesh || typeof mesh !== "object" || Array.isArray(mesh)) {
-            throw new TypeError("Invalid pose mesh: expected an object.");
+            throw new TypeError(tr("Invalid pose mesh: expected an object."));
         }
         const normalized = { ...mesh };
         for (const key of Object.keys(mesh)) {
@@ -14017,7 +14083,7 @@ class PoseStudioWidget {
             const value = mesh[key];
             if (!(typeof value === "number" || typeof value === "string" && value.trim() !== "")
                 || !Number.isFinite(Number(value))) {
-                throw new TypeError(`Invalid pose mesh value in ${key}.`);
+                throw new TypeError(tr("Invalid pose mesh value in {key}.", { key }));
             }
             normalized[key] = Number(value);
         }
@@ -14026,15 +14092,15 @@ class PoseStudioWidget {
 
     async loadCharacterSceneLibraryAsset(asset, { animation = false } = {}) {
         if (!asset || !Array.isArray(asset.characters) || !asset.characters.length) {
-            throw new Error("Library scene does not contain characters.");
+            throw new Error(tr("Library scene does not contain characters."));
         }
         if (animation && Array.isArray(asset.animation)) {
-            throw new Error("Library animation is missing its timeline data.");
+            throw new Error(tr("Library animation is missing its timeline data."));
         }
         for (const character of asset.characters) {
             if (!character || typeof character !== "object" || Array.isArray(character)
                 || character.poses != null && !Array.isArray(character.poses)) {
-                throw new TypeError("Invalid pose character or pose set.");
+                throw new TypeError(tr("Invalid pose character or pose set."));
             }
         }
         const token = this._libraryLoadToken;
@@ -14124,7 +14190,7 @@ class PoseStudioWidget {
     loadPoseSetAsset(asset, { fallbackPrompt } = {}) {
         const sourcePoses = Array.isArray(asset) ? asset : asset?.poses;
         if (!Array.isArray(sourcePoses) || !sourcePoses.length) {
-            throw new Error("Pose set does not contain poses.");
+            throw new Error(tr("Pose set does not contain poses."));
         }
         sourcePoses.forEach(pose => this.validateImportedPose(pose));
         this._poseDataRestoreError = null;
@@ -14173,7 +14239,7 @@ class PoseStudioWidget {
     loadAnimationLibraryAsset(asset) {
         const source = asset?.animation;
         if (!source || typeof source !== "object" || Array.isArray(source)) {
-            throw new Error("Library animation is missing its timeline data.");
+            throw new Error(tr("Library animation is missing its timeline data."));
         }
         if (source.basePose != null) this.validateImportedPose(source.basePose);
         const normalized = normalizeAnimationState(source, source.basePose || {});
@@ -14227,7 +14293,7 @@ class PoseStudioWidget {
             if (this._disposed || token !== this._libraryLoadToken || characterId !== this.activeCharacterId || tab !== this.activeTab) return;
             if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
             if (!data?.pose || typeof data.pose !== "object" || Array.isArray(data.pose)) {
-                throw new Error("Library item does not contain a valid pose.");
+                throw new Error(tr("Library item does not contain a valid pose."));
             }
 
             if (data.pose && this.viewer) {
@@ -14243,7 +14309,7 @@ class PoseStudioWidget {
                     ? extractActiveCharacterTransformFromSceneAsset(data.pose, activeScenePose)
                     : null;
                 if (isPoseSet) {
-                    if (!data.pose.poses.length) throw new Error("Pose set does not contain poses.");
+                    if (!data.pose.poses.length) throw new Error(tr("Pose set does not contain poses."));
                     data.pose.poses.forEach(pose => this.validateImportedPose(pose));
                     if (!this.isAnimationMode()) this.viewer?.recordState?.();
                     this.loadPoseSetAsset(data.pose, { fallbackPrompt: this.getPosePrompt() });
@@ -14282,7 +14348,7 @@ class PoseStudioWidget {
                     if (this.host?.embedded !== true && (activeSceneTransform || savedFraming)) {
                         if (!activeSceneTransform) cameraFramingToCharacterTransform(savedFraming, this.viewer.sceneCameraTarget);
                         if (![savedAngles.yaw_deg, savedAngles.pitch_deg].every(value => Number.isFinite(Number(value)))) {
-                            throw new TypeError("Pose framing requires finite camera angles.");
+                            throw new TypeError(tr("Pose framing requires finite camera angles."));
                         }
                     }
                     if (!this.isAnimationMode()) this.viewer?.recordState?.();
@@ -14319,7 +14385,7 @@ class PoseStudioWidget {
         } catch (err) {
             if (this._disposed || token !== this._libraryLoadToken) return;
             console.error("Failed to load pose:", err);
-            this.showMessage(`Failed to load pose: ${err?.message || err}`, true);
+            this.showMessage(tr("Failed to load pose: {error}", { error: err?.message || err }), true);
         }
     }
 
@@ -14338,8 +14404,8 @@ class PoseStudioWidget {
         const header = document.createElement('div');
         header.className = 'vnccs-ps-settings-header';
         header.innerHTML = `
-            <span class="vnccs-ps-settings-title">⚙️ Settings</span>
-            <button class="vnccs-ps-settings-close" title="Close">✕</button>
+            <span class="vnccs-ps-settings-title">⚙️ ${tr("Settings")}</span>
+            <button class="vnccs-ps-settings-close" title="${tr("Close")}">✕</button>
         `;
         header.querySelector('.vnccs-ps-settings-close').onclick = () => panel.remove();
 
@@ -14349,7 +14415,7 @@ class PoseStudioWidget {
         const editorHeader = document.createElement("div");
         editorHeader.className = "vnccs-ps-settings-title";
         editorHeader.style.padding = "4px 0 10px";
-        editorHeader.innerText = "Editing Mode";
+        editorHeader.innerText = tr("Editing Mode");
         content.appendChild(editorHeader);
 
         const editorRow = document.createElement("div");
@@ -14362,12 +14428,12 @@ class PoseStudioWidget {
         imageModeBtn.type = "button";
         imageModeBtn.className = "vnccs-ps-toggle-btn";
         imageModeBtn.style.flex = "1";
-        imageModeBtn.innerText = "Image";
+        imageModeBtn.innerText = tr("Image");
         const animationModeBtn = document.createElement("button");
         animationModeBtn.type = "button";
         animationModeBtn.className = "vnccs-ps-toggle-btn";
         animationModeBtn.style.flex = "1";
-        animationModeBtn.innerText = "Animation";
+        animationModeBtn.innerText = tr("Animation");
         editorToggle.append(imageModeBtn, animationModeBtn);
         editorRow.appendChild(editorToggle);
         content.appendChild(editorRow);
@@ -14379,7 +14445,7 @@ class PoseStudioWidget {
 
         const animationSettingsTitle = document.createElement("div");
         animationSettingsTitle.className = "vnccs-ps-section-title";
-        animationSettingsTitle.textContent = "Timeline";
+        animationSettingsTitle.textContent = tr("Timeline");
         animationSettingsTitle.style.marginBottom = "12px";
         animationSettings.appendChild(animationSettingsTitle);
 
@@ -14390,7 +14456,7 @@ class PoseStudioWidget {
             field.className = "vnccs-ps-field";
             const label = document.createElement("span");
             label.className = "vnccs-ps-label";
-            label.textContent = labelText;
+            label.textContent = tr(labelText);
             const input = document.createElement("input");
             input.type = "number";
             input.className = "vnccs-ps-input";
@@ -14419,7 +14485,7 @@ class PoseStudioWidget {
             checkbox.style.marginTop = "2px";
             checkbox.addEventListener("change", () => onchange(checkbox.checked));
             const text = document.createElement("span");
-            text.innerHTML = `<strong>${title}</strong><small style="display:block;color:#888;margin-top:3px;line-height:1.35">${description}</small>`;
+            text.innerHTML = `<strong>${tr(title)}</strong><small style="display:block;color:#888;margin-top:3px;line-height:1.35">${tr(description)}</small>`;
             label.append(checkbox, text);
             return { label, checkbox };
         };
@@ -14464,7 +14530,10 @@ class PoseStudioWidget {
             autoKeySetting.checkbox.checked = this.animationState.autoKey;
             loopSetting.checkbox.checked = this.animationState.loop;
             imageBatchSetting.checkbox.checked = this.exportParams.animation_image_batch === true;
-            fpsInfo.textContent = `${this.animationState.frameCount} frames will be generated · frames 0–${this.animationState.frameCount - 1}`;
+            fpsInfo.textContent = tr("{count} frames will be generated · frames 0–{last}", {
+                count: this.animationState.frameCount,
+                last: this.animationState.frameCount - 1,
+            });
         };
         imageModeBtn.onclick = () => {
             this.setEditorMode("image");
@@ -14492,7 +14561,7 @@ class PoseStudioWidget {
         const interfaceHeader = document.createElement("div");
         interfaceHeader.className = "vnccs-ps-settings-title";
         interfaceHeader.style.padding = "4px 0 10px";
-        interfaceHeader.innerText = "Interface";
+        interfaceHeader.innerText = tr("Interface");
         content.appendChild(interfaceHeader);
 
         const interfaceRow = document.createElement("div");
@@ -14512,7 +14581,7 @@ class PoseStudioWidget {
         const managerBtn = document.createElement("button");
         managerBtn.className = "vnccs-ps-toggle-btn";
         managerBtn.type = "button";
-        managerBtn.innerText = "Pose Manager";
+        managerBtn.innerText = tr("Pose Manager");
         managerBtn.style.flex = "1";
 
         const updateInterfaceUI = () => {
@@ -14553,7 +14622,7 @@ class PoseStudioWidget {
             this.syncToNode(false, { skipCapture: true });
         });
         const captureImageSizeText = document.createElement("span");
-        captureImageSizeText.innerHTML = "<strong>Capture Image Size</strong><small style='display:block;color:#888;margin-top:3px;line-height:1.35'>When enabled, a connected pose-analysis image sets the canvas and exported capture to its exact width, height, and aspect ratio.</small>";
+        captureImageSizeText.innerHTML = `<strong>${tr("Capture Image Size")}</strong><small style='display:block;color:#888;margin-top:3px;line-height:1.35'>${tr("When enabled, a connected pose-analysis image sets the canvas and exported capture to its exact width, height, and aspect ratio.")}</small>`;
         captureImageSizeLabel.append(captureImageSizeCheckbox, captureImageSizeText);
         captureImageSizeRow.appendChild(captureImageSizeLabel);
         content.appendChild(captureImageSizeRow);
@@ -14582,7 +14651,7 @@ class PoseStudioWidget {
         };
 
         const handControlsText = document.createElement("div");
-        handControlsText.innerHTML = "<strong>New Hand Controls</strong><div style='font-size:11px; color:#888; margin-top:4px;'>When enabled, clicking a hand opens the floating hand editor. Disable to show and edit every finger joint directly.</div>";
+        handControlsText.innerHTML = `<strong>${tr("New Hand Controls")}</strong><div style='font-size:11px; color:#888; margin-top:4px;'>${tr("When enabled, clicking a hand opens the floating hand editor. Disable to show and edit every finger joint directly.")}</div>`;
 
         handControlsLabel.appendChild(handControlsCheckbox);
         handControlsLabel.appendChild(handControlsText);
@@ -14610,7 +14679,7 @@ class PoseStudioWidget {
         };
 
         const jointLimitsText = document.createElement("div");
-        jointLimitsText.innerHTML = "<strong>Joint Limits</strong><div style='font-size:11px; color:#888; margin-top:4px;'>When enabled, rotating a joint or dragging a limb keeps the spine, neck, head, shoulders, elbows, wrists, hips, knees and ankles within a loose human range of motion. Fingers, imported poses and saved poses are not changed.</div>";
+        jointLimitsText.innerHTML = `<strong>${tr("Joint Limits")}</strong><div style='font-size:11px; color:#888; margin-top:4px;'>${tr("When enabled, rotating a joint or dragging a limb keeps the spine, neck, head, shoulders, elbows, wrists, hips, knees and ankles within a loose human range of motion. Fingers, imported poses and saved poses are not changed.")}</div>`;
 
         jointLimitsLabel.appendChild(jointLimitsCheckbox);
         jointLimitsLabel.appendChild(jointLimitsText);
@@ -14638,7 +14707,7 @@ class PoseStudioWidget {
         };
 
         const skydomeText = document.createElement("div");
-        skydomeText.innerHTML = "<strong>Directional Skydome</strong><div style='font-size:11px; color:#888; margin-top:4px;'>Shows and exports the colored direction grid and enables the camera-angle prompt input. Disabling it hides the skydome and removes the input socket.</div>";
+        skydomeText.innerHTML = `<strong>${tr("Directional Skydome")}</strong><div style='font-size:11px; color:#888; margin-top:4px;'>${tr("Shows and exports the colored direction grid and enables the camera-angle prompt input. Disabling it hides the skydome and removes the input socket.")}</div>`;
 
         skydomeLabel.appendChild(skydomeCheckbox);
         skydomeLabel.appendChild(skydomeText);
@@ -14670,7 +14739,7 @@ class PoseStudioWidget {
         };
 
         const samCamText = document.createElement("div");
-        samCamText.innerHTML = "<strong>SAM Import: Apply Camera Angle</strong><div style='font-size:11px; color:#888; margin-top:4px;'>When enabled, importing a SAM3D pose will override the camera yaw/pitch to match the detected angle. Disable to keep your current camera settings after import.</div>";
+        samCamText.innerHTML = `<strong>${tr("SAM Import: Apply Camera Angle")}</strong><div style='font-size:11px; color:#888; margin-top:4px;'>${tr("When enabled, importing a SAM3D pose will override the camera yaw/pitch to match the detected angle. Disable to keep your current camera settings after import.")}</div>`;
 
         samCamLabel.appendChild(samCamCheckbox);
         samCamLabel.appendChild(samCamText);
@@ -14689,7 +14758,7 @@ class PoseStudioWidget {
             this.syncToNode(false, { skipCapture: true, skipCaptureUpload: true });
         };
         const keepModelsText = document.createElement("span");
-        keepModelsText.innerHTML = "<strong>Keep Models Loaded</strong><small style='display:block;color:#888;margin-top:3px;line-height:1.35'>Keep SAM 3D Body and BiRefNet in memory between runs for faster imports. Turn off to release GPU memory after each run.</small>";
+        keepModelsText.innerHTML = `<strong>${tr("Keep Models Loaded")}</strong><small style='display:block;color:#888;margin-top:3px;line-height:1.35'>${tr("Keep SAM 3D Body and BiRefNet in memory between runs for faster imports. Turn off to release GPU memory after each run.")}</small>`;
         keepModelsLabel.append(keepModelsCheckbox, keepModelsText);
         keepModelsRow.appendChild(keepModelsLabel);
         content.appendChild(keepModelsRow);
@@ -14720,7 +14789,7 @@ class PoseStudioWidget {
         };
 
         const debugText = document.createElement("div");
-        debugText.innerHTML = "<strong>Debug Mode (Library Pose on Queue)</strong><div style='font-size:11px; color:#888; margin-top:4px;'>Selects exactly one random pose from the loaded pose library for each execution and applies it as saved. No extra model rotation, camera or framing randomization is added.</div>";
+        debugText.innerHTML = `<strong>${tr("Debug Mode (Library Pose on Queue)")}</strong><div style='font-size:11px; color:#888; margin-top:4px;'>${tr("Selects exactly one random pose from the loaded pose library for each execution and applies it as saved. No extra model rotation, camera or framing randomization is added.")}</div>`;
 
         debugLabel.appendChild(debugCheckbox);
         debugLabel.appendChild(debugText);
@@ -14747,7 +14816,7 @@ class PoseStudioWidget {
         };
 
         const keepLightText = document.createElement("div");
-        keepLightText.innerHTML = "<strong>Keep Manual Lighting</strong><div style='font-size:11px; color:#888; margin-top:4px;'>Disables Debug light randomization and preserves the complete current lighting state, including Keeping Original Lighting.</div>";
+        keepLightText.innerHTML = `<strong>${tr("Keep Manual Lighting")}</strong><div style='font-size:11px; color:#888; margin-top:4px;'>${tr("Disables Debug light randomization and preserves the complete current lighting state, including Keeping Original Lighting.")}</div>`;
 
         keepLightLabel.appendChild(keepLightCheckbox);
         keepLightLabel.appendChild(keepLightText);
@@ -14780,7 +14849,7 @@ class PoseStudioWidget {
         };
 
         const samHelperText = document.createElement("div");
-        samHelperText.innerHTML = "<strong>Show SAM Helper Skeleton</strong><div style='font-size:11px; color:#888; margin-top:4px;'>Displays the imported SAM3D reference skeleton in the viewer for alignment debugging. It is hidden during final capture.</div>";
+        samHelperText.innerHTML = `<strong>${tr("Show SAM Helper Skeleton")}</strong><div style='font-size:11px; color:#888; margin-top:4px;'>${tr("Displays the imported SAM3D reference skeleton in the viewer for alignment debugging. It is hidden during final capture.")}</div>`;
 
         samHelperLabel.appendChild(samHelperCheckbox);
         samHelperLabel.appendChild(samHelperText);
@@ -14812,7 +14881,7 @@ class PoseStudioWidget {
         };
 
         const samMeshText = document.createElement("div");
-        samMeshText.innerHTML = "<strong>Show SAM Render Mesh Overlay</strong><div style='font-size:11px; color:#888; margin-top:4px;'>Displays the postprocessed SAM3D Body render mesh as a translucent overlay for direct skeleton/model comparison. It is hidden during final capture.</div>";
+        samMeshText.innerHTML = `<strong>${tr("Show SAM Render Mesh Overlay")}</strong><div style='font-size:11px; color:#888; margin-top:4px;'>${tr("Displays the postprocessed SAM3D Body render mesh as a translucent overlay for direct skeleton/model comparison. It is hidden during final capture.")}</div>`;
 
         samMeshLabel.appendChild(samMeshCheckbox);
         samMeshLabel.appendChild(samMeshText);
@@ -14826,7 +14895,7 @@ class PoseStudioWidget {
         skinHeader.style.marginTop = "20px";
         skinHeader.style.padding = "10px 0";
         skinHeader.style.borderTop = "1px solid var(--ps-border)";
-        skinHeader.innerText = "Skin";
+        skinHeader.innerText = tr("Skin");
         content.appendChild(skinHeader);
 
         const skinRow = document.createElement("div");
@@ -14854,7 +14923,7 @@ class PoseStudioWidget {
         for (const opt of skinOptions) {
             const btn = document.createElement("button");
             btn.className = "vnccs-ps-toggle-btn";
-            btn.innerText = opt.label;
+            btn.innerText = tr(opt.label);
             btn.style.flex = "1";
             btn.onclick = () => {
                 this.exportParams.skin_type = opt.key;
@@ -14878,7 +14947,7 @@ class PoseStudioWidget {
         templateHeader.style.marginTop = "20px";
         templateHeader.style.padding = "10px 0";
         templateHeader.style.borderTop = "1px solid var(--ps-border)";
-        templateHeader.innerText = "Prompt Templates";
+        templateHeader.innerText = tr("Prompt Templates");
         content.appendChild(templateHeader);
 
         const createTemplateField = (label, key) => {
@@ -14889,7 +14958,7 @@ class PoseStudioWidget {
 
             const l = document.createElement("div");
             l.className = "vnccs-ps-label";
-            l.innerText = label;
+            l.innerText = tr(label);
             l.style.marginBottom = "5px";
 
             const area = document.createElement("textarea");
@@ -14925,7 +14994,7 @@ class PoseStudioWidget {
         donationSection.style.textAlign = "center";
         donationSection.innerHTML = `
             <div style="font-size: 11px; color: var(--ps-text); margin-bottom: 20px; line-height: 1.6; font-weight: bold; padding: 0 10px;">
-                If you find my project useful, please consider supporting it! I work on it completely on my own, and your support will allow me to continue maintaining it and adding even more cool features!
+                ${tr("If you find my project useful, please consider supporting it! I work on it completely on my own, and your support will allow me to continue maintaining it and adding even more cool features!")}
             </div>
             <a href="https://www.buymeacoffee.com/MIUProject" target="_blank" style="display: inline-block; transition: transform 0.2s;" 
                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
@@ -14953,7 +15022,7 @@ class PoseStudioWidget {
 
         const title = document.createElement('div');
         title.className = 'vnccs-ps-modal-title';
-        title.textContent = isError ? '⚠️ Error' : 'ℹ️ Information';
+        title.textContent = isError ? tr('⚠️ Error') : tr('ℹ️ Information');
 
         const content = document.createElement('div');
         content.className = 'vnccs-ps-modal-content';
@@ -14963,7 +15032,7 @@ class PoseStudioWidget {
         const okBtn = document.createElement('button');
         okBtn.className = 'vnccs-ps-modal-btn';
         okBtn.style.justifyContent = 'center';
-        okBtn.textContent = 'OK';
+        okBtn.textContent = tr('OK');
         okBtn.onclick = () => overlay.remove();
 
         modal.appendChild(title);
@@ -14985,24 +15054,27 @@ class PoseStudioWidget {
 
         const title = document.createElement('div');
         title.className = 'vnccs-ps-modal-title';
-        title.textContent = `⚠️ Delete ${itemType}`;
+        title.textContent = tr("⚠️ Delete {type}", { type: tr(itemType) });
 
         const content = document.createElement('div');
         content.className = 'vnccs-ps-modal-content';
         content.style.textAlign = 'center';
 
         const message = document.createElement('div');
-        message.innerHTML = `Delete ${itemType.toLowerCase()} "<strong>${this.escapeHtml(poseName)}</strong>"?<br>This cannot be undone.`;
+        message.innerHTML = tr("Delete {type} \"<strong>{name}</strong>\"?<br>This cannot be undone.", {
+            type: this.isLibraryAnimation(poseOrName) ? tr("animation") : tr("pose"),
+            name: this.escapeHtml(poseName),
+        });
         content.appendChild(message);
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'vnccs-ps-modal-btn danger';
         deleteBtn.style.justifyContent = 'center';
-        deleteBtn.textContent = '🗑️ Delete';
+        deleteBtn.textContent = tr('🗑️ Delete');
 
         const cancelBtn = document.createElement('button');
         cancelBtn.className = 'vnccs-ps-modal-btn cancel';
-        cancelBtn.textContent = 'Cancel';
+        cancelBtn.textContent = tr('Cancel');
 
         modal.appendChild(title);
         modal.appendChild(content);
@@ -15038,7 +15110,10 @@ class PoseStudioWidget {
             await this.refreshLibrary(false);
         } catch (err) {
             console.error(`Failed to delete ${itemType}:`, err);
-            this.showMessage(`Failed to delete ${itemType}: ${err?.message || err}`, true);
+            this.showMessage(tr("Failed to delete {type}: {error}", {
+                type: itemType === "animation" ? tr("animation") : tr("pose"),
+                error: err?.message || err,
+            }), true);
         }
     }
 
@@ -15046,7 +15121,7 @@ class PoseStudioWidget {
         const staticData = message?.staticData;
         const bonePositions = message?.bonePositions;
         if (!staticData || !bonePositions || !message?.vertices) {
-            throw new Error("Pose Studio MakeHuman worker returned incomplete model data.");
+            throw new Error(tr("Pose Studio MakeHuman worker returned incomplete model data."));
         }
         const bones = (staticData.bones || []).map((bone, index) => {
             const offset = index * 6;
@@ -15078,14 +15153,14 @@ class PoseStudioWidget {
 
     requestStaticMorphModel() {
         const worker = this.ensureMorphWorker();
-        if (!worker) return Promise.reject(new Error("Pose Studio MakeHuman worker is unavailable."));
+        if (!worker) return Promise.reject(new Error(tr("Pose Studio MakeHuman worker is unavailable.")));
         const seq = ++this._morphSeq;
         this._morphSeqCharacterIds.set(seq, this.activeCharacterId);
         return new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
                 this._morphLoadTasks.delete(seq);
                 this._morphSeqCharacterIds.delete(seq);
-                reject(new Error("Timed out while loading the Pose Studio MakeHuman asset."));
+                reject(new Error(tr("Timed out while loading the Pose Studio MakeHuman asset.")));
             }, 120000);
             this._morphLoadTasks.set(seq, { resolve, reject, timeout });
             try {
@@ -15282,9 +15357,11 @@ class PoseStudioWidget {
             for (const [seq, request] of this._morphLoadTasks) {
                 clearTimeout(request.timeout);
                 this._morphLoadTasks.delete(seq);
-                request.reject(new Error(message.message || "Pose Studio MakeHuman worker failed."));
+                request.reject(new Error(message.message || tr("Pose Studio MakeHuman worker failed.")));
             }
-            this.showMessage?.(`Pose Studio body update failed: ${message.message || "MakeHuman worker unavailable"}. Reload ComfyUI to retry.`, true);
+            this.showMessage?.(tr("Pose Studio body update failed: {error}. Reload ComfyUI to retry.", {
+                error: message.message || tr("MakeHuman worker unavailable"),
+            }), true);
             return;
         }
         if (message.type !== "result" || message.seq == null) return;
@@ -15418,7 +15495,7 @@ class PoseStudioWidget {
         const isOverridden = this.exportParams.keepOriginalLighting;
         this.lightListContainer.style.opacity = isOverridden ? "0.3" : "1.0";
         this.lightListContainer.inert = isOverridden;
-        this.lightListContainer.title = isOverridden ? "Lighting is overridden by 'Keep Original Lighting' mode" : "";
+        this.lightListContainer.title = isOverridden ? tr("Lighting is overridden by 'Keep Original Lighting' mode") : "";
 
         this.lightParams.forEach((light, index) => {
             const item = document.createElement('div');
@@ -15436,12 +15513,12 @@ class PoseStudioWidget {
             if (light.type === 'directional') iconChar = '☀️';
             else if (light.type === 'ambient') iconChar = '☁️';
 
-            title.innerHTML = `<span class="vnccs-ps-light-icon">${iconChar}</span> Light ${index + 1}`;
+            title.innerHTML = `<span class="vnccs-ps-light-icon">${iconChar}</span> ${tr("Light {index}", { index: index + 1 })}`;
 
             const removeBtn = document.createElement('button');
             removeBtn.className = 'vnccs-ps-light-remove';
             removeBtn.innerHTML = '×';
-            removeBtn.title = "Remove Light";
+            removeBtn.title = tr("Remove Light");
             removeBtn.onclick = (e) => {
                 e.stopPropagation();
                 this.lightParams.splice(index, 1);
@@ -15467,7 +15544,7 @@ class PoseStudioWidget {
             ['ambient', 'directional', 'point'].forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t;
-                opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+                opt.textContent = tr(t.charAt(0).toUpperCase() + t.slice(1));
                 if (t === light.type) opt.selected = true;
                 typeSelect.appendChild(opt);
             });
@@ -15496,7 +15573,7 @@ class PoseStudioWidget {
 
             const intLabel = document.createElement('span');
             intLabel.className = 'vnccs-ps-light-pos-label';
-            intLabel.innerText = "Int";
+            intLabel.innerText = tr("Int");
 
             const isAmbient = light.type === 'ambient';
             const intSlider = document.createElement('input');
@@ -15507,7 +15584,7 @@ class PoseStudioWidget {
             intSlider.step = isAmbient ? 0.01 : 0.1;
             intSlider.value = light.intensity ?? (isAmbient ? 0.5 : 1);
 
-            const intValue = this.createSliderNumber(intSlider, `Light ${index + 1} Intensity`);
+            const intValue = this.createSliderNumber(intSlider, tr("Light {index} Intensity", { index: index + 1 }));
 
             intSlider.oninput = () => {
                 light.intensity = parseFloat(intSlider.value);
@@ -15526,7 +15603,7 @@ class PoseStudioWidget {
 
                 const radLabel = document.createElement('span');
                 radLabel.className = 'vnccs-ps-light-pos-label';
-                radLabel.innerText = "Rad";
+                radLabel.innerText = tr("Rad");
 
                 const radSlider = document.createElement('input');
                 radSlider.type = 'range';
@@ -15534,7 +15611,7 @@ class PoseStudioWidget {
                 radSlider.min = 5; radSlider.max = 300; radSlider.step = 1;
                 radSlider.value = light.radius ?? 100;
 
-                const radValue = this.createSliderNumber(radSlider, `Light ${index + 1} Radius`, 0);
+                const radValue = this.createSliderNumber(radSlider, tr("Light {index} Radius", { index: index + 1 }), 0);
 
                 radSlider.oninput = () => {
                     light.radius = parseFloat(radSlider.value);
@@ -15565,7 +15642,7 @@ class PoseStudioWidget {
 
                 const hLabel = document.createElement('span');
                 hLabel.className = 'vnccs-ps-light-h-label';
-                hLabel.innerText = "Y-HGT";
+                hLabel.innerText = tr("Y-HGT");
 
                 const hSlider = document.createElement('input');
                 hSlider.type = 'range';
@@ -15576,7 +15653,7 @@ class PoseStudioWidget {
                 hSlider.max = isPoint ? 10 : 100;
                 hSlider.step = isPoint ? 0.1 : 1;
                 hSlider.value = light.y || 0;
-                const hVal = this.createSliderNumber(hSlider, `Light ${index + 1} Height`, isPoint ? 1 : 0);
+                const hVal = this.createSliderNumber(hSlider, tr("Light {index} Height", { index: index + 1 }), isPoint ? 1 : 0);
 
                 hSlider.oninput = () => {
                     light.y = parseFloat(hSlider.value);
@@ -15599,7 +15676,7 @@ class PoseStudioWidget {
         // Add Light Button (Big)
         const addBtn = document.createElement('button');
         addBtn.className = 'vnccs-ps-btn-add-large';
-        addBtn.innerHTML = '+ Add Light Source';
+        addBtn.innerHTML = '+ ' + tr('Add Light Source');
         addBtn.disabled = isOverridden;
         if (isOverridden) {
             addBtn.style.opacity = "0.5";
@@ -16060,9 +16137,9 @@ class PoseStudioWidget {
         if (!this.exportParams.debugMode || this.isAnimationMode()) return;
         if (this.getDebugLibraryPoseCandidates().length > 0) return;
         const result = await this.refreshLibrary(true);
-        if (result?.error) throw new Error(`Debug Mode could not load the pose library: ${result.error}`);
+        if (result?.error) throw new Error(tr("Debug Mode could not load the pose library: {error}", { error: result.error }));
         if (this.getDebugLibraryPoseCandidates().length === 0) {
-            throw new Error("Debug Mode requires at least one fully loaded library pose.");
+            throw new Error(tr("Debug Mode requires at least one fully loaded library pose."));
         }
     }
 
@@ -16214,7 +16291,7 @@ class PoseStudioWidget {
 
     syncToNode(fullCapture = false, options = {}) {
         if (this._poseDataRestoreError || this._poseDataRestorePending || this.node?._vnccsPoseAwaitingRestore) {
-            if (options.executionCapture) throw new Error(this._poseDataRestoreError || "Pose Studio is still restoring the workflow.");
+            if (options.executionCapture) throw new Error(this._poseDataRestoreError || tr("Pose Studio is still restoring the workflow."));
             return;
         }
         if (this._isSyncing || this._animationCacheRestorePending) return;
@@ -16273,7 +16350,7 @@ class PoseStudioWidget {
         if (fullCapture && captureExplicitlyRequested
             && outputCount * (this.exportParams.view_width || 1024)
                 * (this.exportParams.view_height || 1024) > 64 * 1024 * 1024) {
-            throw new Error("Captured sequence is too large. Reduce resolution or frame count.");
+            throw new Error(tr("Captured sequence is too large. Reduce resolution or frame count."));
         }
 
         if (this.radarRedraw) this.radarRedraw();
@@ -16294,7 +16371,7 @@ class PoseStudioWidget {
         const managerGeneration = this.refreshManagerPreviewsIfNeeded();
         if (reusePoseManagerCaptures && managerGeneration
             && (this._managerPreviewRefreshCompletedGeneration || 0) < managerGeneration) {
-            throw new Error("Pose Manager previews are still refreshing; wait for the updated cards.");
+            throw new Error(tr("Pose Manager previews are still refreshing; wait for the updated cards."));
         }
         if (options.executionCapture === true) {
             this._executionCaptureSnapshot = null;
@@ -16304,7 +16381,7 @@ class PoseStudioWidget {
             const managerCapturesReady = this.poseCaptures.length === outputCount
                 && this.poseCaptures.every(capture => typeof capture === "string" && capture.length > 0);
             if (!managerCapturesReady) {
-                throw new Error("Pose Manager previews are not ready; RUN cannot use incomplete cards.");
+                throw new Error(tr("Pose Manager previews are not ready; RUN cannot use incomplete cards."));
             }
             // RUN in Pose Manager is a byte-for-byte snapshot of the images
             // already displayed in its cards. It must never invoke capture(),
@@ -16384,7 +16461,7 @@ class PoseStudioWidget {
                                 ...normalizeCaptureLens({ ...(asset.camera || {}), ...(savedFraming || {}) }),
                             } : currentCaptureCamera;
                             if (![poseCamera.yaw_deg, poseCamera.pitch_deg].every(Number.isFinite)) {
-                                throw new TypeError("Pose framing requires finite camera angles.");
+                                throw new TypeError(tr("Pose framing requires finite camera angles."));
                             }
                             const projection = normalizeSAMProjectionFrame(
                                 pose.sam_projection ?? asset.sam_projection ?? asset.camera?.sam_projection,
@@ -16675,19 +16752,19 @@ class PoseStudioWidget {
         try {
             const data = JSON.parse(widget.value);
             if (!data || typeof data !== "object" || Array.isArray(data)) {
-                throw new Error("pose_data must be an object");
+                throw new Error(tr("pose_data must be an object"));
             }
             if (data.schema_version !== undefined && ![1, 2, 3].includes(data.schema_version)) {
-                throw new Error("Unsupported Pose Studio schema version");
+                throw new Error(tr("Unsupported Pose Studio schema version"));
             }
             for (const key of ["mesh", "export", "animation", "timeline"]) {
                 if (data[key] != null && (typeof data[key] !== "object" || Array.isArray(data[key]))) {
-                    throw new Error(`pose_data.${key} must be an object`);
+                    throw new Error(tr("pose_data.{key} must be an object", { key }));
                 }
             }
             for (const key of ["poses", "image_poses", "characters", "pose_prompts", "lights"]) {
                 if (data[key] != null && !Array.isArray(data[key])) {
-                    throw new Error(`pose_data.${key} must be an array`);
+                    throw new Error(tr("pose_data.{key} must be an array", { key }));
                 }
             }
             if (data.export && "bg_color" in data.export) {
@@ -16695,31 +16772,31 @@ class PoseStudioWidget {
                 if (!Array.isArray(rgb) || rgb.length < 3 || !rgb.slice(0, 3).every(value => (
                     (typeof value === "number" || typeof value === "string" && value.trim() !== "")
                     && Number.isFinite(Number(value))
-                ))) throw new TypeError("Invalid pose background color.");
+                ))) throw new TypeError(tr("Invalid pose background color."));
                 data.export.bg_color = rgb.map((value, index) => index < 3 ? Number(value) : value);
             }
             for (const light of data.lights || []) {
                 if (!light || typeof light !== "object" || Array.isArray(light)) {
-                    throw new TypeError("Invalid pose light: expected an object.");
+                    throw new TypeError(tr("Invalid pose light: expected an object."));
                 }
                 for (const key of ["intensity", "radius", "x", "y", "z"]) {
                     if (light[key] == null) continue;
                     const value = light[key];
                     if (!(typeof value === "number" || typeof value === "string" && value.trim() !== "")
                         || !Number.isFinite(Number(value))) {
-                        throw new TypeError(`Invalid pose light value in ${key}.`);
+                        throw new TypeError(tr("Invalid pose light value in {key}.", { key }));
                     }
                     light[key] = Number(value);
                 }
             }
             for (const source of [data, ...(data.characters || [])]) {
                 if (!source || typeof source !== "object" || Array.isArray(source)) {
-                    throw new TypeError("Invalid pose character.");
+                    throw new TypeError(tr("Invalid pose character."));
                 }
                 if (source.mesh != null) source.mesh = this.normalizeImportedMesh(source.mesh);
                 for (const key of ["poses", "image_poses"]) {
                     if (source[key] == null) continue;
-                    if (!Array.isArray(source[key])) throw new TypeError("Invalid pose set.");
+                    if (!Array.isArray(source[key])) throw new TypeError(tr("Invalid pose set."));
                     source[key].forEach(pose => this.validateImportedPose(pose));
                 }
                 if (source.animation?.basePose != null) this.validateImportedPose(source.animation.basePose);
@@ -16974,14 +17051,14 @@ class PoseStudioWidget {
                 this.exportParams.background_url = bgUrl;
                 this.viewer.loadReferenceImage(bgUrl);
                 if (this.refBtn) {
-                    this.refBtn.innerHTML = '<span class="vnccs-ps-btn-icon">🗑️</span> Remove Background';
+                    this.refBtn.innerHTML = '<span class="vnccs-ps-btn-icon">🗑️</span> ' + tr('Remove Background');
                     this.refBtn.classList.add('danger');
                 }
             } else {
                 this.exportParams.background_url = null;
                 this.viewer?.removeReferenceImage?.();
                 if (this.refBtn) {
-                    this.refBtn.innerHTML = '<span class="vnccs-ps-btn-icon">🖼️</span> Background';
+                    this.refBtn.innerHTML = '<span class="vnccs-ps-btn-icon">🖼️</span> ' + tr('Background');
                     this.refBtn.classList.remove('danger');
                 }
             }
@@ -17025,7 +17102,7 @@ class PoseStudioWidget {
                 if (this._disposed || restoreToken !== this._poseDataRestoreToken) return;
                 this._poseDataRestorePending = false;
                 if (this.container) this.container.inert = false;
-                this._poseDataRestoreError = `Pose Studio restoration failed; original state preserved: ${error?.message || error}`;
+                this._poseDataRestoreError = tr("Pose Studio restoration failed; original state preserved: {error}", { error: error?.message || error });
                 console.error("Failed to restore Pose Studio character scene:", error);
                 this.showMessage?.(this._poseDataRestoreError, true);
             });
@@ -17034,7 +17111,7 @@ class PoseStudioWidget {
         } catch (e) {
             this._poseDataRestorePending = false;
             if (this.container) this.container.inert = false;
-            this._poseDataRestoreError = `Pose Studio restoration failed; original state preserved. Import a valid pose or reset the pose to continue: ${e?.message || e}`;
+            this._poseDataRestoreError = tr("Pose Studio restoration failed; original state preserved. Import a valid pose or reset the pose to continue: {error}", { error: e?.message || e });
             this.showMessage?.(this._poseDataRestoreError, true);
             console.error("Failed to parse pose_data:", e);
         }
@@ -17169,7 +17246,7 @@ app.registerExtension({
                 await new Promise(resolve => setTimeout(resolve, 16));
             }
             if (widget?._isSyncing) {
-                throw new Error("Pose Studio is still synchronizing another capture.");
+                throw new Error(tr("Pose Studio is still synchronizing another capture."));
             }
         };
 
@@ -17194,14 +17271,14 @@ app.registerExtension({
                 if (widget._disposed || node.studioWidget !== widget
                     || restoreToken !== widget._poseDataRestoreToken || loadToken !== widget._libraryLoadToken
                     || characterId !== widget.activeCharacterId || tab !== widget.activeTab) {
-                    throw new Error("Pose Studio scene changed while execution was preparing. Run the workflow again.");
+                    throw new Error(tr("Pose Studio scene changed while execution was preparing. Run the workflow again."));
                 }
             };
         };
 
         const uploadPoseStudioSync = async (node, nodeId, syncToken = "") => {
             const poseWidget = node.widgets.find(w => w.name === "pose_data");
-            if (!poseWidget) throw new Error("Pose Studio pose_data widget is unavailable. Reload the workflow and retry.");
+            if (!poseWidget) throw new Error(tr("Pose Studio pose_data widget is unavailable. Reload the workflow and retry."));
             const widget = node.studioWidget;
             const assertCurrent = poseStudioSyncGuard(node);
             const widgetData = JSON.parse(poseWidget.value);
@@ -17239,7 +17316,7 @@ app.registerExtension({
 
         const requirePoseStudioSyncResponse = async (response) => {
             if (!response.ok) {
-                let message = `Pose Studio sync failed (HTTP ${response.status})`;
+                let message = tr("Pose Studio sync failed (HTTP {status})", { status: response.status });
                 try {
                     const errorPayload = await response.json();
                     if (errorPayload?.error) message = String(errorPayload.error);
@@ -17257,7 +17334,7 @@ app.registerExtension({
                     body: JSON.stringify({
                         node_id: syncFileId,
                         sync_token: syncToken || undefined,
-                        sync_error: String(error?.message || error || "Pose Studio sync failed").slice(0, 2048),
+                        sync_error: String(error?.message || error || tr("Pose Studio sync failed")).slice(0, 2048),
                     }),
                 });
                 await requirePoseStudioSyncResponse(response);
@@ -17278,7 +17355,7 @@ app.registerExtension({
                     if (widget._animationCacheRestorePending) {
                         const restored = await widget._animationCacheRestorePromise;
                         assertCurrent();
-                        if (!restored) throw new Error("Animation cache could not be restored before execution.");
+                        if (!restored) throw new Error(tr("Animation cache could not be restored before execution."));
                     }
                     // Safe mode: ensure viewer is initialized
                     if (!widget.viewer || !widget.viewer.isInitialized()) {
@@ -17314,7 +17391,7 @@ app.registerExtension({
                 }
             } else {
                 await reportPoseStudioSyncFailure(nodeId, syncToken,
-                    new Error("Pose Studio widget is unavailable. Keep the executing workflow open and reload ComfyUI before retrying."));
+                    new Error(tr("Pose Studio widget is unavailable. Keep the executing workflow open and reload ComfyUI before retrying.")));
             }
         });
 
@@ -17329,7 +17406,7 @@ app.registerExtension({
             }
             if (current?.token === token) return;
             current?.close();
-            const modal = widget.showImportProgressModal("SAM 3D Body Import");
+            const modal = widget.showImportProgressModal(tr("SAM 3D Body Import"));
             const stopPolling = widget.watchSAM3DImportProgress(token, status => {
                 modal.update({ ...status, progress: Math.min(status.progress, 90) });
             });
@@ -17355,8 +17432,8 @@ app.registerExtension({
             const widget = node?.studioWidget;
             if (!widget || !poseData) {
                 await reportPoseStudioSyncFailure(nodeId, syncToken,
-                    new Error(!poseData ? "SAM 3D Body pose data is unavailable."
-                        : "Pose Studio widget is unavailable. Keep the executing workflow open and reload ComfyUI before retrying."));
+                    new Error(!poseData ? tr("SAM 3D Body pose data is unavailable.")
+                        : tr("Pose Studio widget is unavailable. Keep the executing workflow open and reload ComfyUI before retrying.")));
                 return;
             }
 
@@ -17364,7 +17441,7 @@ app.registerExtension({
             try {
                 progress?.stopPolling();
                 progress?.modal.setProgress(92);
-                progress?.modal.setText("Step 6/6: Applying the pose and capturing the result...");
+                progress?.modal.setText(tr("Step 6/6: Applying the pose and capturing the result..."));
                 const assertCurrent = poseStudioSyncGuard(node);
                 widget.applyCapturedImageSize(
                     Number(event.detail.image_width),

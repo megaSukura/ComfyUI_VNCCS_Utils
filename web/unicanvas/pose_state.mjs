@@ -1,4 +1,6 @@
 /** Serializable pose layer contracts shared by the canvas and editor host. */
+import { t } from "../i18n/index.mjs";
+
 // Articulated mannequin mid-pose: filled head and joints read as a posable figure at tool size.
 export const POSE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle class="fill" cx="12" cy="3.7" r="2.5"/><rect class="fill" x="9.7" y="7" width="4.6" height="7.4" rx="2.3"/><path stroke-width="2.4" d="M10.4 8.4 7 6.4 5.8 2.9M13.6 8.4l3.2 2.9 2.9 1.4M10.8 13.8l-1.6 4-1 3.6M13.2 13.8l1.7 3.9 1.3 3.5"/><circle class="fill" cx="7" cy="6.4" r="1.4"/><circle class="fill" cx="16.8" cy="11.3" r="1.4"/><circle class="fill" cx="9.2" cy="17.8" r="1.4"/><circle class="fill" cx="14.9" cy="17.7" r="1.4"/></svg>';
 export const isImageLayer = layer => layer?.type === "raster" || layer?.type === "pose";
@@ -28,12 +30,12 @@ export function poseGenerationLayer(host) {
 
 export function poseCharacterIssue(host, layer) {
     const character = layer?.pose?.character;
-    if (character?.source === "upload") return character.dataURL ? null : "The character image is missing. Upload it again.";
+    if (character?.source === "upload") return character.dataURL ? null : t("The character image is missing. Upload it again.");
     if (character?.source === "layer") {
         return host.layers.some(item => item.id === character.layerId && item !== layer && isImageLayer(item))
-            ? null : "The character layer no longer exists. Choose another character image.";
+            ? null : t("The character layer no longer exists. Choose another character image.");
     }
-    return "Choose a character image from a layer or upload one, then press Generate.";
+    return t("Choose a character image from a layer or upload one, then press Generate.");
 }
 function intersects(a, b) {
     return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
@@ -57,11 +59,11 @@ export async function composePoseReference(host, layer, size) {
     const character = layer.pose?.character;
     if (character?.source === "layer") {
         const selected = host.layers.find(item => item.id === character.layerId && item !== layer && isImageLayer(item));
-        if (!selected) throw new Error("The character layer no longer exists. Select another character image.");
+        if (!selected) throw new Error(t("The character layer no longer exists. Select another character image."));
         // An already visible lower layer is part of image2 exactly once.
         const bounds = host.getLayerWorldBounds(selected);
         if (!lower.includes(selected) || (bounds && !intersects(bounds, host.bbox))) {
-            if (!bounds) throw new Error("The character layer is empty. Select another character image.");
+            if (!bounds) throw new Error(t("The character layer is empty. Select another character image."));
             const scale = Math.min(out.width / bounds.width, out.height / bounds.height);
             const width = bounds.width * scale, height = bounds.height * scale;
             ctx.save(); ctx.globalAlpha = selected.opacity;
@@ -70,7 +72,7 @@ export async function composePoseReference(host, layer, size) {
             ctx.restore();
         }
     } else if (character?.source === "upload") {
-        if (!character.dataURL) throw new Error("The character image is missing. Load it again.");
+        if (!character.dataURL) throw new Error(t("The character image is missing. Load it again."));
         const image = await host.loadImage(character.dataURL);
         const scale = Math.min(out.width / image.width, out.height / image.height);
         const width = image.width * scale, height = image.height * scale;

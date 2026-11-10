@@ -4,6 +4,7 @@ import {
     quaternionToEulerDegrees,
     slerpQuaternion,
 } from "../animation.mjs";
+import { t as tr } from "../../i18n/index.mjs";
 
 export const VIDEO_FILE_EXTENSIONS = new Set([
     "mp4", "m4v", "webm", "mov", "ogv", "ogg", "avi", "mkv",
@@ -544,7 +545,7 @@ export function fitVideoTimelineSelection(duration, inTime, outTime, { padding =
 }
 
 function abortError() {
-    return new DOMException("Video import cancelled.", "AbortError");
+    return new DOMException(tr("Video import cancelled."), "AbortError");
 }
 
 export function waitForVideoMetadata(video, signal) {
@@ -559,7 +560,7 @@ export function waitForVideoMetadata(video, signal) {
         const onLoaded = () => { cleanup(); resolve(); };
         const onError = () => {
             cleanup();
-            reject(new Error("The browser cannot decode this video container or codec."));
+            reject(new Error(tr("The browser cannot decode this video container or codec.")));
         };
         const onAbort = () => { cleanup(); reject(abortError()); };
         video.addEventListener("loadedmetadata", onLoaded, { once: true });
@@ -581,7 +582,7 @@ export async function seekVideo(video, time, signal) {
                 signal?.removeEventListener("abort", onAbort);
             };
             const onLoaded = () => { cleanup(); resolve(); };
-            const onError = () => { cleanup(); reject(new Error("Failed to decode a video frame.")); };
+            const onError = () => { cleanup(); reject(new Error(tr("Failed to decode a video frame."))); };
             const onAbort = () => { cleanup(); reject(abortError()); };
             video.addEventListener("loadeddata", onLoaded, { once: true });
             video.addEventListener("error", onError, { once: true });
@@ -596,7 +597,7 @@ export async function seekVideo(video, time, signal) {
             signal?.removeEventListener("abort", onAbort);
         };
         const onSeeked = () => { cleanup(); resolve(); };
-        const onError = () => { cleanup(); reject(new Error("Failed to decode a video frame.")); };
+        const onError = () => { cleanup(); reject(new Error(tr("Failed to decode a video frame."))); };
         const onAbort = () => { cleanup(); reject(abortError()); };
         video.addEventListener("seeked", onSeeked, { once: true });
         video.addEventListener("error", onError, { once: true });
@@ -728,7 +729,7 @@ export function canvasToBlob(canvas, type = "image/jpeg", quality = 0.9) {
     return new Promise((resolve, reject) => {
         canvas.toBlob(blob => {
             if (blob) resolve(blob);
-            else reject(new Error("Failed to encode the captured video frame."));
+            else reject(new Error(tr("Failed to encode the captured video frame.")));
         }, type, quality);
     });
 }

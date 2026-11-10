@@ -1,3 +1,5 @@
+import { t } from "../i18n/index.mjs";
+
 export const POSE_STUDIO_MAKEHUMAN_ASSET_URL = new URL(
     "./assets/pose_studio_makehuman.v2.bin.gz",
     import.meta.url,
@@ -15,7 +17,7 @@ async function decompressIfNeeded(buffer) {
     const bytes = new Uint8Array(buffer);
     if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) return buffer;
     if (typeof DecompressionStream === "undefined") {
-        throw new Error("This browser does not support gzip DecompressionStream required by Pose Studio.");
+        throw new Error(t("This browser does not support gzip DecompressionStream required by Pose Studio."));
     }
     const stream = new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"));
     return new Response(stream).arrayBuffer();
@@ -31,16 +33,16 @@ function typedView(Type, buffer, dataOffset, descriptor) {
 export function parseMorphPack(buffer) {
     const bytes = new Uint8Array(buffer);
     if (bytes.length < 12 || readAscii(bytes, 0, 8) !== MAGIC) {
-        throw new Error("Invalid Pose Studio MakeHuman asset header.");
+        throw new Error(t("Invalid Pose Studio MakeHuman asset header."));
     }
     const view = new DataView(buffer);
     const headerLength = view.getUint32(8, true);
     if (headerLength <= 0 || 12 + headerLength > bytes.length) {
-        throw new Error("Invalid Pose Studio MakeHuman asset metadata length.");
+        throw new Error(t("Invalid Pose Studio MakeHuman asset metadata length."));
     }
     const headerText = new TextDecoder().decode(bytes.subarray(12, 12 + headerLength));
     const header = JSON.parse(headerText);
-    if (header.version !== 2) throw new Error(`Unsupported MakeHuman asset version: ${header.version}`);
+    if (header.version !== 2) throw new Error(t("Unsupported MakeHuman asset version: {version}", { version: header.version }));
     const dataOffset = 12 + headerLength + ((4 - ((12 + headerLength) % 4)) % 4);
 
     const targets = (header.targets || []).map((target) => ({
@@ -81,7 +83,7 @@ export function parseMorphPack(buffer) {
 
 export async function loadMorphPack(url = POSE_STUDIO_MAKEHUMAN_ASSET_URL) {
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`Failed to load Pose Studio MakeHuman asset: HTTP ${response.status}`);
+    if (!response.ok) throw new Error(t("Failed to load Pose Studio MakeHuman asset: HTTP {status}", { status: response.status }));
     return parseMorphPack(await decompressIfNeeded(await response.arrayBuffer()));
 }
 

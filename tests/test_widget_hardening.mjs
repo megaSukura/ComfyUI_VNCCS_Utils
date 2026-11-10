@@ -91,13 +91,13 @@ test("Pose Library image previews preserve their aspect ratio without cropping",
 });
 
 test("Pose Studio library launcher uses the concise product name", () => {
-    assert.match(poseStudioSource, /> Pose Library';/);
+    assert.match(poseStudioSource, /> ' \+ tr\("Pose Library"\)/);
     assert.doesNotMatch(poseStudioSource, /Pose Library Gallery/);
 });
 
 test("Pose Studio exposes male genitals only through an opt-in checkbox", () => {
     assert.match(poseStudioSource, /show_genitals: false/);
-    assert.match(poseStudioSource, /genitalsLabel\.innerText = "Show Genitals"/);
+    assert.match(poseStudioSource, /genitalsLabel\.innerText = tr\("Show Genitals"\)/);
     assert.match(poseStudioSource, /this\.genderFields\.show_genitals = \{ field: genitalsField, gender: "male" \}/);
     assert.match(
         poseStudioSource,
@@ -233,7 +233,7 @@ test("Pose Manager regenerates missing previews after worker model load and mode
 
 test("Pose Manager keeps the pose image input and gates automatic proportion analysis", () => {
     assert.match(poseStudioSource, /manager_auto_analyze_proportions: true/);
-    assert.match(poseStudioSource, /autoAnalyzeText\.textContent = "Auto-analyze proportions"/);
+    assert.match(poseStudioSource, /autoAnalyzeText\.textContent = tr\("Auto-analyze proportions"\)/);
     assert.match(
         poseStudioSource,
         /manager_auto_analyze_proportions = autoAnalyzeCheckbox\.checked;[\s\S]*syncToNode\(false, \{ skipCapture: true \}\)/,
@@ -565,7 +565,7 @@ test("character removal uses the Pose Studio modal instead of browser confirm", 
     assert.match(confirmMethod, /overlay\.className = "vnccs-ps-modal-overlay"/);
     assert.match(confirmMethod, /modal\.className = "vnccs-ps-modal vnccs-ps-character-remove-modal"/);
     assert.match(confirmMethod, /this\.deleteCharacter\(characterId\)/);
-    assert.match(confirmMethod, /titleText\.textContent = `Remove Character \$\{characterNumber\}\?`/);
+    assert.match(confirmMethod, /titleText\.textContent = tr\("Remove Character \{index\}\?", \{ index: characterNumber \}\)/);
     assert.match(confirmMethod, /actions\.append\(cancelBtn, removeBtn\)/);
     assert.match(confirmMethod, /requestAnimationFrame\(\(\) => cancelBtn\.focus\(\)\)/);
     assert.match(confirmMethod, /event\.key === "Escape"/);

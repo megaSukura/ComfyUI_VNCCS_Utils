@@ -2,22 +2,22 @@
  * VNCCS UniCanvas - in-node infinite canvas for SDXL img2img/inpaint.
  */
 
-import { UniCanvasPoseEditor } from "./unicanvas/pose.mjs?v=1791754604000";
-import { POSE_ICON, isImageLayer, serializePose, poseGenerationLayer, poseCharacterIssue, mergePoseCache } from "./unicanvas/pose_state.mjs?v=1791754604000";
+import { UniCanvasPoseEditor } from "./unicanvas/pose.mjs?v=1794326400000";
+import { POSE_ICON, isImageLayer, serializePose, poseGenerationLayer, poseCharacterIssue, mergePoseCache } from "./unicanvas/pose_state.mjs?v=1794326400000";
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { PanoramaOrbitControl, snapAxisAngles } from "./unicanvas/panorama_orbit.mjs?v=1791754604000";
-import { DEFAULT_PANORAMA_CAMERA, PANORAMA_MAX_VIEW, PanoramaDocument, normalizePanorama, isPanoramaCandidate, trimPanoramaHistory } from "./unicanvas/panorama.mjs?v=1791754604000";
+import { PanoramaOrbitControl, snapAxisAngles } from "./unicanvas/panorama_orbit.mjs?v=1794326400000";
+import { DEFAULT_PANORAMA_CAMERA, PANORAMA_MAX_VIEW, PanoramaDocument, normalizePanorama, isPanoramaCandidate, trimPanoramaHistory } from "./unicanvas/panorama.mjs?v=1794326400000";
 import { installCustomSelects } from "./shared/custom_select.mjs?v=20261104-scaled-menu";
-import { installUniCanvasInputTools } from "./unicanvas/input_tools.mjs?v=1791754604000";
-import { canvasRequest, installCanvasDocuments } from "./unicanvas/documents.mjs?v=1791754604000";
-import { installUniCanvasLayerTools, compositeBlendModeToPsd } from "./unicanvas/layer_tools.mjs?v=1791754604000";
-import { MODEL_MEMORY_ASSET_FIELDS, sharedModelMemory } from "./unicanvas/model_memory.mjs?v=1791754604000";
-import { installInferenceScaleEdit, inferenceScaleMegapixels, inferenceScaleFromMegapixels, INFERENCE_SCALE_MP_MIN, INFERENCE_SCALE_MP_MAX, INFERENCE_SCALE_MP_STEP } from "./unicanvas/scale_edit.mjs?v=1791754604000";
-import { buildRemoveBgSettings } from "./unicanvas/remove_bg.mjs?v=1791754604000";
-import { AUTO_NAME_MODEL_SETTING, AUTO_NAME_MODELS, AUTO_NAME_SETTING, maybeAutoNameLayer, resolveAutoNameModel } from "./unicanvas/naming.mjs?v=1791754604000";
-import { pickRenderLodScale } from "./unicanvas/render_lod.mjs?v=1791754604000";
-import { loadConfigReferences, resolveConfigDrawSettings } from "./unicanvas/config_bridge.mjs?v=1791754604000";
+import { installUniCanvasInputTools } from "./unicanvas/input_tools.mjs?v=1794326400000";
+import { canvasRequest, installCanvasDocuments } from "./unicanvas/documents.mjs?v=1794326400000";
+import { installUniCanvasLayerTools, compositeBlendModeToPsd } from "./unicanvas/layer_tools.mjs?v=1794326400000";
+import { MODEL_MEMORY_ASSET_FIELDS, sharedModelMemory } from "./unicanvas/model_memory.mjs?v=1794326400000";
+import { installInferenceScaleEdit, inferenceScaleMegapixels, inferenceScaleFromMegapixels, INFERENCE_SCALE_MP_MIN, INFERENCE_SCALE_MP_MAX, INFERENCE_SCALE_MP_STEP } from "./unicanvas/scale_edit.mjs?v=1794326400000";
+import { buildRemoveBgSettings } from "./unicanvas/remove_bg.mjs?v=1794326400000";
+import { AUTO_NAME_MODEL_SETTING, AUTO_NAME_MODELS, AUTO_NAME_SETTING, maybeAutoNameLayer, resolveAutoNameModel } from "./unicanvas/naming.mjs?v=1794326400000";
+import { pickRenderLodScale } from "./unicanvas/render_lod.mjs?v=1794326400000";
+import { loadConfigReferences, resolveConfigDrawSettings } from "./unicanvas/config_bridge.mjs?v=1794326400000";
 import {
   EMPTY_CROP,
   TRANSFORM_MODE_LABELS,
@@ -49,11 +49,11 @@ import {
   snapAngle,
   transformDraftBounds,
   translateQuad,
-} from "./unicanvas/transform.mjs?v=1791754604000";
+} from "./unicanvas/transform.mjs?v=1794326400000";
 import {
   forceUniCanvasPresetModelSettings,
   getUniCanvasPresetModelName,
-} from "./unicanvas/presets.mjs?v=1791754604000";
+} from "./unicanvas/presets.mjs?v=1794326400000";
 import {
   buildUniCanvasBboxCompositeCanvas,
   installUniCanvasWidgetModes,
@@ -62,10 +62,11 @@ import {
   syncUniCanvasStandaloneSidebarTab,
   teardownUniCanvasWidgetModes,
   UNICANVAS_STANDALONE_SETTING_ID,
-} from "./unicanvas/modes.mjs?v=1791754604000";
-import { UNICANVAS_QWEN21_MODULE } from "./unicanvas/qwen21.mjs?v=1791754604000";
-import { installUniCanvasHelpTooltips } from "./unicanvas/help.mjs?v=1791754604000";
-import { MODEL_DEPENDENCIES_CSS, checkModelDependencies, disposeModelDependencies } from "./unicanvas/model_dependencies.mjs?v=1791754604000";
+} from "./unicanvas/modes.mjs?v=1794326400000";
+import { UNICANVAS_QWEN21_MODULE } from "./unicanvas/qwen21.mjs?v=1794326400000";
+import { installUniCanvasHelpTooltips } from "./unicanvas/help.mjs?v=1794326400000";
+import { MODEL_DEPENDENCIES_CSS, checkModelDependencies, disposeModelDependencies } from "./unicanvas/model_dependencies.mjs?v=1794326400000";
+import { t as tr } from "./i18n/index.mjs";
 
 // ---------------------------------------------------------------------------
 // Staleness gate: keep the tab's extension code in sync with the files on disk
@@ -78,7 +79,7 @@ import { MODEL_DEPENDENCIES_CSS, checkModelDependencies, disposeModelDependencie
 // This probe fetches the served entry with cache: "no-store", compares
 // versions, and reloads the page once when they differ (a sessionStorage guard
 // prevents reload loops; matching versions clear it again).
-const VNCCS_UNICANVAS_VERSION = "1791754604000";
+const VNCCS_UNICANVAS_VERSION = "1794326400000";
 (() => {
   if (typeof window === "undefined" || typeof sessionStorage === "undefined") return;
   const guardKey = "vnccs-unicanvas-version-reload";
@@ -128,8 +129,8 @@ const VNCCS_UNICANVAS_VERSION = "1791754604000";
     event.preventDefault();
   }, true);
 })();
-import { PROMPT_GUIDE_CSS, indexModelDescriptors, promptGuideText, referenceConventionHint, referenceSlotName, renderPromptGuide, resolvePromptGuide } from "./unicanvas/prompt_guide.mjs?v=1791754604000";
-import { PROMPT_ENHANCE_CSS, bindEnhanceSettingsReader, buildPromptEnhanceSettings, installPromptEnhance, promptEnhancePayload, promptEnhanceSettingDefs, stripEnhanceSettings, syncPromptEnhance } from "./unicanvas/prompt_enhance.mjs?v=1791754604000";
+import { PROMPT_GUIDE_CSS, indexModelDescriptors, promptGuideText, referenceConventionHint, referenceSlotName, renderPromptGuide, resolvePromptGuide } from "./unicanvas/prompt_guide.mjs?v=1794326400000";
+import { PROMPT_ENHANCE_CSS, bindEnhanceSettingsReader, buildPromptEnhanceSettings, installPromptEnhance, promptEnhancePayload, promptEnhanceSettingDefs, stripEnhanceSettings, syncPromptEnhance } from "./unicanvas/prompt_enhance.mjs?v=1794326400000";
 
 const VNCCS_DONATE_BANNER_URL = new URL("./shared/assets/VNCCS_Donate_Button.png", import.meta.url).href;
 
@@ -1131,9 +1132,9 @@ class UniCanvasWidget {
     this.generationProgress = document.createElement("div");
     this.generationProgress.className = "vnccs-uc-generation-progress";
     this.generationProgress.innerHTML = `
-      <div class="vnccs-uc-progress-label">Ready</div>
+      <div class="vnccs-uc-progress-label">${tr("Ready")}</div>
       <div class="vnccs-uc-progress-percent">0%</div>
-      <div class="vnccs-uc-progress-track" role="progressbar" aria-label="Generation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="vnccs-uc-progress-fill"></div></div>`;
+      <div class="vnccs-uc-progress-track" role="progressbar" aria-label="${tr("Generation progress")}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="vnccs-uc-progress-fill"></div></div>`;
     this.container.appendChild(this.generationProgress);
     this.stageWrap = document.createElement("div");
     this.stageWrap.className = "vnccs-uc-stage-wrap";
@@ -1148,14 +1149,14 @@ class UniCanvasWidget {
     this.stageWrap.appendChild(this.hud);
     this.stagingControls = document.createElement("div");
     this.stagingControls.className = "vnccs-uc-staging-popover";
-    this.stagingPrevBtn = this._button(STAGING_ICONS.prev, "vnccs-uc-icon", () => this.selectRelativeStaging(-1), "Previous result");
+    this.stagingPrevBtn = this._button(STAGING_ICONS.prev, "vnccs-uc-icon", () => this.selectRelativeStaging(-1), tr("Previous result"));
     this.stagingCount = document.createElement("span");
     this.stagingCount.className = "vnccs-uc-staging-count";
-    this.stagingNextBtn = this._button(STAGING_ICONS.next, "vnccs-uc-icon", () => this.selectRelativeStaging(1), "Next result");
-    this.stagingToggleBtn = this._button(STAGING_ICONS.show, "vnccs-uc-icon", () => this.toggleStagingVisibility(), "Hide result preview");
-    this.stagingAcceptBtn = this._button(STAGING_ICONS.accept, "vnccs-uc-icon", () => this.acceptStaging(), "Accept as layer");
+    this.stagingNextBtn = this._button(STAGING_ICONS.next, "vnccs-uc-icon", () => this.selectRelativeStaging(1), tr("Next result"));
+    this.stagingToggleBtn = this._button(STAGING_ICONS.show, "vnccs-uc-icon", () => this.toggleStagingVisibility(), tr("Hide result preview"));
+    this.stagingAcceptBtn = this._button(STAGING_ICONS.accept, "vnccs-uc-icon", () => this.acceptStaging(), tr("Accept as layer"));
     this.stagingControls.append(
-      this._button(STAGING_ICONS.discard, "vnccs-uc-icon danger", () => this.discardStaging(), "Discard"),
+      this._button(STAGING_ICONS.discard, "vnccs-uc-icon danger", () => this.discardStaging(), tr("Discard")),
       this.stagingPrevBtn,
       this.stagingCount,
       this.stagingNextBtn,
@@ -1167,11 +1168,11 @@ class UniCanvasWidget {
     this.transformControls.className = "vnccs-uc-staging-popover";
     this.transformLabel = document.createElement("span");
     this.transformLabel.className = "vnccs-uc-staging-count vnccs-uc-transform-label";
-    this.transformLabel.textContent = "Transform";
+    this.transformLabel.textContent = tr("Transform");
     this.transformControls.append(
-      this._button(STAGING_ICONS.discard, "vnccs-uc-icon danger", () => this.cancelTransformDraft(), "Cancel transform"),
+      this._button(STAGING_ICONS.discard, "vnccs-uc-icon danger", () => this.cancelTransformDraft(), tr("Cancel transform")),
       this.transformLabel,
-      this._button(STAGING_ICONS.accept, "vnccs-uc-icon", () => this.applyTransformDraft(), "Apply transform")
+      this._button(STAGING_ICONS.accept, "vnccs-uc-icon", () => this.applyTransformDraft(), tr("Apply transform"))
     );
     this.stageWrap.appendChild(this.transformControls);
     this.samPanel = document.createElement("div");
@@ -1187,16 +1188,16 @@ class UniCanvasWidget {
       this.sam.model = this.samModelSelect.value;
       this.clearSamMask();
     });
-    this.samAddBtn = this._button("+ Add", "vnccs-uc-btn vnccs-uc-sam-mode", () => this.setSamPointMode("add"), "Green point: keep this area");
-    this.samSubtractBtn = this._button("− Subtract", "vnccs-uc-btn vnccs-uc-sam-mode", () => this.setSamPointMode("subtract"), "Red point: remove this area");
-    this.samUndoBtn = this._button(UI_ICONS.undo, "vnccs-uc-icon", () => this.undo(), "Undo segmentation or point (Ctrl+Z)");
-    this.samRedoBtn = this._button(UI_ICONS.redo, "vnccs-uc-icon", () => this.redo(), "Redo segmentation or point (Ctrl+Y)");
-    this.samInvertBtn = this._button("Invert", "vnccs-uc-btn", () => this.toggleSamInvert(), "Invert mask");
+    this.samAddBtn = this._button(tr("+ Add"), "vnccs-uc-btn vnccs-uc-sam-mode", () => this.setSamPointMode("add"), tr("Green point: keep this area"));
+    this.samSubtractBtn = this._button(tr("− Subtract"), "vnccs-uc-btn vnccs-uc-sam-mode", () => this.setSamPointMode("subtract"), tr("Red point: remove this area"));
+    this.samUndoBtn = this._button(UI_ICONS.undo, "vnccs-uc-icon", () => this.undo(), tr("Undo segmentation or point (Ctrl+Z)"));
+    this.samRedoBtn = this._button(UI_ICONS.redo, "vnccs-uc-icon", () => this.redo(), tr("Redo segmentation or point (Ctrl+Y)"));
+    this.samInvertBtn = this._button(tr("Invert"), "vnccs-uc-btn", () => this.toggleSamInvert(), tr("Invert mask"));
     this.samPointsLabel = document.createElement("span");
     this.samPointsLabel.className = "vnccs-uc-sam-points";
-    this.samSegmentBtn = this._button("Segment", "vnccs-uc-btn primary", () => this.segmentSamMask(), "Build SAM mask");
-    this.samApplyBtn = this._button(STAGING_ICONS.accept, "vnccs-uc-icon", () => this.applySamMask(), "Apply mask to selected layer");
-    this.samClearBtn = this._button(STAGING_ICONS.discard, "vnccs-uc-icon danger", () => this.clearSamPrompt(), "Clear SAM points and mask");
+    this.samSegmentBtn = this._button(tr("Segment"), "vnccs-uc-btn primary", () => this.segmentSamMask(), tr("Build SAM mask"));
+    this.samApplyBtn = this._button(STAGING_ICONS.accept, "vnccs-uc-icon", () => this.applySamMask(), tr("Apply mask to selected layer"));
+    this.samClearBtn = this._button(STAGING_ICONS.discard, "vnccs-uc-icon danger", () => this.clearSamPrompt(), tr("Clear SAM points and mask"));
     this.samStatus = document.createElement("span");
     this.samStatus.className = "vnccs-uc-sam-status";
     this.samStatus.setAttribute("role", "status");
@@ -1215,7 +1216,7 @@ class UniCanvasWidget {
     this.denoiseControl = document.createElement("div");
     this.denoiseControl.className = "vnccs-uc-side-control";
     this.denoiseControl.innerHTML = `
-      <label class="vnccs-uc-denoise-control"><span data-denoise-label>Denoise</span>
+      <label class="vnccs-uc-denoise-control"><span data-denoise-label>${tr("Denoise")}</span>
         <input class="vnccs-uc-range" data-setting="denoise" type="range" min="0" max="1" step="0.01" value="${this.settings.denoise}">
         <input class="vnccs-uc-input" data-setting="denoise" type="number" lang="en-US" inputmode="decimal" min="0" max="1" step="0.01" value="${this.settings.denoise}">
       </label>`;
@@ -1230,28 +1231,28 @@ class UniCanvasWidget {
     this.layerSubhead.className = "vnccs-uc-layer-subhead";
     this.layerSubhead.innerHTML = `
       <select class="vnccs-uc-select" data-layer-control="blendMode">
-        <option value="source-over">Normal</option>
-        <option value="multiply">Multiply</option>
-        <option value="screen">Screen</option>
-        <option value="overlay">Overlay</option>
-        <option value="darken">Darken</option>
-        <option value="lighten">Lighten</option>
-        <option value="color-dodge">Color Dodge</option>
-        <option value="color-burn">Color Burn</option>
-        <option value="hard-light">Hard Light</option>
-        <option value="soft-light">Soft Light</option>
-        <option value="difference">Difference</option>
-        <option value="exclusion">Exclusion</option>
-        <option value="hue">Hue</option>
-        <option value="saturation">Saturation</option>
-        <option value="color">Color</option>
-        <option value="luminosity">Luminosity</option>
+        <option value="source-over">${tr("Normal")}</option>
+        <option value="multiply">${tr("Multiply")}</option>
+        <option value="screen">${tr("Screen")}</option>
+        <option value="overlay">${tr("Overlay")}</option>
+        <option value="darken">${tr("Darken")}</option>
+        <option value="lighten">${tr("Lighten")}</option>
+        <option value="color-dodge">${tr("Color Dodge")}</option>
+        <option value="color-burn">${tr("Color Burn")}</option>
+        <option value="hard-light">${tr("Hard Light")}</option>
+        <option value="soft-light">${tr("Soft Light")}</option>
+        <option value="difference">${tr("Difference")}</option>
+        <option value="exclusion">${tr("Exclusion")}</option>
+        <option value="hue">${tr("Hue")}</option>
+        <option value="saturation">${tr("Saturation")}</option>
+        <option value="color">${tr("Color")}</option>
+        <option value="luminosity">${tr("Luminosity")}</option>
       </select>
-      <label class="vnccs-uc-layer-opacity">Opacity <input class="vnccs-uc-range" type="range" min="0" max="1" step="0.01" data-layer-control="opacity"><span class="vnccs-uc-layer-opacity-value"></span></label>`;
+      <label class="vnccs-uc-layer-opacity">${tr("Opacity")} <input class="vnccs-uc-range" type="range" min="0" max="1" step="0.01" data-layer-control="opacity"><span class="vnccs-uc-layer-opacity-value"></span></label>`;
     this.layersTopActions = document.createElement("div");
     this.layersTopActions.className = "vnccs-uc-layers-top-actions";
     this.layersTopActions.append(
-      this._button("Import Image", "vnccs-uc-btn", () => this.fileInput.click(), "Import image")
+      this._button(tr("Import Image"), "vnccs-uc-btn", () => this.fileInput.click(), tr("Import image"))
     );
     this.flattenLayersFooter = document.createElement("div");
     this.flattenLayersFooter.className = "vnccs-uc-layers-footer";
@@ -1264,8 +1265,8 @@ class UniCanvasWidget {
     this.psdImportInput.className = "vnccs-uc-file";
     this.psdImportInput.type = "file";
     this.psdImportInput.accept = ".psd,application/octet-stream";
-    this.psdExportBtn = this._button(`${PSD_ROW_EXPORT_ICON}<span>Export</span>`, "vnccs-uc-btn", () => this.exportPSD(), "Export visible raster layers to PSD");
-    this.psdImportBtn = this._button(`${PSD_ROW_IMPORT_ICON}<span>Import</span>`, "vnccs-uc-btn", () => this.psdImportInput.click(), "Import layers from a PSD file");
+    this.psdExportBtn = this._button(`${PSD_ROW_EXPORT_ICON}<span>${tr("Export")}</span>`, "vnccs-uc-btn", () => this.exportPSD(), tr("Export visible raster layers to PSD"));
+    this.psdImportBtn = this._button(`${PSD_ROW_IMPORT_ICON}<span>${tr("Import")}</span>`, "vnccs-uc-btn", () => this.psdImportInput.click(), tr("Import layers from a PSD file"));
     const psdRow = document.createElement("div");
     psdRow.className = "vnccs-uc-psd-row";
     const psdRowLabel = document.createElement("span");
@@ -1273,7 +1274,7 @@ class UniCanvasWidget {
     psdRowLabel.textContent = "PSD";
     psdRow.append(psdRowLabel, this.psdExportBtn, this.psdImportBtn);
     this.flattenLayersFooter.append(
-      this._button("Flatten layers", "vnccs-uc-btn danger", () => this.confirmFlattenLayers(), "Flatten all layers"),
+      this._button(tr("Flatten layers"), "vnccs-uc-btn danger", () => this.confirmFlattenLayers(), tr("Flatten all layers")),
       psdRow,
       this.psdImportInput
     );
@@ -1289,12 +1290,12 @@ class UniCanvasWidget {
     const layersBody = document.createElement("div");
     layersBody.className = "vnccs-uc-layers-section";
     layersBody.append(this.layerSubhead, this.layersTopActions, this.layerList, this.flattenLayersFooter);
-    const layersSection = this._section("Layers", layersBody, [
-      [UI_ICONS.plus, "Add raster", () => this.addLayer("raster")],
-      [POSE_ICON, "Add pose layer", () => this.addPoseLayer()],
-      [UI_ICONS.duplicate, "Duplicate selected", () => this.duplicateActiveLayer()],
-      [UI_ICONS.up, "Move selected up", () => this.moveActiveLayer(-1)],
-      [UI_ICONS.down, "Move selected down", () => this.moveActiveLayer(1)],
+    const layersSection = this._section(tr("Layers"), layersBody, [
+      [UI_ICONS.plus, tr("Add raster"), () => this.addLayer("raster")],
+      [POSE_ICON, tr("Add pose layer"), () => this.addPoseLayer()],
+      [UI_ICONS.duplicate, tr("Duplicate selected"), () => this.duplicateActiveLayer()],
+      [UI_ICONS.up, tr("Move selected up"), () => this.moveActiveLayer(-1)],
+      [UI_ICONS.down, tr("Move selected down"), () => this.moveActiveLayer(1)],
     ]);
     layersSection.classList.add("vnccs-uc-layers-section");
 
@@ -1304,73 +1305,73 @@ class UniCanvasWidget {
       .map((module) => `<option value="${this._escape(module.key)}">${this._escape(module.label)}</option>`)
       .join("");
     const modelLoaderOptions = Object.values(UNICANVAS_MODEL_LOADERS)
-      .map((loader) => `<option value="${this._escape(loader.key)}">${this._escape(loader.label)}</option>`)
+      .map((loader) => `<option value="${this._escape(loader.key)}">${this._escape(tr(loader.label))}</option>`)
       .join("");
     const loaderFields = Object.values(UNICANVAS_MODEL_LOADERS).flatMap((loader) =>
       (loader.fields || []).map((field) => `
         <label class="vnccs-uc-field" data-loader-field="${this._escape(loader.key)}" data-config-override>
-          ${this._escape(field.label)}<select class="vnccs-uc-select" data-setting="${this._escape(field.setting)}"></select>
+          ${this._escape(tr(field.label, null, "model loader"))}<select class="vnccs-uc-select" data-setting="${this._escape(field.setting)}"></select>
         </label>`)
     ).join("");
     this.promptBox.innerHTML = `
       <div class="vnccs-uc-field">
-        <div class="vnccs-uc-prompt-head"><span>Prompt</span><button class="vnccs-uc-prompt-help" type="button" data-action="prompt-help" data-prompt-help aria-expanded="false" aria-label="How to prompt this model" title="How to prompt this model">?</button></div>
+        <div class="vnccs-uc-prompt-head"><span>${tr("Prompt")}</span><button class="vnccs-uc-prompt-help" type="button" data-action="prompt-help" data-prompt-help aria-expanded="false" aria-label="${tr("How to prompt this model")}" title="${tr("How to prompt this model")}">?</button></div>
         <div class="vnccs-uc-enhance-wrap">
-          <textarea class="vnccs-uc-textarea" data-setting="positive" aria-label="Prompt" placeholder="positive prompt"></textarea>
-          <button class="vnccs-uc-enhance-btn" type="button" data-enhance="positive" aria-label="Enhance prompt" hidden></button>
+          <textarea class="vnccs-uc-textarea" data-setting="positive" aria-label="${tr("Prompt")}" placeholder="${tr("positive prompt")}"></textarea>
+          <button class="vnccs-uc-enhance-btn" type="button" data-enhance="positive" aria-label="${tr("Enhance prompt")}" hidden></button>
         </div>
       </div>
-      <div class="vnccs-uc-field">Negative
+      <div class="vnccs-uc-field">${tr("Negative")}
         <div class="vnccs-uc-enhance-wrap">
-          <textarea class="vnccs-uc-textarea" data-setting="negative" aria-label="Negative prompt" placeholder="negative prompt"></textarea>
-          <button class="vnccs-uc-enhance-btn" type="button" data-enhance="negative" aria-label="Enhance negative prompt" hidden></button>
+          <textarea class="vnccs-uc-textarea" data-setting="negative" aria-label="${tr("Negative prompt")}" placeholder="${tr("negative prompt")}"></textarea>
+          <button class="vnccs-uc-enhance-btn" type="button" data-enhance="negative" aria-label="${tr("Enhance negative prompt")}" hidden></button>
         </div>
       </div>
       <div class="vnccs-uc-config-banner" data-config-banner hidden></div>
       <div class="vnccs-uc-model-tabs" data-config-override>
-        <button class="vnccs-uc-model-tab" type="button" data-model-selection-mode="presets">Presets</button>
-        <button class="vnccs-uc-model-tab" type="button" data-model-selection-mode="custom">Custom</button>
+        <button class="vnccs-uc-model-tab" type="button" data-model-selection-mode="presets">${tr("Presets")}</button>
+        <button class="vnccs-uc-model-tab" type="button" data-model-selection-mode="custom">${tr("Custom")}</button>
       </div>
       <div class="vnccs-uc-model-panel" data-model-panel="presets">
         <div data-preset-card-list data-config-override></div>
-        <label class="vnccs-uc-infer-scale"><span>Inference scale</span><input class="vnccs-uc-range" data-setting="inference_scale" type="range" min="0.5" max="3" step="0.05" value="${this.formatSettingNumber(Math.min(3, Math.max(0.5, Number(this.settings.inference_scale) || 1)), 3)}"><span class="vnccs-uc-infer-size" data-inference-size></span></label>
+        <label class="vnccs-uc-infer-scale"><span>${tr("Inference scale")}</span><input class="vnccs-uc-range" data-setting="inference_scale" type="range" min="0.5" max="3" step="0.05" value="${this.formatSettingNumber(Math.min(3, Math.max(0.5, Number(this.settings.inference_scale) || 1)), 3)}"><span class="vnccs-uc-infer-size" data-inference-size></span></label>
       </div>
       <div class="vnccs-uc-model-panel" data-model-panel="custom">
         <div class="vnccs-uc-mode-loader-row">
-          <label class="vnccs-uc-field" data-mode-control>Mode<select class="vnccs-uc-select" data-setting="generation_mode">${modelModeOptions}</select></label>
-          <label class="vnccs-uc-field" data-config-override>Loader<select class="vnccs-uc-select" data-setting="model_loader">${modelLoaderOptions}</select></label>
+          <label class="vnccs-uc-field" data-mode-control>${tr("Mode")}<select class="vnccs-uc-select" data-setting="generation_mode">${modelModeOptions}</select></label>
+          <label class="vnccs-uc-field" data-config-override>${tr("Loader")}<select class="vnccs-uc-select" data-setting="model_loader">${modelLoaderOptions}</select></label>
         </div>
-        <label class="vnccs-uc-infer-scale"><span>Inference scale</span><input class="vnccs-uc-range" data-setting="inference_scale" type="range" min="0.5" max="3" step="0.05" value="${this.formatSettingNumber(Math.min(3, Math.max(0.5, Number(this.settings.inference_scale) || 1)), 3)}"><span class="vnccs-uc-infer-size" data-inference-size></span></label>
+        <label class="vnccs-uc-infer-scale"><span>${tr("Inference scale")}</span><input class="vnccs-uc-range" data-setting="inference_scale" type="range" min="0.5" max="3" step="0.05" value="${this.formatSettingNumber(Math.min(3, Math.max(0.5, Number(this.settings.inference_scale) || 1)), 3)}"><span class="vnccs-uc-infer-size" data-inference-size></span></label>
         ${loaderFields}
-        <label class="vnccs-uc-field" data-family-field="krea2_edit" data-config-override title="Krea2 Identity Edit adapter: required for editing with this model">
-          Edit LoRA<select class="vnccs-uc-select" data-setting="krea2_edit_lora_name"></select>
+        <label class="vnccs-uc-field" data-family-field="krea2_edit" data-config-override title="${tr("Krea2 Identity Edit adapter: required for editing with this model")}">
+          ${tr("Edit LoRA")}<select class="vnccs-uc-select" data-setting="krea2_edit_lora_name"></select>
         </label>
       </div>
       <div class="vnccs-uc-turbo-section" data-turbo-panel data-config-override></div>
       <div class="vnccs-uc-h3-panel" data-h3-panel style="display:none">
-        <div class="vnccs-uc-edit-steps-row"><label class="vnccs-uc-field"><span class="vnccs-uc-field-head"><span>Steps</span><span class="vnccs-uc-help" data-tip="REF2VA region edit — working area is &lt;Picture 1&gt;, Edit model references are &lt;Picture 2..5&gt;.">?</span></span><input class="vnccs-uc-input" data-setting="minimax_h3_steps" type="number" lang="en-US" inputmode="decimal" min="1" max="60" step="1"></label><button class="vnccs-uc-icon vnccs-uc-refs-btn" type="button" data-action="edit-refs" data-config-override title="Edit model reference images (up to 4)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="14" height="12" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/></svg><span class="vnccs-uc-refs-badge" data-edit-refs-badge hidden>0</span></button></div>
+        <div class="vnccs-uc-edit-steps-row"><label class="vnccs-uc-field"><span class="vnccs-uc-field-head"><span>${tr("Steps")}</span><span class="vnccs-uc-help" data-tip="${tr("REF2VA region edit — working area is &lt;Picture 1&gt;, Edit model references are &lt;Picture 2..5&gt;.")}">?</span></span><input class="vnccs-uc-input" data-setting="minimax_h3_steps" type="number" lang="en-US" inputmode="decimal" min="1" max="60" step="1"></label><button class="vnccs-uc-icon vnccs-uc-refs-btn" type="button" data-action="edit-refs" data-config-override title="${tr("Edit model reference images (up to 4)")}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="14" height="12" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/></svg><span class="vnccs-uc-refs-badge" data-edit-refs-badge hidden>0</span></button></div>
       </div>
       <div class="vnccs-uc-h3-panel" data-edit-steps-panel style="display:none">
-        <div class="vnccs-uc-edit-steps-row"><label class="vnccs-uc-field"><span class="vnccs-uc-field-head"><span>Steps</span><span class="vnccs-uc-help" data-edit-steps-help data-tip hidden>?</span></span><input class="vnccs-uc-input" data-setting="steps" type="number" lang="en-US" inputmode="decimal" min="1" max="60" step="1"></label><button class="vnccs-uc-icon vnccs-uc-refs-btn" type="button" data-action="edit-refs" data-config-override title="Edit model reference images (Krea2 Edit: 1, others: up to 4)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="14" height="12" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/></svg><span class="vnccs-uc-refs-badge" data-edit-refs-badge hidden>0</span></button></div>
+        <div class="vnccs-uc-edit-steps-row"><label class="vnccs-uc-field"><span class="vnccs-uc-field-head"><span>${tr("Steps")}</span><span class="vnccs-uc-help" data-edit-steps-help data-tip hidden>?</span></span><input class="vnccs-uc-input" data-setting="steps" type="number" lang="en-US" inputmode="decimal" min="1" max="60" step="1"></label><button class="vnccs-uc-icon vnccs-uc-refs-btn" type="button" data-action="edit-refs" data-config-override title="${tr("Edit model reference images (Krea2 Edit: 1, others: up to 4)")}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="14" height="12" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/></svg><span class="vnccs-uc-refs-badge" data-edit-refs-badge hidden>0</span></button></div>
       </div>
       <div class="vnccs-uc-refs-row" data-standalone-refs-row data-config-override hidden>
-        <button class="vnccs-uc-btn vnccs-uc-refs-wide" type="button" data-action="edit-refs" data-standalone-refs>Reference Images</button>
-        <label class="vnccs-uc-ref-layers" title="Use all visible image layers inside the selection box as the first reference image"><input type="checkbox" data-setting="edit_use_layers_as_reference" data-use-layers-reference checked>Use Layers</label>
+        <button class="vnccs-uc-btn vnccs-uc-refs-wide" type="button" data-action="edit-refs" data-standalone-refs>${tr("Reference Images")}</button>
+        <label class="vnccs-uc-ref-layers" title="${tr("Use all visible image layers inside the selection box as the first reference image")}"><input type="checkbox" data-setting="edit_use_layers_as_reference" data-use-layers-reference checked>${tr("Use Layers")}</label>
       </div>
       <div class="vnccs-uc-generation-grid">
-        <label class="vnccs-uc-field" data-generic-steps>Steps<input class="vnccs-uc-input" data-setting="steps" type="number"></label>
-        <label class="vnccs-uc-field">Sampler<select class="vnccs-uc-select" data-setting="sampler_name"></select></label>
+        <label class="vnccs-uc-field" data-generic-steps>${tr("Steps")}<input class="vnccs-uc-input" data-setting="steps" type="number"></label>
+        <label class="vnccs-uc-field">${tr("Sampler")}<select class="vnccs-uc-select" data-setting="sampler_name"></select></label>
         <label class="vnccs-uc-field">CFG<input class="vnccs-uc-input" data-setting="cfg" type="number" lang="en-US" inputmode="decimal" step="0.1"></label>
-        <label class="vnccs-uc-field">Scheduler<select class="vnccs-uc-select" data-setting="scheduler"></select></label>
-        <label class="vnccs-uc-field wide">Seed
+        <label class="vnccs-uc-field">${tr("Scheduler")}<select class="vnccs-uc-select" data-setting="scheduler"></select></label>
+        <label class="vnccs-uc-field wide">${tr("Seed")}
           <span class="vnccs-uc-seed-row">
             <input class="vnccs-uc-input" data-setting="seed" type="number" min="0">
-            <button class="vnccs-uc-icon vnccs-uc-seed-dice" type="button" data-action="seed-mode" title="Random seed">${UI_ICONS.dice}</button>
+            <button class="vnccs-uc-icon vnccs-uc-seed-dice" type="button" data-action="seed-mode" title="${tr("Random seed")}">${UI_ICONS.dice}</button>
           </span>
         </label>
       </div>
       <div class="vnccs-uc-lora-stack" data-lora-stack data-config-override></div>`;
-    this.drawBtn = this._button("GENERATE", "vnccs-uc-btn primary", () => this.draw(), "Generate");
+    this.drawBtn = this._button(tr("GENERATE"), "vnccs-uc-btn primary", () => this.draw(), tr("Generate"));
     this.batchInput = document.createElement("input");
     this.batchInput.className = "vnccs-uc-input vnccs-uc-batch-input";
     this.batchInput.type = "number";
@@ -1379,23 +1380,23 @@ class UniCanvasWidget {
     this.batchInput.step = "1";
     this.batchInput.inputMode = "numeric";
     this.batchInput.dataset.setting = "batch_size";
-    this.batchInput.title = "Images";
+    this.batchInput.title = tr("Images");
     this.drawControl = document.createElement("div");
     this.drawControl.className = "vnccs-uc-draw-control";
-    this.stopBtn = this._button("", "vnccs-uc-btn stop", () => void this.stopDraw(), "Stop: interrupt the generation and free the VRAM it used");
-    this.stopBtn.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" rx="2"/></svg><span>STOP</span>';
+    this.stopBtn = this._button("", "vnccs-uc-btn stop", () => void this.stopDraw(), tr("Stop: interrupt the generation and free the VRAM it used"));
+    this.stopBtn.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" rx="2"/></svg><span>${tr("STOP")}</span>';
     this.stopBtn.hidden = true;
     this.drawControl.append(this.drawBtn, this.stopBtn, this.batchInput);
     installPromptEnhance(this);
-    const promptSection = this._section("Parameters", this.promptBox);
+    const promptSection = this._section(tr("Parameters"), this.promptBox);
     promptSection.classList.add("vnccs-uc-parameters-section");
     this.donateLink = document.createElement("a");
     this.donateLink.className = "vnccs-uc-donate-link";
     this.donateLink.href = "https://www.buymeacoffee.com/MIUProject";
     this.donateLink.target = "_blank";
     this.donateLink.rel = "noopener noreferrer";
-    this.donateLink.title = "Support MIUProject";
-    this.donateLink.innerHTML = `<img src="${VNCCS_DONATE_BANNER_URL}" alt="Support MIUProject">`;
+    this.donateLink.title = tr("Support MIUProject");
+    this.donateLink.innerHTML = `<img src="${VNCCS_DONATE_BANNER_URL}" alt="${tr("Support MIUProject")}">`;
     this.donateLink.addEventListener("pointerdown", (e) => e.stopPropagation());
     this.donateLink.addEventListener("click", (e) => e.stopPropagation());
 
@@ -1417,7 +1418,7 @@ class UniCanvasWidget {
       ["resize", "Resize layer"],
       ["bbox", "Generation bbox"],
       ["pan", "Pan view"],
-    ].forEach(([tool, title]) => this.tools.appendChild(this._toolButton(tool, title)));
+    ].forEach(([tool, title]) => this.tools.appendChild(this._toolButton(tool, tr(title))));
     this.stageWrap.appendChild(this.tools);
     this.toolSettings = document.createElement("div");
     this.toolSettings.className = "vnccs-uc-tool-settings";
@@ -1439,13 +1440,13 @@ class UniCanvasWidget {
 
     this.settingsBar = document.createElement("div");
     this.settingsBar.className = "vnccs-uc-settings";
-    this.undoBtn = this._button(UI_ICONS.undo, "vnccs-uc-icon", () => this.undo(), "Undo");
-    this.redoBtn = this._button(UI_ICONS.redo, "vnccs-uc-icon", () => this.redo(), "Redo");
-    this.fitBtn = this._button("Fit", "vnccs-uc-btn", () => this.fitView(), "Fit");
-    this.snapBtn = this._button(UI_ICONS.snap, "vnccs-uc-icon", () => this.toggleSnapToGrid(), "Snap to grid: off = the generation box moves freely, on = 64 px steps (Ctrl: 8 px)");
-    this.zoomResetBtn = this._button("100%", "vnccs-uc-btn vnccs-uc-zoom-reset", () => this.resetZoom(), "Reset zoom to 100%");
+    this.undoBtn = this._button(UI_ICONS.undo, "vnccs-uc-icon", () => this.undo(), tr("Undo"));
+    this.redoBtn = this._button(UI_ICONS.redo, "vnccs-uc-icon", () => this.redo(), tr("Redo"));
+    this.fitBtn = this._button(tr("Fit"), "vnccs-uc-btn", () => this.fitView(), tr("Fit"));
+    this.snapBtn = this._button(UI_ICONS.snap, "vnccs-uc-icon", () => this.toggleSnapToGrid(), tr("Snap to grid: off = the generation box moves freely, on = 64 px steps (Ctrl: 8 px)"));
+    this.zoomResetBtn = this._button("100%", "vnccs-uc-btn vnccs-uc-zoom-reset", () => this.resetZoom(), tr("Reset zoom to 100%"));
     this.zoomResetBtn.hidden = true;
-    this.gearBtn = this._button(UI_ICONS.gear, "vnccs-uc-icon vnccs-uc-gear", () => this.openUniCanvasSettings(), "UniCanvas settings");
+    this.gearBtn = this._button(UI_ICONS.gear, "vnccs-uc-icon vnccs-uc-gear", () => this.openUniCanvasSettings(), tr("UniCanvas settings"));
     const settingsSpacer = document.createElement("div");
     settingsSpacer.className = "vnccs-uc-settings-spacer";
     this.settingsBar.append(this.undoBtn, this.redoBtn, this.fitBtn, this.zoomResetBtn, settingsSpacer, this.snapBtn, this.gearBtn);
@@ -1468,7 +1469,7 @@ class UniCanvasWidget {
     this.panoramaOrbit = new PanoramaOrbitControl(canvas);
     this.panoramaPanel = document.createElement("div");
     this.panoramaPanel.className = "vnccs-uc-side-control vnccs-uc-panorama-controls";
-    this.panoramaResetBtn = this._button("Reset", "vnccs-uc-btn vnccs-uc-panorama-reset", () => this.resetPanoramaView(), "Reset the view: yaw 0, pitch 0, roll 0, field of view 90 (undoable)");
+    this.panoramaResetBtn = this._button(tr("Reset"), "vnccs-uc-btn vnccs-uc-panorama-reset", () => this.resetPanoramaView(), tr("Reset the view: yaw 0, pitch 0, roll 0, field of view 90 (undoable)"));
     this.panoramaPanel.append(canvas, this.panoramaResetBtn);
     this.side.prepend(this.panoramaPanel);
     this.updatePanoramaControls();
@@ -1480,7 +1481,7 @@ class UniCanvasWidget {
     if (!panorama || !panorama.beginCamera()) return;
     panorama.setCamera({ ...DEFAULT_PANORAMA_CAMERA });
     panorama.endCamera();
-    this.setStatus("Panorama view reset");
+    this.setStatus(tr("Panorama view reset"));
   }
 
   panoramaLayerActive(settings = this.panorama?.settings) {
@@ -1502,15 +1503,15 @@ class UniCanvasWidget {
       const overlay = document.createElement("div"); overlay.className = "vnccs-uc-modal-overlay";
       const modal = document.createElement("div"); modal.className = "vnccs-uc-modal";
       modal.setAttribute("role", "dialog"); modal.setAttribute("aria-modal", "true");
-      modal.setAttribute("aria-label", "Import as panorama?");
-      const title = document.createElement("div"); title.className = "vnccs-uc-modal-title"; title.textContent = "Import as panorama?";
+      modal.setAttribute("aria-label", tr("Import as panorama?"));
+      const title = document.createElement("div"); title.className = "vnccs-uc-modal-title"; title.textContent = tr("Import as panorama?");
       const message = document.createElement("div"); message.className = "vnccs-uc-modal-message";
-      message.textContent = `${img.width} × ${img.height}. Is this a full 360 × 180° equirectangular panorama? The complete image will wrap onto a sphere. A typical panorama has a 2:1 aspect ratio; an ordinary wide photo does not contain a full spherical view.`;
+      message.textContent = tr("{width} × {height}. Is this a full 360 × 180° equirectangular panorama? The complete image will wrap onto a sphere. A typical panorama has a 2:1 aspect ratio; an ordinary wide photo does not contain a full spherical view.", { width: img.width, height: img.height });
       if (this.layers.some((layer) => this.getLayerWorldBounds(layer))) {
         // Every layer lives inside the panorama's square editing window, so existing content is resampled.
         message.textContent += this.settings.panorama_native_layers === true
-          ? "\n\nYour existing layers will keep their native resolution: the editing window (and generation area) grows to fit the largest one, up to 4096 px."
-          : "\n\nYour existing layers will be scaled into the panorama's 1024 \u00d7 1024 editing window, which can lower their quality. Turn on \"Keep layers at their native resolution\" in UniCanvas settings > Panorama to avoid that.";
+          ? tr("\n\nYour existing layers will keep their native resolution: the editing window (and generation area) grows to fit the largest one, up to 4096 px.")
+          : tr("\n\nYour existing layers will be scaled into the panorama's 1024 \u00d7 1024 editing window, which can lower their quality. Turn on \"Keep layers at their native resolution\" in UniCanvas settings > Panorama to avoid that.");
         message.style.whiteSpace = "pre-line";
       }
       const previousFocus = document.activeElement;
@@ -1518,9 +1519,9 @@ class UniCanvasWidget {
       this._panoramaImportClose = () => close("cancel");
       const actions = document.createElement("div"); actions.className = "vnccs-uc-modal-actions";
       const buttons = [
-        this._button("Cancel", "vnccs-uc-btn", () => close("cancel")),
-        this._button("Regular image", "vnccs-uc-btn", () => close("flat")),
-        this._button("Panorama", "vnccs-uc-btn primary", () => close("panorama")),
+        this._button(tr("Cancel"), "vnccs-uc-btn", () => close("cancel")),
+        this._button(tr("Regular image"), "vnccs-uc-btn", () => close("flat")),
+        this._button(tr("Panorama"), "vnccs-uc-btn primary", () => close("panorama")),
       ];
       actions.append(...buttons); modal.append(title, message, actions); overlay.append(modal);
       overlay.addEventListener("keydown", e => {
@@ -1582,7 +1583,7 @@ class UniCanvasWidget {
       this.setTool("move"); this.updatePanoramaControls();
       this.renderLayerList(); this.fitView(); this.requestRender();
       this.undoStack.push(previous); this.redoStack = []; this.updateHistoryButtons();
-      this.syncToNode(); this.setStatus("Panorama ready.");
+      this.syncToNode(); this.setStatus(tr("Panorama ready."));
     } catch (error) {
       this.restoreHistorySnapshot(previous);
       throw error;
@@ -1593,15 +1594,15 @@ class UniCanvasWidget {
     const panorama = this.panorama;
     if (!panorama || panorama.settings.baseLayerId !== id || this._panoramaDeletePending) return false;
     if (this.editingBlocked || this._isRestoring || this.transformDraft || this.isPointerDown) {
-      this.setStatus("Finish the current edit before deleting the panorama", true);
+      this.setStatus(tr("Finish the current edit before deleting the panorama"), true);
       return false;
     }
     this._panoramaDeletePending = true;
     try {
       const confirmed = await this.confirmInWidget(
-        "Delete panorama?",
-        "Deleting this panorama will exit panorama mode and permanently discard the entire panorama workspace: all layers, staged results, and undo/redo history. This cannot be undone.",
-        "Delete panorama"
+        tr("Delete panorama?"),
+        tr("Deleting this panorama will exit panorama mode and permanently discard the entire panorama workspace: all layers, staged results, and undo/redo history. This cannot be undone."),
+        tr("Delete panorama")
       );
       if (!confirmed || this._disposed || this.panorama !== panorama) return false;
       if (this.editingBlocked || this._isRestoring || this.transformDraft || this.isPointerDown) return false;
@@ -1642,13 +1643,13 @@ class UniCanvasWidget {
       this.fitView();
       this.requestRender();
       this.syncToNode();
-      this.setStatus("Panorama workspace deleted. Panorama mode is off.");
+      this.setStatus(tr("Panorama workspace deleted. Panorama mode is off."));
       // This upload follows any pending panorama writes, including their backups.
       await this.flushStateUpload();
       if (this.layers === layers && !layers.some(layer => this.getLayerAlphaBounds(layer))) clearBackup();
       return true;
     } catch (error) {
-      this.setStatus(`Could not delete panorama: ${error.message || error}`, true);
+      this.setStatus(tr("Could not delete panorama: {error}", { error: error.message || error }), true);
       return false;
     } finally {
       this._panoramaDeletePending = false;
@@ -1815,8 +1816,8 @@ class UniCanvasWidget {
       input.value = value;
       const actions = document.createElement("div");
       actions.className = "vnccs-uc-modal-actions";
-      const cancel = this._button("Cancel", "vnccs-uc-btn", () => close(null), "Cancel");
-      const ok = this._button("OK", "vnccs-uc-btn primary", () => close(input.value), "OK");
+      const cancel = this._button(tr("Cancel"), "vnccs-uc-btn", () => close(null), tr("Cancel"));
+      const ok = this._button(tr("OK"), "vnccs-uc-btn primary", () => close(input.value), tr("OK"));
       const close = (result) => {
         overlay.remove();
         resolve(result);
@@ -1858,8 +1859,8 @@ class UniCanvasWidget {
       messageEl.style.whiteSpace = "pre-line";
       const actions = document.createElement("div");
       actions.className = "vnccs-uc-modal-actions";
-      const cancel = this._button("Cancel", "vnccs-uc-btn", () => close(false), "Cancel");
-      const ok = this._button(confirmLabel, "vnccs-uc-btn danger", () => close(true), confirmLabel);
+      const cancel = this._button(tr("Cancel"), "vnccs-uc-btn", () => close(false), tr("Cancel"));
+      const ok = this._button(tr(confirmLabel), "vnccs-uc-btn danger", () => close(true), tr(confirmLabel));
       const close = (result) => {
         overlay.remove();
         resolve(result);
@@ -2145,7 +2146,7 @@ class UniCanvasWidget {
     }
     if (layer.locked || !layer.visible) {
       this.poseEditor?.setVisible(false);
-      this.setStatus(`Unlock and show ${layer.name} to edit its pose.`, true);
+      this.setStatus(tr("Unlock and show {name} to edit its pose.", { name: layer.name }), true);
       if (this.tool === "pose") this.setTool("move");
       return;
     }
@@ -2214,7 +2215,7 @@ class UniCanvasWidget {
     if (!this.standalone) this.centerBbox(true, layer.pose.rect, 2);
     this.requestRender();
     this.updateHistoryButtons();
-    this.setStatus("Editing pose - Save pose (Enter) or Cancel when done. Ctrl+Z / Ctrl+Y undo and redo pose changes.");
+    this.setStatus(tr("Editing pose - Save pose (Enter) or Cancel when done. Ctrl+Z / Ctrl+Y undo and redo pose changes."));
   }
 
   // Leaving the Pose tool keeps the edit: one undo step for the whole session.
@@ -2230,7 +2231,7 @@ class UniCanvasWidget {
     this.restorePoseEditView(session);
     this.refreshLayerRow(session.layerId);
     this.updateHistoryButtons();
-    this.setStatus(layer ? `Pose saved: ${layer.name}` : "");
+    this.setStatus(layer ? tr("Pose saved: {name}", { name: layer.name }) : "");
   }
 
   restorePoseEditView(session) {
@@ -2265,7 +2266,7 @@ class UniCanvasWidget {
     this.restorePoseEditView(session);
     this.renderLayerList();
     this.requestRender();
-    this.setStatus("Pose edit canceled");
+    this.setStatus(tr("Pose edit canceled"));
   }
 
   // Cancel on a pose layer that was never saved: the layer is not created at all (no leftover
@@ -2284,7 +2285,7 @@ class UniCanvasWidget {
     this.requestRender();
     this.syncLightStateToWidget();
     this.scheduleFullSync();
-    this.setStatus("New pose layer canceled");
+    this.setStatus(tr("New pose layer canceled"));
   }
 
   // Topmost visible image layer with content under a world point (pose layers: their rect).
@@ -2327,7 +2328,7 @@ class UniCanvasWidget {
     this.renderLayerList();
     this.requestRender();
     this.syncToNode();
-    this.setStatus(`Rasterized ${layer.name}`);
+    this.setStatus(tr("Rasterized {name}", { name: layer.name }));
   }
 
   toolNeedsCanvasRender(tool) {
@@ -2345,8 +2346,8 @@ class UniCanvasWidget {
 
   transformHint() {
     return this.resizeTransformMode === "crop"
-      ? "Crop: drag an edge or corner inward to trim the layer, outward to bring the trimmed part back. Drag inside: move · Reset restores everything · Enter apply · Esc cancel"
-      : "Drag inside: move · outside: rotate (Shift 15°) · corner: scale (Shift ratio, Alt center) · Ctrl+corner: distort · Ctrl+edge: skew · Ctrl+Alt+Shift+corner: perspective · Enter apply · Esc cancel";
+      ? tr("Crop: drag an edge or corner inward to trim the layer, outward to bring the trimmed part back. Drag inside: move · Reset restores everything · Enter apply · Esc cancel")
+      : tr("Drag inside: move · outside: rotate (Shift 15°) · corner: scale (Shift ratio, Alt center) · Ctrl+corner: distort · Ctrl+edge: skew · Ctrl+Alt+Shift+corner: perspective · Enter apply · Esc cancel");
   }
 
   renderToolSettings() {
@@ -2360,46 +2361,46 @@ class UniCanvasWidget {
     }
     const titleMap = { brush: "Brush", eraser: "Eraser", rect: "Shape", lasso: "Lasso", resize: "Transform" };
     const title = titleMap[this.tool] || this.tool;
-    if (this.toolSettingsTitle) this.toolSettingsTitle.textContent = `${title} Settings`;
+    if (this.toolSettingsTitle) this.toolSettingsTitle.textContent = tr("{title} Settings", { title: tr(title) });
     const html = [];
     if (controls.includes("shapeType")) {
       const options = [["square", "Square"], ["circle", "Circle"], ["triangle", "Triangle"]]
-        .map(([value, label]) => `<option value="${value}" ${this.shapeType === value ? "selected" : ""}>${label}</option>`).join("");
-      html.push(`<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">Shape</span><select class="vnccs-uc-select" data-control="shapeType">${options}</select></label>`);
+        .map(([value, label]) => `<option value="${value}" ${this.shapeType === value ? "selected" : ""}>${tr(label)}</option>`).join("");
+      html.push(`<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">${tr("Shape")}</span><select class="vnccs-uc-select" data-control="shapeType">${options}</select></label>`);
     }
     if (controls.includes("brushSize")) {
-      html.push(`<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">Size</span><input class="vnccs-uc-range" type="range" min="1" max="220" value="${this.brushSize}" data-control="brushSize"></label>`);
+      html.push(`<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">${tr("Size")}</span><input class="vnccs-uc-range" type="range" min="1" max="220" value="${this.brushSize}" data-control="brushSize"></label>`);
     }
     if (controls.includes("fg")) {
-      html.push(`<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">Color</span><input class="vnccs-uc-input" type="color" value="${this.fg}" data-control="fg"></label>`);
+      html.push(`<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">${tr("Color")}</span><input class="vnccs-uc-input" type="color" value="${this.fg}" data-control="fg"></label>`);
     }
     if (controls.includes("opacity")) {
-      html.push(`<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">Opacity</span><input class="vnccs-uc-range" type="range" min="0" max="1" step="0.01" value="${this.opacity}" data-control="opacity"></label>`);
+      html.push(`<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">${tr("Opacity")}</span><input class="vnccs-uc-range" type="range" min="0" max="1" step="0.01" value="${this.opacity}" data-control="opacity"></label>`);
     }
     if (controls.includes("keepAspect")) {
-      html.push(`<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">Keep ratio</span><input type="checkbox" ${this.resizeKeepAspect ? "checked" : ""} data-control="keepAspect"></label>`);
+      html.push(`<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">${tr("Keep ratio")}</span><input type="checkbox" ${this.resizeKeepAspect ? "checked" : ""} data-control="keepAspect"></label>`);
     }
     if (controls.includes("resizeMode")) {
       const options = Object.entries(TRANSFORM_MODE_LABELS)
-        .map(([value, label]) => `<option value="${value}" ${this.resizeTransformMode === value ? "selected" : ""}>${this._escape(label)}</option>`)
+        .map(([value, label]) => `<option value="${value}" ${this.resizeTransformMode === value ? "selected" : ""}>${this._escape(tr(label))}</option>`)
         .join("");
-      html.push(`<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">Mode</span><select class="vnccs-uc-select" data-control="resizeMode">${options}</select></label>`);
+      html.push(`<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">${tr("Mode")}</span><select class="vnccs-uc-select" data-control="resizeMode">${options}</select></label>`);
     }
     if (controls.includes("transformNumeric")) {
       // Absolute values over the frame the slider started from (reset by any canvas gesture).
       const sliders = this.transformDraft?.sliders || {};
-      const slider = (key, label, min, max) => `<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">${label}</span><input class="vnccs-uc-range" type="range" min="${min}" max="${max}" step="1" value="${Number(sliders[key]) || 0}" data-control="transform-${key}" title="${label}"><span class="vnccs-uc-tool-setting-value" data-transform-value="${key}">${Math.round(Number(sliders[key]) || 0)}°</span></label>`;
+      const slider = (key, label, min, max) => `<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">${tr(label)}</span><input class="vnccs-uc-range" type="range" min="${min}" max="${max}" step="1" value="${Number(sliders[key]) || 0}" data-control="transform-${key}" title="${tr(label)}"><span class="vnccs-uc-tool-setting-value" data-transform-value="${key}">${Math.round(Number(sliders[key]) || 0)}°</span></label>`;
       html.push(slider("rotate", "Rotate", -180, 180), slider("tiltX", "3D tilt X", -75, 75), slider("tiltY", "3D tilt Y", -75, 75));
     }
     if (controls.includes("transformActions")) {
-      const button = (action, label, title) => `<button class="vnccs-uc-btn" type="button" data-transform-action="${action}" title="${title}">${label}</button>`;
+      const button = (action, label, title) => `<button class="vnccs-uc-btn" type="button" data-transform-action="${action}" title="${tr(title)}">${tr(label)}</button>`;
       html.push(`<div class="vnccs-uc-transform-actions">${[
-        button("flip-h", "Flip H", "Flip horizontal"),
-        button("flip-v", "Flip V", "Flip vertical"),
-        button("rotate-ccw", "⟲ 90°", "Rotate 90° counter-clockwise"),
-        button("rotate-cw", "⟳ 90°", "Rotate 90° clockwise"),
-        button("rotate-180", "180°", "Rotate 180°"),
-        button("reset", "Reset", "Reset the transform"),
+        button("flip-h", tr("Flip H"), tr("Flip horizontal")),
+        button("flip-v", tr("Flip V"), tr("Flip vertical")),
+        button("rotate-ccw", "⟲ 90°", tr("Rotate 90° counter-clockwise")),
+        button("rotate-cw", "⟳ 90°", tr("Rotate 90° clockwise")),
+        button("rotate-180", "180°", tr("Rotate 180°")),
+        button("reset", tr("Reset"), tr("Reset the transform")),
       ].join("")}</div>`);
       html.push(`<div class="vnccs-uc-transform-hint" data-transform-hint>${this._escape(this.transformHint())}</div>`);
     }
@@ -2411,8 +2412,8 @@ class UniCanvasWidget {
   renderSamPanel() {
     if (!this.samPanel) return;
     const layer = this.activeLayer;
-    const issue = !layer || layer.type !== "raster" ? "Select a raster layer in Layers to place SAM points."
-      : layer.locked ? "Unlock the selected raster layer to place SAM points." : "";
+    const issue = !layer || layer.type !== "raster" ? tr("Select a raster layer in Layers to place SAM points.")
+      : layer.locked ? tr("Unlock the selected raster layer to place SAM points.") : "";
     const fgCount = this.sam.points.filter((point) => point.label > 0).length;
     const bgCount = this.sam.points.length - fgCount;
     // Runs on every stage render while SAM is active: rebuild the counts only when they change.
@@ -2432,7 +2433,7 @@ class UniCanvasWidget {
     this.samSegmentBtn.disabled = this.sam.busy || Boolean(issue) || !this.sam.points.length;
     this.samApplyBtn.disabled = this.sam.busy || !this.sam.maskCanvas;
     this.samClearBtn.disabled = this.sam.busy || (!this.sam.points.length && !this.sam.maskCanvas && !this.sam.redoPoints.length && !this.sam.redoMask);
-    this.samStatus.textContent = issue || this.sam.status || "Add: green keep points. Subtract: red remove points. Click the selected image, then Segment.";
+    this.samStatus.textContent = issue || this.sam.status || tr("Add: green keep points. Subtract: red remove points. Click the selected image, then Segment.");
     this.samStatus.classList?.toggle("error", Boolean(issue || this.sam.error));
     this.updateHistoryButtons();
   }
@@ -2440,7 +2441,7 @@ class UniCanvasWidget {
   setSamPointMode(mode) {
     if (this.editingBlocked || this.sam.busy) return;
     this.sam.mode = mode;
-    this.setSamStatus(mode === "subtract" ? "Click the image to add red remove points." : "Click the image to add green keep points.");
+    this.setSamStatus(mode === "subtract" ? tr("Click the image to add red remove points.") : tr("Click the image to add green keep points."));
   }
 
   undoSamPoint() {
@@ -2449,14 +2450,14 @@ class UniCanvasWidget {
       const mask = { maskCanvas: this.sam.maskCanvas, crop: this.sam.crop, layerId: this.sam.layerId, layerState: this.sam.layerState, invert: this.sam.invert };
       this.clearSamMask(false);
       this.sam.redoMask = mask;
-      this.setSamStatus("Mask preview undone; points kept.");
+      this.setSamStatus(tr("Mask preview undone; points kept."));
       this.updateToolPreviewOverlay();
       return true;
     }
     if (!this.sam.points.length) return false;
     this.sam.redoPoints.push(this.sam.points.pop());
     this.clearSamMask(false);
-    this.setSamStatus(`${this.sam.points.length} point${this.sam.points.length === 1 ? "" : "s"}`);
+    this.setSamStatus(this.sam.points.length === 1 ? tr("{count} point", { count: this.sam.points.length }) : tr("{count} points", { count: this.sam.points.length }));
     this.requestRender();
     return true;
   }
@@ -2467,18 +2468,18 @@ class UniCanvasWidget {
       const mask = this.sam.redoMask;
       this.sam.redoMask = null;
       if (!this.isLayerEditStateCurrent(mask.layerState)) {
-        this.setSamStatus("SAM input changed; segment again", true);
+        this.setSamStatus(tr("SAM input changed; segment again"), true);
         return true;
       }
       Object.assign(this.sam, mask);
-      this.setSamStatus("Mask preview restored. Highlighted area is kept; Apply removes the rest.");
+      this.setSamStatus(tr("Mask preview restored. Highlighted area is kept; Apply removes the rest."));
       this.updateToolPreviewOverlay();
       return true;
     }
     if (!this.sam.redoPoints.length) return false;
     this.sam.points.push(this.sam.redoPoints.pop());
     this.clearSamMask(false);
-    this.setSamStatus(`${this.sam.points.length} point${this.sam.points.length === 1 ? "" : "s"}`);
+    this.setSamStatus(this.sam.points.length === 1 ? tr("{count} point", { count: this.sam.points.length }) : tr("{count} points", { count: this.sam.points.length }));
     this.requestRender();
     return true;
   }
@@ -2488,7 +2489,7 @@ class UniCanvasWidget {
     this.sam.invert = !this.sam.invert;
     this.renderSamPanel();
     this.updateToolPreviewOverlay();
-    this.setStatus(this.sam.invert ? "SAM invert on" : "SAM invert off");
+    this.setStatus(this.sam.invert ? tr("SAM invert on") : tr("SAM invert off"));
   }
 
   syncCursorStyle() {
@@ -2835,7 +2836,7 @@ class UniCanvasWidget {
       await this.loadPresets();
       this.syncPromptControls();
     } catch (err) {
-      this.setStatus(`Asset list failed: ${err.message || err}`, true);
+      this.setStatus(tr("Asset list failed: {error}", { error: err.message || err }), true);
     }
   }
 
@@ -2844,14 +2845,14 @@ class UniCanvasWidget {
     try {
       const res = await fetch(`/vnccs/unicanvas/presets?t=${Date.now()}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Preset list failed");
+      if (!res.ok) throw new Error(data.error || tr("Preset list failed"));
       if (this._disposed) return;
       this.presets = Array.isArray(data.presets) ? data.presets : [];
       this.presetDownloads = data.downloads || {};
     } catch (err) {
       this.presets = [];
       this.presetDownloads = {};
-      this.setStatus(`Preset list failed: ${err.message || err}`, true);
+      this.setStatus(tr("Preset list failed: {error}", { error: err.message || err }), true);
     }
   }
 
@@ -2973,10 +2974,10 @@ class UniCanvasWidget {
     const stack = this.normalizeLoraStack();
     const loraOptions = ["", ...(this.assets.loras || [])];
     const optionHTML = loraOptions.map((name) => {
-      const label = name || "None";
+      const label = name || tr("None");
       return `<option value="${this._escape(name)}">${this._escape(label)}</option>`;
     }).join("");
-    container.innerHTML = `<div class="vnccs-uc-lora-stack-head"><span class="vnccs-uc-lora-stack-title">LoRA Stack</span><button class="vnccs-uc-icon" type="button" data-action="lora-add" title="Add a LoRA" aria-label="Add a LoRA"${stack.length >= LORA_STACK_MAX ? " disabled" : ""}>${UI_ICONS.plus}</button></div><div class="vnccs-uc-lora-rows" data-lora-rows></div>`;
+    container.innerHTML = `<div class="vnccs-uc-lora-stack-head"><span class="vnccs-uc-lora-stack-title">${tr("LoRA Stack")}</span><button class="vnccs-uc-icon" type="button" data-action="lora-add" title="${tr("Add a LoRA")}" aria-label="${tr("Add a LoRA")}"${stack.length >= LORA_STACK_MAX ? " disabled" : ""}>${UI_ICONS.plus}</button></div><div class="vnccs-uc-lora-rows" data-lora-rows></div>`;
     const rows = container.querySelector("[data-lora-rows]");
     stack.forEach((item, index) => {
       const row = document.createElement("div");
@@ -2984,7 +2985,7 @@ class UniCanvasWidget {
       row.innerHTML = `
         <select class="vnccs-uc-select" data-lora-stack-index="${index}" data-lora-stack-field="name">${optionHTML}</select>
         <input class="vnccs-uc-input" data-lora-stack-index="${index}" data-lora-stack-field="strength" type="number" lang="en-US" inputmode="decimal" step="0.05">
-        ${index > 0 ? `<button class="vnccs-uc-icon" type="button" data-action="lora-remove" data-lora-index="${index}" title="Remove this LoRA" aria-label="Remove this LoRA">${MINUS_ICON}</button>` : ""}`;
+        ${index > 0 ? `<button class="vnccs-uc-icon" type="button" data-action="lora-remove" data-lora-index="${index}" title="${tr("Remove this LoRA")}" aria-label="${tr("Remove this LoRA")}">${MINUS_ICON}</button>` : ""}`;
       const select = row.querySelector("select");
       const strength = row.querySelector("input");
       if (select) select.value = item.name || "";
@@ -3082,7 +3083,7 @@ class UniCanvasWidget {
       card.dataset.turboToggle = preset.id;
     } else if (head) {
       card.dataset.presetPickerToggle = "1";
-      card.title = "Choose another preset";
+      card.title = tr("Choose another preset");
       card.setAttribute("aria-haspopup", "listbox");
       card.setAttribute("aria-expanded", this.presetPickerOpen ? "true" : "false");
     } else {
@@ -3097,9 +3098,9 @@ class UniCanvasWidget {
     // Menu rows stay one compact line (pick first, download from the header card); tooltips carry the description.
     const downloadButton = turbo || row || status.installed || status.progress
       ? ""
-      : `<div class="vnccs-uc-model-card-actions"><button type="button" class="vnccs-uc-model-card-download" ${downloadAttrs}>Download</button></div>`;
+      : `<div class="vnccs-uc-model-card-actions"><button type="button" class="vnccs-uc-model-card-download" ${downloadAttrs}>${tr("Download")}</button></div>`;
     const toggle = turbo ? `<span class="vnccs-uc-toggle ${selected ? "active" : ""}" aria-hidden="true"></span>` : "";
-    const statusNode = `<span class="vnccs-uc-model-card-status ${statusClass}">${this._escape(statusText)}</span>`;
+    const statusNode = `<span class="vnccs-uc-model-card-status ${statusClass}">${this._escape(tr(statusText))}</span>`;
     if (row && desc) card.title = desc;
     card.innerHTML = `
       <span class="vnccs-uc-model-card-top">
@@ -3108,7 +3109,7 @@ class UniCanvasWidget {
         ${turbo ? `${statusNode}${toggle}` : statusNode}
         ${head ? PRESET_CHEVRON_ICON : ""}
       </span>
-      ${modelName ? `<span class="vnccs-uc-model-card-model">${row ? "" : "Model: "}${this._escape(modelName)}</span>` : ""}
+      ${modelName ? `<span class="vnccs-uc-model-card-model">${row ? "" : `${tr("Model:")} `}${this._escape(modelName)}</span>` : ""}
       ${turbo || row ? "" : `<span class="vnccs-uc-model-card-desc">${this._escape(desc || "")}</span>`}
       ${downloadButton}`;
     return card;
@@ -3174,7 +3175,7 @@ class UniCanvasWidget {
         group.className = "vnccs-uc-model-picker-group";
         const title = document.createElement("div");
         title.className = "vnccs-uc-model-picker-group-title";
-        title.textContent = groupLabel;
+        title.textContent = tr(groupLabel);
         group.appendChild(title);
         for (const preset of groupPresets) {
           group.appendChild(this.buildPresetCard(preset));
@@ -3191,7 +3192,7 @@ class UniCanvasWidget {
       if (preset?.turbo?.asset) {
         const title = document.createElement("div");
         title.className = "vnccs-uc-turbo-title";
-        title.textContent = "Turbo LoRA";
+        title.textContent = tr("Turbo LoRA");
         turboPanel.append(title, this.buildPresetCard(preset, true));
         turboPanel.style.display = "";
       } else {
@@ -3209,9 +3210,9 @@ class UniCanvasWidget {
     // their reference convention (spec section 9 style, user request); the
     // generic Steps row is hidden for every family that owns one.
     const editStepsHints = {
-      flux_klein: "Guided edit - the working area is re-sampled under the prompt and denoise settings; Edit model references condition the result. Steps control the sampling depth.",
-      qwen_image21: "Reference edit at full denoise. Connected images are <image1>, <image2>, ...; the working area comes first when Use Layers is enabled and an image is present.",
-      krea2_edit: "Identity edit - the working area is the background (image 1); one Edit model reference is the character to put into it (image 2). Krea2 takes at most these two pictures.",
+      flux_klein: tr("Guided edit - the working area is re-sampled under the prompt and denoise settings; Edit model references condition the result. Steps control the sampling depth."),
+      qwen_image21: tr("Reference edit at full denoise. Connected images are <image1>, <image2>, ...; the working area comes first when Use Layers is enabled and an image is present."),
+      krea2_edit: tr("Identity edit - the working area is the background (image 1); one Edit model reference is the character to put into it (image 2). Krea2 takes at most these two pictures."),
     };
     const editStepsPanel = this.container.querySelector("[data-edit-steps-panel]");
     if (editStepsPanel) {
@@ -3421,14 +3422,14 @@ class UniCanvasWidget {
         body: JSON.stringify({ preset_id: presetId, kind }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Download failed");
+      if (!res.ok) throw new Error(data.error || tr("Download failed"));
       for (const key of data.queued || []) {
         this.presetDownloads[key] = { status: "queued", message: "Queued", progress: 0 };
       }
       this.renderModelSelectionControls();
       this.startPresetDownloadPolling();
     } catch (err) {
-      this.setStatus(`Preset download failed: ${err.message || err}`, true);
+      this.setStatus(tr("Preset download failed: {error}", { error: err.message || err }), true);
     }
   }
 
@@ -3448,7 +3449,7 @@ class UniCanvasWidget {
       const res = await fetch(`/vnccs/unicanvas/presets/status?t=${Date.now()}`);
       const data = await res.json();
       if (this._disposed || revision !== this._presetDownloadRevision) return;
-      if (!res.ok) throw new Error(data.error || "Status failed");
+      if (!res.ok) throw new Error(data.error || tr("Status failed"));
       this.presetDownloads = data || {};
       this._dependencyDialog?.update(this.presetDownloads);
       this.renderModelSelectionControls();
@@ -3460,8 +3461,8 @@ class UniCanvasWidget {
       }
     } catch (err) {
       if (this._disposed) return;
-      this._dependencyDialog?.error(`Status unavailable: ${err.message || err}. Retrying…`);
-      this.setStatus(`Preset status failed: ${err.message || err}`, true);
+      this._dependencyDialog?.error(tr("Status unavailable: {error}. Retrying…", { error: err.message || err }));
+      this.setStatus(tr("Preset status failed: {error}", { error: err.message || err }), true);
     } finally {
       this._presetStatusRefreshing = false;
     }
@@ -3522,9 +3523,9 @@ class UniCanvasWidget {
     banner.hidden = !linked;
     if (linked && !banner.childElementCount) {
       const title = document.createElement("strong");
-      title.textContent = "VNCSS Config linked";
+      title.textContent = tr("VNCSS Config linked");
       const body = document.createElement("span");
-      body.textContent = "Model, family, CLIP, VAE, LoRAs and reference images come from the config node. Prompt, steps, sampler, scheduler, CFG and seed still apply.";
+      body.textContent = tr("Model, family, CLIP, VAE, LoRAs and reference images come from the config node. Prompt, steps, sampler, scheduler, CFG and seed still apply.");
       banner.append(title, body);
     }
   }
@@ -3710,16 +3711,16 @@ class UniCanvasWidget {
     const value = fullDenoise ? 1 : Math.max(0, Math.min(max, Number(this.settings[key] ?? fallback) || 0));
     this.settings[key] = value;
     const label = this.denoiseControl?.querySelector("[data-denoise-label]");
-    if (label) label.textContent = likeness ? "Likeness" : key === "fun_controlnet_strength" || key === "anima_lllite_strength" ? "ControlNet strength" : "Denoise";
+    if (label) label.textContent = likeness ? tr("Likeness") : key === "fun_controlnet_strength" || key === "anima_lllite_strength" ? tr("ControlNet strength") : tr("Denoise");
     this.denoiseControl?.querySelectorAll('[data-setting="denoise"]').forEach((el) => {
       if (!(el instanceof HTMLInputElement)) return;
       el.max = String(max);
       el.step = likeness ? "0.1" : "0.01";
       el.disabled = fullDenoise;
-      el.setAttribute("aria-label", label?.textContent || "Denoise");
-      el.title = fullDenoise ? "Qwen Edit 2.1 generates from an empty latent at full denoise. Use Layers controls the canvas reference." : likeness
-        ? "Reference likeness: 1 = baseline, 4 = recommended. Higher values preserve appearance more strongly; lower values allow larger edits."
-        : label?.textContent || "Denoise";
+      el.setAttribute("aria-label", tr(label?.textContent || "Denoise"));
+      el.title = fullDenoise ? tr("Qwen Edit 2.1 generates from an empty latent at full denoise. Use Layers controls the canvas reference.") : likeness
+        ? tr("Reference likeness: 1 = baseline, 4 = recommended. Higher values preserve appearance more strongly; lower values allow larger edits.")
+        : tr(label?.textContent || "Denoise");
       if (el !== source || fullDenoise) el.value = this.formatSettingNumber(value, 2);
     });
   }
@@ -3883,7 +3884,7 @@ class UniCanvasWidget {
     const inferenceSize = this.getInferenceSize();
     this.updateInferenceSizeLabels(inferenceSize);
     this.updateZoomResetButton();
-    const hudHTML = `<span class="vnccs-uc-chip">${this.tool}</span><span class="vnccs-uc-chip">${Math.round(this.view.scale * 100)}%</span><span class="vnccs-uc-chip">${this.bbox.width}×${this.bbox.height}</span><span class="vnccs-uc-chip">infer ${inferenceSize.width}×${inferenceSize.height}</span>`;
+    const hudHTML = `<span class="vnccs-uc-chip">${this.tool}</span><span class="vnccs-uc-chip">${Math.round(this.view.scale * 100)}%</span><span class="vnccs-uc-chip">${this.bbox.width}×${this.bbox.height}</span><span class="vnccs-uc-chip">${tr("infer")} ${inferenceSize.width}×${inferenceSize.height}</span>`;
     if (hudHTML !== this.lastHudHTML) {
       this.lastHudHTML = hudHTML;
       this.hud.innerHTML = hudHTML;
@@ -3990,7 +3991,7 @@ class UniCanvasWidget {
       if (this.tool === "bbox") return;
     }
     if (this.activeLayer?.type === "pose" && e.button === 0 && !["pose", "bbox", "pan", "move", "sam"].includes(this.tool)) {
-      this.setStatus("Use Pose Studio to edit this live layer, or select a raster layer for pixel tools.", true);
+      this.setStatus(tr("Use Pose Studio to edit this live layer, or select a raster layer for pixel tools."), true);
       return;
     }
     if (this.tool === "pose" && e.button === 0) return;
@@ -4018,14 +4019,14 @@ class UniCanvasWidget {
     }
     if (this.transformDraft && !["pan", "zoom-drag", "resize"].includes(this.pointerMode)) {
       this.pointerMode = "idle";
-      this.setStatus("Apply or cancel the active transform first", true);
+      this.setStatus(tr("Apply or cancel the active transform first"), true);
       this.render();
       return;
     }
     if (this.pointerMode === "bbox") {
       if (this.isStagingActive()) {
         this.pointerMode = "idle";
-        this.setStatus(this.drawInProgress ? "Wait for GENERATE to finish before moving bbox" : "Accept or discard the staged result before moving bbox", true);
+        this.setStatus(this.drawInProgress ? tr("Wait for GENERATE to finish before moving bbox") : tr("Accept or discard the staged result before moving bbox"), true);
         this.render();
         return;
       }
@@ -4384,23 +4385,23 @@ class UniCanvasWidget {
     if (this.editingBlocked || this.sam.busy) return;
     const layer = this.activeLayer;
     if (!layer || layer.type !== "raster") {
-      this.setSamStatus("Select a raster layer in Layers to place SAM points.", true);
+      this.setSamStatus(tr("Select a raster layer in Layers to place SAM points."), true);
       return;
     }
     if (layer.locked) {
-      this.setSamStatus("Layer is locked", true);
+      this.setSamStatus(tr("Layer is locked"), true);
       return;
     }
     const bounds = this.getLayerWorldBounds(layer);
     if (!bounds || point.x < bounds.x || point.y < bounds.y || point.x > bounds.x + bounds.width || point.y > bounds.y + bounds.height) {
-      this.setSamStatus("Click inside selected layer", true);
+      this.setSamStatus(tr("Click inside selected layer"), true);
       return;
     }
     const label = this.sam.mode === "subtract" || event.button === 2 || event.altKey || event.ctrlKey || event.metaKey ? 0 : 1;
     this.sam.points.push({ x: point.x, y: point.y, label });
     this.sam.redoPoints = [];
     this.clearSamMask(false);
-    this.setSamStatus(label > 0 ? "Green keep point added. Segment to preview the mask." : "Red remove point added. Segment to preview the mask.");
+    this.setSamStatus(label > 0 ? tr("Green keep point added. Segment to preview the mask.") : tr("Red remove point added. Segment to preview the mask."));
     this.requestRender();
   }
 
@@ -4428,26 +4429,26 @@ class UniCanvasWidget {
     this.sam.points = [];
     this.sam.redoPoints = [];
     this.clearSamMask(false);
-    this.sam.status = "SAM cleared";
+    this.sam.status = tr("SAM cleared");
     this.sam.error = false;
     this.renderSamPanel();
     this.requestRender();
-    this.setStatus("SAM cleared");
+    this.setStatus(tr("SAM cleared"));
   }
 
   async segmentSamMask() {
     if (this.editingBlocked || this.sam.busy) return;
     const layer = this.activeLayer;
     if (!layer || layer.type !== "raster") {
-      this.setSamStatus("Select a raster layer", true);
+      this.setSamStatus(tr("Select a raster layer"), true);
       return;
     }
     if (layer.locked) {
-      this.setSamStatus("Layer is locked", true);
+      this.setSamStatus(tr("Layer is locked"), true);
       return;
     }
     if (!this.sam.points.length) {
-      this.setSamStatus("Add foreground point", true);
+      this.setSamStatus(tr("Add foreground point"), true);
       return;
     }
     const nativeSource = layer.hiresCanvas && layer.hiresRect ? layer.hiresCanvas : null;
@@ -4455,7 +4456,7 @@ class UniCanvasWidget {
     const crop = worldRect ? { ...worldRect, x: worldRect.x - this.origin.x, y: worldRect.y - this.origin.y }
       : this.expandCanvasCrop(this.getLayerAlphaBounds(layer), layer.canvas, 24);
     if (!crop) {
-      this.setSamStatus("Layer is empty", true);
+      this.setSamStatus(tr("Layer is empty"), true);
       return;
     }
     const source = nativeSource || this.cloneCanvasCrop(layer.canvas, crop);
@@ -4467,7 +4468,7 @@ class UniCanvasWidget {
         label: point.label > 0 ? 1 : 0,
       }));
     if (!points.length) {
-      this.setSamStatus("SAM points are outside crop", true);
+      this.setSamStatus(tr("SAM points are outside crop"), true);
       return;
     }
     this.clearSamMask(false);
@@ -4475,17 +4476,17 @@ class UniCanvasWidget {
     const layerState = this.captureLayerEditState(layer);
     this.sam.busy = true;
     this.sam.error = false;
-    this.sam.status = "Segmenting...";
+    this.sam.status = tr("Segmenting...");
     this.renderSamPanel();
-    this.setStatus("SAM segmenting...");
+    this.setStatus(tr("SAM segmenting..."));
     // A seconds counter keeps it visibly alive; the first run of a model loads (or downloads) it.
     const started = performance.now();
     const ticker = setInterval(() => {
       if (requestRevision !== this.sam.requestRevision || this._disposed) return;
       const seconds = Math.round((performance.now() - started) / 1000);
       this.sam.status = seconds >= 5
-        ? `Segmenting... ${seconds}s (first use loads the model${this.sam.model === "sam3" ? ", SAM 3 downloads ~3.4 GB" : ""})`
-        : "Segmenting...";
+        ? this.sam.model === "sam3" ? tr("Segmenting... {seconds}s (first use loads the model, SAM 3 downloads ~3.4 GB)", { seconds }) : tr("Segmenting... {seconds}s (first use loads the model)", { seconds })
+        : tr("Segmenting...");
       this.renderSamPanel();
     }, 1000);
     try {
@@ -4502,7 +4503,7 @@ class UniCanvasWidget {
       if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
       const img = await this.loadImage(data.mask);
       if (requestRevision !== this.sam.requestRevision || !this.isLayerEditStateCurrent(layerState)) {
-        this.sam.status = "SAM input changed; segment again";
+        this.sam.status = tr("SAM input changed; segment again");
         return;
       }
       const maskCanvas = document.createElement("canvas");
@@ -4513,10 +4514,10 @@ class UniCanvasWidget {
       this.sam.crop = { ...crop };
       this.sam.layerId = layer.id;
       this.sam.layerState = layerState;
-      this.sam.status = `${data.note ? "Mask ready (SAM2 fallback)." : "Mask ready."} Highlighted area is kept; Apply removes the rest.`;
-      this.setStatus(data.note ? `SAM mask ready - ${data.note}` : "SAM mask ready", Boolean(data.note));
+      this.sam.status = `${data.note ? tr("Mask ready (SAM2 fallback).") : tr("Mask ready.")} ${tr("Highlighted area is kept; Apply removes the rest.")}`;
+      this.setStatus(data.note ? tr("SAM mask ready - {note}", { note: data.note }) : tr("SAM mask ready"), Boolean(data.note));
     } catch (err) {
-      this.sam.status = `SAM failed: ${err.message || err}`;
+      this.sam.status = tr("SAM failed: {error}", { error: err.message || err });
       this.setSamStatus(this.sam.status, true);
     } finally {
       clearInterval(ticker);
@@ -4530,16 +4531,16 @@ class UniCanvasWidget {
     if (this.editingBlocked || this.sam.busy) return;
     if (!this.isLayerEditStateCurrent(this.sam.layerState)) {
       this.clearSamMask(false);
-      this.setSamStatus("SAM input changed; segment again", true);
+      this.setSamStatus(tr("SAM input changed; segment again"), true);
       return;
     }
     const layer = this.sam.layerState.layer;
     if (!layer || layer.type !== "raster" || !this.sam.maskCanvas || !this.sam.crop) {
-      this.setSamStatus("No SAM mask to apply", true);
+      this.setSamStatus(tr("No SAM mask to apply"), true);
       return;
     }
     if (layer.locked) {
-      this.setSamStatus("Layer is locked", true);
+      this.setSamStatus(tr("Layer is locked"), true);
       return;
     }
     const before = this.createLayerPixelSnapshot(layer);
@@ -4548,7 +4549,7 @@ class UniCanvasWidget {
     const crop = this.clampCanvasBounds({ ...this.sam.crop,
       x: this.sam.crop.x + origin.x - this.origin.x, y: this.sam.crop.y + origin.y - this.origin.y }, layer.canvas);
     if (!crop) {
-      this.setSamStatus("SAM crop is outside layer", true);
+      this.setSamStatus(tr("SAM crop is outside layer"), true);
       return;
     }
     const ctx = layer.canvas.getContext("2d");
@@ -4568,14 +4569,14 @@ class UniCanvasWidget {
     // Applied pixels now own Undo; transient prompts must not intercept the cut's history.
     this.sam.points = [];
     this.sam.redoPoints = [];
-    this.sam.status = "Mask applied";
+    this.sam.status = tr("Mask applied");
     this.sam.error = false;
     this.renderSamPanel();
     this.refreshLayerRow(layer.id);
     this.requestRender();
     this.syncLightStateToWidget();
     this.scheduleFullSync();
-    this.setStatus("SAM mask applied");
+    this.setStatus(tr("SAM mask applied"));
   }
 
   createTransformSource(layer) {
@@ -4796,19 +4797,19 @@ class UniCanvasWidget {
     if (this.editingBlocked || this.historyGestureActive) return;
     if (this.tool === "sam" && this.sam.busy) return;
     if (this.tool === "sam" && this.undoSamPoint()) {
-      this.setStatus("SAM undo");
+      this.setStatus(tr("SAM undo"));
       return;
     }
     if (this.tool === "pose" && this.poseEditSession) {
       // While a pose is edited, Undo walks the mannequin's own history.
-      if (this.poseEditor?.undo()) this.setStatus("Pose undo");
+      if (this.poseEditor?.undo()) this.setStatus(tr("Pose undo"));
       this.updateHistoryButtons();
       return;
     }
     this.panorama?.commit();
     if (!this.undoStack.length) return;
     if (this.transformDraft) {
-      this.setStatus("Apply or cancel the active transform before undo", true);
+      this.setStatus(tr("Apply or cancel the active transform before undo"), true);
       return;
     }
     const previous = this.undoStack.pop();
@@ -4817,32 +4818,32 @@ class UniCanvasWidget {
       this.redoStack.push(previous);
       if (this.redoStack.length > HISTORY_LIMIT) this.redoStack.shift();
       this.updateHistoryButtons();
-      this.setStatus("Undo");
+      this.setStatus(tr("Undo"));
       return;
     }
     this.redoStack.push(this.createHistorySnapshot(false));
     if (this.redoStack.length > HISTORY_LIMIT) this.redoStack.shift();
     this.restoreHistorySnapshot(previous);
     this.updateHistoryButtons();
-    this.setStatus("Undo");
+    this.setStatus(tr("Undo"));
   }
 
   redo() {
     if (this.editingBlocked || this.historyGestureActive) return;
     if (this.tool === "sam" && this.sam.busy) return;
     if (this.tool === "sam" && this.redoSamPoint()) {
-      this.setStatus("SAM redo");
+      this.setStatus(tr("SAM redo"));
       return;
     }
     if (this.tool === "pose" && this.poseEditSession) {
-      if (this.poseEditor?.redo()) this.setStatus("Pose redo");
+      if (this.poseEditor?.redo()) this.setStatus(tr("Pose redo"));
       this.updateHistoryButtons();
       return;
     }
     this.panorama?.commit();
     if (!this.redoStack.length) return;
     if (this.transformDraft) {
-      this.setStatus("Apply or cancel the active transform before redo", true);
+      this.setStatus(tr("Apply or cancel the active transform before redo"), true);
       return;
     }
     const next = this.redoStack.pop();
@@ -4851,14 +4852,14 @@ class UniCanvasWidget {
       this.undoStack.push(next);
       if (this.undoStack.length > HISTORY_LIMIT) this.undoStack.shift();
       this.updateHistoryButtons();
-      this.setStatus("Redo");
+      this.setStatus(tr("Redo"));
       return;
     }
     this.undoStack.push(this.createHistorySnapshot(false));
     if (this.undoStack.length > HISTORY_LIMIT) this.undoStack.shift();
     this.restoreHistorySnapshot(next);
     this.updateHistoryButtons();
-    this.setStatus("Redo");
+    this.setStatus(tr("Redo"));
   }
 
   applyHistoryEntry(entry, direction) {
@@ -5156,7 +5157,7 @@ class UniCanvasWidget {
   runTransformAction(action) {
     const draft = this.beginTransformDraft(this.activeLayer);
     if (!draft) {
-      this.setStatus("Select an unlocked layer with pixels to transform", true);
+      this.setStatus(tr("Select an unlocked layer with pixels to transform"), true);
       return;
     }
     const quad = draft.quad;
@@ -5213,7 +5214,7 @@ class UniCanvasWidget {
   cancelTransformDraft() {
     if (!this.transformDraft) return;
     this.transformDraft = null;
-    this.setStatus("Transform canceled");
+    this.setStatus(tr("Transform canceled"));
     this.renderToolSettings();
     this.updateTransformControls();
     this.requestRender();
@@ -5605,7 +5606,7 @@ class UniCanvasWidget {
       }
     } catch (err) {
       console.warn("[VNCCS UniCanvas] Browser refused canvas backing expansion", { width: newW, height: newH, err });
-      this.setStatus(`Browser refused canvas expansion (${newW}×${newH})`, true);
+      this.setStatus(tr("Browser refused canvas expansion ({width}×{height})", { width: newW, height: newH }), true);
       return false;
     }
     // Growing the canvas only moves the pixels by (dx, dy): carry each layer's known alpha bounds
@@ -5762,7 +5763,7 @@ class UniCanvasWidget {
     const inferenceSize = this.getInferenceSize();
     this.updateInferenceSizeLabels(inferenceSize);
     this.updateZoomResetButton();
-    const hudHTML = `<span class="vnccs-uc-chip">${this.tool}</span><span class="vnccs-uc-chip">${Math.round(this.view.scale * 100)}%</span><span class="vnccs-uc-chip">${this.bbox.width}×${this.bbox.height}</span><span class="vnccs-uc-chip">infer ${inferenceSize.width}×${inferenceSize.height}</span>`;
+    const hudHTML = `<span class="vnccs-uc-chip">${this.tool}</span><span class="vnccs-uc-chip">${Math.round(this.view.scale * 100)}%</span><span class="vnccs-uc-chip">${this.bbox.width}×${this.bbox.height}</span><span class="vnccs-uc-chip">${tr("infer")} ${inferenceSize.width}×${inferenceSize.height}</span>`;
     if (hudHTML !== this.lastHudHTML) {
       this.lastHudHTML = hudHTML;
       this.hud.innerHTML = hudHTML;
@@ -6145,7 +6146,7 @@ class UniCanvasWidget {
       // Runs on every stage render: rebuild the icon only when it changes.
       const icon = visible ? STAGING_ICONS.show : STAGING_ICONS.hide;
       if (this.stagingToggleIcon !== icon) { this.stagingToggleIcon = icon; this.stagingToggleBtn.innerHTML = icon; }
-      this.stagingToggleBtn.title = visible ? "Hide result preview" : "Show result preview";
+      this.stagingToggleBtn.title = visible ? tr("Hide result preview") : tr("Show result preview");
     }
     this.stagingControls.classList.add("visible");
   }
@@ -6162,7 +6163,7 @@ class UniCanvasWidget {
     this.transformControls.style.bottom = "12px";
     this.transformControls.style.width = "";
     this.transformControls.style.transform = "translateX(-50%)";
-    if (this.transformLabel) this.transformLabel.textContent = TRANSFORM_MODE_LABELS[this.transformDraft.kind] || "Transform";
+    if (this.transformLabel) this.transformLabel.textContent = tr(TRANSFORM_MODE_LABELS[this.transformDraft.kind] || "Transform");
     this.transformControls.classList.add("visible");
   }
 
@@ -6464,11 +6465,11 @@ class UniCanvasWidget {
     this.rasterLayerList.innerHTML = "";
     const masks = this.layers.filter((layer) => layer.type === "mask");
     const rasters = this.layers.filter((layer) => layer.type !== "mask");
-    this.maskLayerList.append(this.createLayerGroupHead("Masks", masks.length, "mask"));
+    this.maskLayerList.append(this.createLayerGroupHead(tr("Masks"), masks.length, "mask"));
     for (const layer of masks) this.maskLayerList.append(this.createLayerRow(layer));
-    this.rasterLayerList.append(this.createLayerGroupHead("Image Layers", rasters.length, "raster"));
+    this.rasterLayerList.append(this.createLayerGroupHead(tr("Image Layers"), rasters.length, "raster"));
     for (const layer of rasters) this.rasterLayerList.append(this.createLayerRow(layer));
-    if (!rasters.length) this.rasterLayerList.append(this.createLayerGroupEmpty("No raster layers"));
+    if (!rasters.length) this.rasterLayerList.append(this.createLayerGroupEmpty(tr("No raster layers")));
     this.attachLayerGroupDrop(this.maskLayerList, "mask");
     this.attachLayerGroupDrop(this.rasterLayerList, "raster");
     this.syncActiveLayerControls();
@@ -6482,8 +6483,8 @@ class UniCanvasWidget {
     if (type === "mask") {
       const add = this._button(UI_ICONS.plus, "vnccs-uc-icon", () => {
         if (!this.editingBlocked && !this._disposed) this.addLayer("mask");
-      }, "Add mask layer");
-      add.setAttribute("aria-label", "Add mask layer");
+      }, tr("Add mask layer"));
+      add.setAttribute("aria-label", tr("Add mask layer"));
       head.append(add);
     } else {
       const badge = document.createElement("span");
@@ -6526,18 +6527,18 @@ class UniCanvasWidget {
     row.dataset.layerType = layer.type;
     const thumb = document.createElement("canvas");
     thumb.className = "vnccs-uc-thumb";
-    thumb.title = layer.visible ? "Hide layer" : "Show layer";
+    thumb.title = layer.visible ? tr("Hide layer") : tr("Show layer");
     thumb.width = 68;
     thumb.height = 68;
     this.drawLayerThumbnailPlaceholder(thumb, layer);
     this.queueLayerThumbnailRender(thumb, layer);
     const label = document.createElement("div");
-    label.innerHTML = `<div class="vnccs-uc-layer-name">${this._escape(layer.name)}</div><div class="vnccs-uc-layer-type">${layer.type}${layer.visible ? "" : " hidden"}</div>`;
-    const lock = this._button(layer.locked ? UI_ICONS.lock : UI_ICONS.unlock, "vnccs-uc-icon", null, layer.locked ? "Unlock layer" : "Lock layer");
+    label.innerHTML = `<div class="vnccs-uc-layer-name">${this._escape(layer.name)}</div><div class="vnccs-uc-layer-type">${layer.type}${layer.visible ? "" : " " + tr("hidden")}</div>`;
+    const lock = this._button(layer.locked ? UI_ICONS.lock : UI_ICONS.unlock, "vnccs-uc-icon", null, layer.locked ? tr("Unlock layer") : tr("Lock layer"));
     lock.dataset.layerLock = "";
-    const del = this._button(UI_ICONS.trash, "vnccs-uc-icon danger", null, "Delete layer");
+    const del = this._button(UI_ICONS.trash, "vnccs-uc-icon danger", null, tr("Delete layer"));
     if (layer.type === "pose") {
-      const edit = this._button(POSE_ICON, "vnccs-uc-icon vnccs-uc-layer-edit-pose", null, "Edit pose");
+      const edit = this._button(POSE_ICON, "vnccs-uc-icon vnccs-uc-layer-edit-pose", null, tr("Edit pose"));
       edit.addEventListener("click", (e) => { e.stopPropagation(); this.editPoseLayer(layer); });
       edit.addEventListener("dblclick", (e) => e.stopPropagation());
       row.append(thumb, label, edit, lock, del);
@@ -6575,7 +6576,7 @@ class UniCanvasWidget {
     });
     label.addEventListener("dblclick", async (e) => {
       e.stopPropagation();
-      const next = await this.promptInWidget("Rename Layer", "Layer name", layer.name);
+      const next = await this.promptInWidget(tr("Rename Layer"), tr("Layer name"), layer.name);
       if (next !== null && !this.editingBlocked && !this._disposed && this.layers.includes(layer)) {
         layer.name = String(next).trim() || layer.name;
         layer.nameSource = "user"; // auto naming never replaces a name the user typed
@@ -6586,7 +6587,7 @@ class UniCanvasWidget {
     thumb.addEventListener("click", (e) => {
       e.stopPropagation();
       if (this.transformDraft) {
-        this.setStatus("Apply or cancel the active transform first", true);
+        this.setStatus(tr("Apply or cancel the active transform first"), true);
         return;
       }
       layer.visible = !layer.visible;
@@ -6599,7 +6600,7 @@ class UniCanvasWidget {
     lock.addEventListener("click", (e) => {
       e.stopPropagation();
       if (this.transformDraft) {
-        this.setStatus("Apply or cancel the active transform first", true);
+        this.setStatus(tr("Apply or cancel the active transform first"), true);
         return;
       }
       layer.locked = !layer.locked;
@@ -6621,18 +6622,18 @@ class UniCanvasWidget {
     row.classList.toggle("hidden-layer", !layer.visible);
     const thumb = row.querySelector(".vnccs-uc-thumb");
     if (thumb instanceof HTMLCanvasElement) {
-      thumb.title = layer.visible ? "Hide layer" : "Show layer";
+      thumb.title = layer.visible ? tr("Hide layer") : tr("Show layer");
       this.drawLayerThumbnailPlaceholder(thumb, layer);
       this.queueLayerThumbnailRender(thumb, layer);
     }
     const name = row.querySelector(".vnccs-uc-layer-name");
     if (name) name.textContent = layer.name;
     const type = row.querySelector(".vnccs-uc-layer-type");
-    if (type) type.textContent = `${layer.type}${layer.visible ? "" : " hidden"}`;
+    if (type) type.textContent = `${layer.type}${layer.visible ? "" : " " + tr("hidden")}`;
     const lock = row.querySelector("[data-layer-lock]") || row.querySelectorAll(".vnccs-uc-icon")[0];
     if (lock) {
       lock.innerHTML = layer.locked ? UI_ICONS.lock : UI_ICONS.unlock;
-      lock.title = layer.locked ? "Unlock layer" : "Lock layer";
+      lock.title = layer.locked ? tr("Unlock layer") : tr("Lock layer");
       lock.classList.toggle("locked", !!layer.locked);
     }
   }
@@ -6689,7 +6690,7 @@ class UniCanvasWidget {
   setActiveLayer(layerId) {
     if (!layerId || !this.layers.some(layer => layer.id === layerId)) return;
     if (this.transformDraft && this.transformDraft.layerId !== layerId) {
-      this.setStatus("Apply or cancel the active transform first", true);
+      this.setStatus(tr("Apply or cancel the active transform first"), true);
       return;
     }
     this.poseEditor?.commit();
@@ -6731,14 +6732,14 @@ class UniCanvasWidget {
   reorderLayer(sourceId, targetId, placement = "before") {
     if (!sourceId || !targetId || sourceId === targetId) return;
     if (this.transformDraft) {
-      this.setStatus("Apply or cancel the active transform first", true);
+      this.setStatus(tr("Apply or cancel the active transform first"), true);
       return;
     }
     const from = this.layers.findIndex((l) => l.id === sourceId);
     const target = this.layers.findIndex((l) => l.id === targetId);
     if (from < 0 || target < 0) return;
     if ((this.layers[from].type === "mask") !== (this.layers[target].type === "mask")) {
-      this.setStatus("Masks and raster layers stay in separate sections", true);
+      this.setStatus(tr("Masks and raster layers stay in separate sections"), true);
       return;
     }
     const [layer] = this.layers.splice(from, 1);
@@ -6851,7 +6852,7 @@ class UniCanvasWidget {
     const layer = this.layers.find(layer => layer.id === id);
     if (!layer || (this.layers.length <= 1 && layer.type !== "mask")) return;
     if (this.transformDraft) {
-      this.setStatus("Apply or cancel the active transform first", true);
+      this.setStatus(tr("Apply or cancel the active transform first"), true);
       return;
     }
     this.poseEditor?.commit();
@@ -6879,7 +6880,7 @@ class UniCanvasWidget {
   // ONE addLayer history entry per duplicated layer.
   duplicateLayer(layer) {
     if (this.transformDraft) {
-      this.setStatus("Apply or cancel the active transform first", true);
+      this.setStatus(tr("Apply or cancel the active transform first"), true);
       return;
     }
     if (!layer) return;
@@ -6930,7 +6931,7 @@ class UniCanvasWidget {
   // NO history entry, same as the header icon buttons always behaved.
   moveLayerOrder(layer, direction) {
     if (this.transformDraft) {
-      this.setStatus("Apply or cancel the active transform first", true);
+      this.setStatus(tr("Apply or cancel the active transform first"), true);
       return;
     }
     if (!layer) return;
@@ -6952,18 +6953,18 @@ class UniCanvasWidget {
 
   async confirmFlattenLayers() {
     if (this.transformDraft) {
-      this.setStatus("Apply or cancel the active transform first", true);
+      this.setStatus(tr("Apply or cancel the active transform first"), true);
       return;
     }
     if (this.layers.length <= 1) {
-      this.setStatus("There is only one layer");
+      this.setStatus(tr("There is only one layer"));
       return;
     }
     const documentRevision = this._documentRevision;
     const confirmed = await this.confirmInWidget(
-      "Flatten Layers",
-      "All visible raster layers will be flattened into one master layer. All other layers will be removed and an empty mask layer will be created. Undo (Ctrl+Z) brings them back.",
-      "Flatten"
+      tr("Flatten Layers"),
+      tr("All visible raster layers will be flattened into one master layer. All other layers will be removed and an empty mask layer will be created. Undo (Ctrl+Z) brings them back."),
+      tr("Flatten")
     );
     if (!confirmed || this.editingBlocked || this._disposed || this._isRestoring || documentRevision !== this._documentRevision) return;
     this.flattenLayersToMaster();
@@ -6996,7 +6997,7 @@ class UniCanvasWidget {
       return rect.x < this.origin.x || rect.y < this.origin.y || rect.x + rect.width > this.origin.x + this.size.width
         || rect.y + rect.height > this.origin.y + this.size.height;
     })) {
-      this.setStatus("Cannot flatten layers outside the current canvas area. Move those layers inside it first.", true);
+      this.setStatus(tr("Cannot flatten layers outside the current canvas area. Move those layers inside it first."), true);
       return;
     }
     this.poseEditor?.release();
@@ -7027,7 +7028,7 @@ class UniCanvasWidget {
     this.requestRender();
     this.syncLightStateToWidget();
     this.scheduleFullSync();
-    this.setStatus("Layers flattened to Master Layer");
+    this.setStatus(tr("Layers flattened to Master Layer"));
   }
 
   async importFile(file) {
@@ -7036,14 +7037,14 @@ class UniCanvasWidget {
     const importRevision = this._importRevision = (this._importRevision || 0) + 1;
     this._panoramaImportClose?.();
     if (this.transformDraft) {
-      this.setStatus("Apply or cancel the active transform first", true);
+      this.setStatus(tr("Apply or cancel the active transform first"), true);
       return;
     }
     const url = URL.createObjectURL(file);
     let img;
     try { img = await this.loadImage(url); }
     catch (error) {
-      if (!this._disposed && !this._isRestoring && importRevision === this._importRevision) this.setStatus(`Image import failed: ${error.message || error}`, true);
+      if (!this._disposed && !this._isRestoring && importRevision === this._importRevision) this.setStatus(tr("Image import failed: {error}", { error: error.message || error }), true);
       return;
     }
     finally { URL.revokeObjectURL(url); this.fileInput.value = ""; }
@@ -7052,9 +7053,9 @@ class UniCanvasWidget {
       const choice = await this.choosePanoramaImport(img);
       if (choice === "cancel" || this._disposed || this._isRestoring || this.editingBlocked || importRevision !== this._importRevision) return;
       if (choice === "panorama") {
-        if (this.isStagingActive() || this.sam.busy) { this.setStatus("Finish generation and segmentation before entering panorama mode", true); return; }
+        if (this.isStagingActive() || this.sam.busy) { this.setStatus(tr("Finish generation and segmentation before entering panorama mode"), true); return; }
         try { await this.importPanorama(img, file.name.replace(/\.[^.]+$/, "")); }
-        catch (error) { this.setStatus(`Panorama import failed: ${error.message || error}`, true); }
+        catch (error) { this.setStatus(tr("Panorama import failed: {error}", { error: error.message || error }), true); }
         return;
       }
     }
@@ -7424,7 +7425,7 @@ class UniCanvasWidget {
   async draw() {
     if (this.editingBlocked || this._isRestoring || this._disposed) return;
     if (this.isPointerDown || this.historyGestureActive || this.transformDraft || this.poseEditor?.isGestureActive?.()) {
-      this.setStatus("Finish the current edit before generating.", true);
+      this.setStatus(tr("Finish the current edit before generating."), true);
       return;
     }
     this.closeColorMatchPreview?.(true);
@@ -7453,7 +7454,7 @@ class UniCanvasWidget {
         await this.runGeneration({ ...request, preparation });
       }
     } catch (error) {
-      this.setStatus(`Generation failed: ${error.message || error}`, true);
+      this.setStatus(tr("Generation failed: {error}", { error: error.message || error }), true);
     } finally {
       this._cancelGenerationPreparation = null;
       this._generationPreparing = false;
@@ -7478,11 +7479,11 @@ class UniCanvasWidget {
           this.editPoseLayer(poseLayer);
           this.poseEditor?.setCharacterOpen(true);
         } else this.setActiveLayer(poseLayer.id);
-        this.setStatus(poseLayer.locked ? "Unlock the pose layer to choose a character image." : characterIssue, true);
+        this.setStatus(poseLayer.locked ? tr("Unlock the pose layer to choose a character image.") : characterIssue, true);
         return;
       }
       if (!["flux_klein", "qwen_image21"].includes(modelBase)) {
-        this.setStatus("Pose layers require Flux Klein or Qwen Edit 2.1. Select a compatible model or hide the pose layer.", true);
+        this.setStatus(tr("Pose layers require Flux Klein or Qwen Edit 2.1. Select a compatible model or hide the pose layer."), true);
         return;
       }
       const preparationKey = () => JSON.stringify([this.bbox,
@@ -7495,8 +7496,8 @@ class UniCanvasWidget {
         this.poseEditor ||= new UniCanvasPoseEditor(this);
         poseRequest = await prepare(this.poseEditor.generation(poseLayer, inferenceSize, requestSettings.positive, preparation));
         if (preparation?.cancelled || this._stopRequested) return;
-        if (this._disposed || preparationDocument !== this.panorama || requestDocumentRevision !== (this._documentRevision || 0) || preparationKey() !== beforePreparation) throw new Error("The canvas changed while preparing the pose. Generate again.");
-      } catch (error) { this.setStatus(`Pose generation: ${error.message || error}`, true); return; }
+        if (this._disposed || preparationDocument !== this.panorama || requestDocumentRevision !== (this._documentRevision || 0) || preparationKey() !== beforePreparation) throw new Error(tr("The canvas changed while preparing the pose. Generate again."));
+      } catch (error) { this.setStatus(tr("Pose generation: {error}", { error: error.message || error }), true); return; }
       finally { this.drawInProgress = false; this.drawBtn.disabled = false; }
     }
     this.panorama?.commit();
@@ -7508,7 +7509,7 @@ class UniCanvasWidget {
     if (config) {
       const resolved = config;
       if (resolved.unsupported) {
-        this.setStatus(`VNCSS Config: ${resolved.unsupported} - queueing the workflow for this draw.`);
+        this.setStatus(tr("VNCSS Config: {reason} - queueing the workflow for this draw.", { reason: resolved.unsupported }));
       } else {
         this.drawInProgress = true;
         this.drawBtn.disabled = true;
@@ -7517,7 +7518,7 @@ class UniCanvasWidget {
           if (preparation?.cancelled || this._stopRequested) return;
           configOverrides = { ...resolved.settings, edit_reference_images: refs, edit_use_layers_as_reference: true };
         } catch (err) {
-          this.setStatus(`VNCSS Config references: ${err.message || err} - queueing the workflow for this draw.`);
+          this.setStatus(tr("VNCSS Config references: {error} - queueing the workflow for this draw.", { error: err.message || err }));
         } finally {
           this.drawInProgress = false;
           this.drawBtn.disabled = false;
@@ -7530,7 +7531,7 @@ class UniCanvasWidget {
     // asset rules do not apply to this draw and must not block it.
     const validationError = configLinked ? null : loader.validate?.(requestSettings);
     if (validationError) {
-      this.setStatus(validationError, true);
+      this.setStatus(tr(validationError), true);
       return;
     }
     this.drawInProgress = true;
@@ -7547,7 +7548,7 @@ class UniCanvasWidget {
     const rasterCoversBbox = rasterStats.nonzeroAlphaPixels >= bboxPixels;
     if (!hasRaster && modelBase === "krea2_edit") {
       this.drawInProgress = false;
-      this.setStatus("Krea2 Edit requires an image inside the bbox. Import an image and describe the edit.", true);
+      this.setStatus(tr("Krea2 Edit requires an image inside the bbox. Import an image and describe the edit."), true);
       return;
     }
     const mode = poseRequest ? "img2img" : !hasRaster ? "txt2img" : rasterCoversBbox ? "inpaint" : "outpaint";
@@ -7559,8 +7560,8 @@ class UniCanvasWidget {
     const maskCanvas = mode === "outpaint" ? this.makeOutpaintMaskCanvas(userMaskCanvas, inferenceSize, requestSettings) : userMaskCanvas;
     const batchSize = Math.max(1, Math.min(99, Math.round(Number(requestSettings.batch_size) || 1)));
     requestSettings.batch_size = batchSize;
-    this.setStatus(`Generating ${mode} ${inferenceSize.width}×${inferenceSize.height}${batchSize > 1 ? ` ×${batchSize}` : ""}...`);
-    this.updateGenerationProgress({ progress: 0.01, message: "Starting generation", step: 0, steps: Number(requestSettings.steps) || 0 }, true);
+    this.setStatus(tr("Generating {mode} {size}...", { mode, size: `${inferenceSize.width}×${inferenceSize.height}${batchSize > 1 ? ` ×${batchSize}` : ""}` }));
+    this.updateGenerationProgress({ progress: 0.01, message: tr("Starting generation"), step: 0, steps: Number(requestSettings.steps) || 0 }, true);
     const drawContext = { settings: requestSettings, mode, imageCanvas, maskCanvas, bbox: requestBbox, inferenceSize, outputSize, poseRequest, panoramaCamera, requestPanorama, requestDocumentRevision };
     const drawId = configLinked ? `uc_${Date.now().toString(36)}` : debugId;
     if (configLinked) {
@@ -7620,15 +7621,15 @@ class UniCanvasWidget {
         await this._stageGeneratedImages(data, maskCanvas, mode, drawContext);
       }
       this.render();
-      this.setStatus(`GENERATE complete (${this.stagingItems.length} staged)${performance ? ` - ${performance}` : ""}`);
-      this.updateGenerationProgress({ progress: 1, message: "Complete", step: Number(requestSettings.steps) || 0, steps: Number(requestSettings.steps) || 0 }, true);
+      this.setStatus(tr("GENERATE complete ({count} staged){performance}", { count: this.stagingItems.length, performance: performance ? ` - ${performance}` : "" }));
+      this.updateGenerationProgress({ progress: 1, message: tr("Complete"), step: Number(requestSettings.steps) || 0, steps: Number(requestSettings.steps) || 0 }, true);
     } catch (err) {
       if (err?.cancelled || this._stopRequested) {
-        this.setStatus("Generation stopped - VRAM freed");
-        this.updateGenerationProgress({ progress: 1, message: "Stopped - VRAM freed", stage: "cancelled" }, true);
+        this.setStatus(tr("Generation stopped - VRAM freed"));
+        this.updateGenerationProgress({ progress: 1, message: tr("Stopped - VRAM freed"), stage: "cancelled" }, true);
       } else {
-        this.setStatus(`GENERATE failed: ${err.message || err}`, true);
-        this.updateGenerationProgress({ progress: 1, message: `Failed: ${err.message || err}`, stage: "error" }, true);
+        this.setStatus(tr("GENERATE failed: {error}", { error: err.message || err }), true);
+        this.updateGenerationProgress({ progress: 1, message: tr("Failed: {error}", { error: err.message || err }), stage: "error" }, true);
       }
     } finally {
       this._queuedDrawPromptId = null;
@@ -7655,13 +7656,13 @@ class UniCanvasWidget {
     if (!this._drawDebugId) {
       this._stopRequested = true;
       this._cancelGenerationPreparation?.();
-      this.setStatus("Stopping request preparation…");
+      this.setStatus(tr("Stopping request preparation…"));
       return;
     }
     this._stopRequested = true;
     this.stopBtn.disabled = true;
-    this.setStatus("Stopping...");
-    this.updateGenerationProgress({ message: "Stopping...", stage: "status" }, false);
+    this.setStatus(tr("Stopping..."));
+    this.updateGenerationProgress({ message: tr("Stopping..."), stage: "status" }, false);
     const queuedPromptId = this._drawViaQueue ? this._queuedDrawPromptId : null;
     const post = (url, body) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
     try {
@@ -7671,7 +7672,7 @@ class UniCanvasWidget {
         await post("/queue", { delete: [queuedPromptId] });
       }
     } catch (err) {
-      this.setStatus(`Stop failed: ${err.message || err}`, true);
+      this.setStatus(tr("Stop failed: {error}", { error: err.message || err }), true);
       this._stopRequested = false;
       this.stopBtn.disabled = false;
     }
@@ -7726,14 +7727,14 @@ class UniCanvasWidget {
     this.renderLayerList();
     this.syncLightStateToWidget();
     this.scheduleFullSync();
-    this.setStatus("Staging accepted; remaining results discarded");
+    this.setStatus(tr("Staging accepted; remaining results discarded"));
     maybeAutoNameLayer(this, layer);
   }
 
   discardStaging() {
     this.removeActiveStagingItem();
     this.requestRender();
-    this.setStatus(this.stagingItems.length ? `Staging discarded (${this.stagingItems.length} left)` : "Staging discarded");
+    this.setStatus(this.stagingItems.length ? tr("Staging discarded ({count} left)", { count: this.stagingItems.length }) : tr("Staging discarded"));
   }
 
   toggleStagingVisibility() {
@@ -7759,16 +7760,16 @@ class UniCanvasWidget {
       this.agPsd = await import("https://esm.sh/ag-psd@28.2.2?bundle");
       return this.agPsd;
     } catch (err) {
-      throw new Error(`ag-psd load failed: ${err.message || err}`);
+      throw new Error(tr("ag-psd load failed: {error}", { error: err.message || err }));
     }
   }
 
   async exportPSD() {
     try {
       await this.poseEditor?.flush();
-      this.setStatus("Preparing PSD...");
+      this.setStatus(tr("Preparing PSD..."));
       const { writePsd } = await this.loadAgPsd();
-      if (typeof writePsd !== "function") throw new Error("ag-psd writePsd is not available");
+      if (typeof writePsd !== "function") throw new Error(tr("ag-psd writePsd is not available"));
       if (this.panorama) {
         this.panorama.commit();
         const { width, height } = this.panorama.settings;
@@ -7781,19 +7782,19 @@ class UniCanvasWidget {
         }));
         const buffer = writePsd({ width, height, channels: 3, bitsPerChannel: 8, colorMode: 3, children });
         this.downloadBlob(new Blob([buffer], { type: "application/octet-stream" }), "unicanvas-panorama.psd");
-        this.setStatus(`Panorama PSD exported: ${width} × ${height}`); return;
+        this.setStatus(tr("Panorama PSD exported: {width} × {height}", { width, height })); return;
       }
       const rasterLayers = this.layers.filter((layer) => isImageLayer(layer) && this.getLayerWorldBounds(layer));
       if (!rasterLayers.length) {
-        this.setStatus("No raster layers to export", true);
+        this.setStatus(tr("No raster layers to export"), true);
         return;
       }
       const visibleRect = this.getLayersVisibleWorldRect(rasterLayers);
       const maxDimension = 8192;
       const maxArea = maxDimension * maxDimension;
-      if (visibleRect.width <= 0 || visibleRect.height <= 0) throw new Error("Invalid PSD bounds");
+      if (visibleRect.width <= 0 || visibleRect.height <= 0) throw new Error(tr("Invalid PSD bounds"));
       if (visibleRect.width > maxDimension || visibleRect.height > maxDimension || visibleRect.width * visibleRect.height > maxArea) {
-        throw new Error("Canvas is too large for PSD export");
+        throw new Error(tr("Canvas is too large for PSD export"));
       }
       const psdLayers = [...rasterLayers].reverse();
       const children = psdLayers.map((layer, index) => {
@@ -7826,9 +7827,9 @@ class UniCanvasWidget {
       const buffer = writePsd(psd);
       const blob = new Blob([buffer], { type: "application/octet-stream" });
       this.downloadBlob(blob, `unicanvas-layers-${new Date().toISOString().slice(0, 10)}.psd`);
-      this.setStatus(`PSD exported: ${children.length} layers`);
+      this.setStatus(tr("PSD exported: {count} layers", { count: children.length }));
     } catch (err) {
-      this.setStatus(`PSD failed: ${err.message || err}`, true);
+      this.setStatus(tr("PSD failed: {error}", { error: err.message || err }), true);
     }
   }
 
@@ -7866,7 +7867,7 @@ class UniCanvasWidget {
     const value = Math.max(0, Math.min(1, Number(progress?.progress) || 0));
     const step = Number(progress?.step) || 0;
     const steps = Number(progress?.steps) || 0;
-    const message = progress?.message || progress?.stage || "Working";
+    const message = progress?.message || progress?.stage || tr("Working");
     const detail = steps > 0 ? `${message} (${step}/${steps})` : message;
     this.generationProgress.querySelector(".vnccs-uc-progress-label").textContent = detail;
     this.generationProgress.querySelector(".vnccs-uc-progress-percent").textContent = `${Math.round(value * 100)}%`;
@@ -7943,7 +7944,7 @@ class UniCanvasWidget {
   // by draw() (bbox, inferenceSize, outputSize) so staged items match the request that produced them.
   async _stageGeneratedImages(result, maskCanvas, mode, context) {
     const resultImages = Array.isArray(result.images) && result.images.length ? result.images : [result.image].filter(Boolean);
-    if (!resultImages.length) throw new Error("Generation returned no images");
+    if (!resultImages.length) throw new Error(tr("Generation returned no images"));
     const bbox = { ...context.bbox };
     const inferenceSize = context.inferenceSize;
     const outputSize = context.outputSize;
@@ -8042,11 +8043,11 @@ class UniCanvasWidget {
     const onExecutionError = (event) => {
       if (!this._eventMatchesQueuedPrompt(event, promptId)) return;
       const detail = event?.detail || {};
-      executionFailure = new Error(`Queued generation failed: ${detail.exception_message || detail.error || "prompt execution failed"}`);
+      executionFailure = new Error(tr("Queued generation failed: {error}", { error: detail.exception_message || detail.error || tr("prompt execution failed") }));
     };
     const onExecutionInterrupted = (event) => {
       if (!this._eventMatchesQueuedPrompt(event, promptId)) return;
-      executionFailure = new Error("Queued generation was cancelled");
+      executionFailure = new Error(tr("Queued generation was cancelled"));
     };
     api.addEventListener("execution_error", onExecutionError);
     api.addEventListener("execution_interrupted", onExecutionInterrupted);
@@ -8055,15 +8056,15 @@ class UniCanvasWidget {
         if (this._stopRequested) throw Object.assign(new Error("Generation stopped"), { cancelled: true });
         if (executionFailure) throw executionFailure;
         const res = await fetch(`/vnccs/unicanvas/result/${encodeURIComponent(drawId)}?t=${Date.now()}`);
-        if (!res.ok) throw new Error(`Queued result request failed: HTTP ${res.status}`);
+        if (!res.ok) throw new Error(tr("Queued result request failed: HTTP {status}", { status: res.status }));
         const data = await res.json();
         if (data.present) return data;
         if (!(await this._queuedPromptIsLive(promptId))) {
-          throw new Error("Queued generation left the queue without a result");
+          throw new Error(tr("Queued generation left the queue without a result"));
         }
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
-      throw new Error("Timed out waiting for the queued generation result");
+      throw new Error(tr("Timed out waiting for the queued generation result"));
     } finally {
       api.removeEventListener("execution_error", onExecutionError);
       api.removeEventListener("execution_interrupted", onExecutionInterrupted);
@@ -8077,7 +8078,7 @@ class UniCanvasWidget {
       negativeInput.closest(".vnccs-uc-field").hidden = Boolean(this.standalone && this.isPresetTurboEnabled(this.getActivePreset()));
       const groundedEdit = this.getModelBase() === "krea2_edit";
       negativeInput.disabled = groundedEdit;
-      negativeInput.title = groundedEdit ? "Krea2 Edit uses the same source image with an empty instruction for negative conditioning." : "";
+      negativeInput.title = groundedEdit ? tr("Krea2 Edit uses the same source image with an empty instruction for negative conditioning.") : "";
     }
     this.syncInferenceControls();
     this.container.querySelectorAll("[data-loader-field]").forEach((el) => {
@@ -8099,7 +8100,7 @@ class UniCanvasWidget {
       }
       const wanted = ["", ...loras];
       if (select.options.length !== wanted.length || [...select.options].some((option, index) => option.value !== wanted[index])) {
-        select.replaceChildren(...wanted.map((name) => new Option(name || "None", name)));
+        select.replaceChildren(...wanted.map((name) => new Option(name || tr("None"), name)));
       }
     });
     const modeSelect = this.container.querySelector('[data-setting="generation_mode"]');
@@ -8108,7 +8109,7 @@ class UniCanvasWidget {
       // generation family and the Mode list has to stay selectable (e.g. to pick "MiniMax H3").
       const modePinnedByLoader = Boolean(loader.forcedMode) && !this._isConfigLinked();
       modeSelect.disabled = modePinnedByLoader;
-      modeSelect.title = modePinnedByLoader ? "Checkpoint loader always uses SDXL" : "";
+      modeSelect.title = modePinnedByLoader ? tr("Checkpoint loader always uses SDXL") : "";
     }
     this.container.querySelectorAll("[data-setting]").forEach((el) => {
       const key = el.dataset.setting;
@@ -8147,14 +8148,14 @@ class UniCanvasWidget {
     const card = document.createElement("div");
     card.className = "vnccs-uc-prompt-guide-card";
     card.setAttribute("role", "dialog");
-    card.setAttribute("aria-label", "How to prompt this model");
+    card.setAttribute("aria-label", tr("How to prompt this model"));
     const bar = document.createElement("div");
     bar.className = "vnccs-uc-prompt-guide-bar";
     const title = document.createElement("strong");
-    title.textContent = "Prompt guide";
-    this.promptGuideCopyBtn = this._button("Copy", "vnccs-uc-btn", () => void this.copyPromptGuide(), "Copy the guide, e.g. to paste it into an LLM that writes the prompt");
-    const close = this._button("×", "vnccs-uc-icon", () => this.togglePromptGuide(false), "Close");
-    close.setAttribute("aria-label", "Close prompt guide");
+    title.textContent = tr("Prompt guide");
+    this.promptGuideCopyBtn = this._button(tr("Copy"), "vnccs-uc-btn", () => void this.copyPromptGuide(), tr("Copy the guide, e.g. to paste it into an LLM that writes the prompt"));
+    const close = this._button("×", "vnccs-uc-icon", () => this.togglePromptGuide(false), tr("Close"));
+    close.setAttribute("aria-label", tr("Close prompt guide"));
     bar.append(title, this.promptGuideCopyBtn, close);
     this.promptGuideBody = document.createElement("div");
     this.promptGuideBody.className = "vnccs-uc-prompt-guide-body";
@@ -8207,18 +8208,18 @@ class UniCanvasWidget {
     }
     const button = this.promptGuideCopyBtn;
     if (!button) return;
-    button.textContent = copied ? "Copied" : "Copy failed";
+    button.textContent = copied ? tr("Copied") : tr("Copy failed");
     clearTimeout(this._promptGuideCopyTimer);
-    this._promptGuideCopyTimer = setTimeout(() => { button.textContent = "Copy"; }, 1400);
+    this._promptGuideCopyTimer = setTimeout(() => { button.textContent = tr("Copy"); }, 1400);
   }
 
   // Prompt help comes from the active family's backend descriptor (capabilities.prompt_guide).
   syncPromptGuide() {
     const guide = resolvePromptGuide(this.modelDescriptors, this.settings.generation_mode);
     const positive = this.container.querySelector('[data-setting="positive"]');
-    if (positive) positive.placeholder = guide?.hint || "positive prompt";
+    if (positive) positive.placeholder = guide?.hint || tr("positive prompt");
     const button = this.container.querySelector("[data-prompt-help]");
-    if (button) button.title = guide ? `How to prompt ${guide.label}` : "How to prompt this model";
+    if (button) button.title = guide ? tr("How to prompt {model}", { model: guide.label }) : tr("How to prompt this model");
     if (this.promptGuidePanel && !this.promptGuidePanel.hidden) renderPromptGuide(this.promptGuideBody, guide);
     syncPromptEnhance(this);
   }
@@ -8246,7 +8247,7 @@ class UniCanvasWidget {
     if (!btn) return;
     const randomMode = (this.settings.seed_mode || DEFAULT_SEED_MODE) === "randomize";
     btn.classList.toggle("active", randomMode);
-    btn.title = randomMode ? "Random seed" : "Fixed seed";
+    btn.title = randomMode ? tr("Random seed") : tr("Fixed seed");
     btn.setAttribute("aria-pressed", randomMode ? "true" : "false");
   }
 
@@ -8579,7 +8580,7 @@ class UniCanvasWidget {
       this.lastUploadedStateJSON = null;
       state = { ...state, state_id: this.stateCacheId, output_id: this.getOutputCacheId() };
       stateJSON = JSON.stringify(state);
-      this.setStatus("Saving canvas snapshot; workflows keep the last saved canvas until the upload completes.");
+      this.setStatus(tr("Saving canvas snapshot; workflows keep the last saved canvas until the upload completes."));
     }
     this._capturedStateJSON = stateJSON;
     // Every snapshot follows the previous upload, including flat raster canvases.
@@ -8605,7 +8606,7 @@ class UniCanvasWidget {
         if (saved && managed && loadRevision === this._stateLoadRevision && !this._disposed) {
           let document;
           try { ({ document } = await canvasRequest("", "POST", { state_id: captured.state_id, name: "Recovered canvas" })); }
-          catch (error) { this.setStatus(`Canvas save failed: ${error.message || error}`, true); return false; }
+          catch (error) { this.setStatus(tr("Canvas save failed: {error}", { error: error.message || error }), true); return false; }
           if (loadRevision !== this._stateLoadRevision || this._disposed) return false;
           captured.canvas_id = document.canvas_id;
           this.canvasId = document.canvas_id;
@@ -8621,14 +8622,14 @@ class UniCanvasWidget {
         }
         if (saved && loadRevision === this._stateLoadRevision && !this._disposed && !this._isRestoring) {
           this.syncToNode(captured);
-          this.setStatus("Another tab changed the canvas. Your edits were saved as a separate canvas draft.");
+          this.setStatus(tr("Another tab changed the canvas. Your edits were saved as a separate canvas draft."));
         }
       }
       if (saved && this._pendingStateCacheId && this._pendingStateCacheId === captured.state_id && revision === this.stateUploadRevision
           && loadRevision === this._stateLoadRevision && !this._disposed && !this._isRestoring) {
         this._pendingStateCacheId = null;
         if (!captured.canvas_id) this.syncToNode(captured);
-        this.setStatus("Canvas snapshot saved.");
+        this.setStatus(tr("Canvas snapshot saved."));
       }
       if (saved && captured.canvas_id && loadRevision === this._stateLoadRevision && !this._disposed) {
         this._frozenStateJSON = JSON.stringify(captured);
@@ -8662,7 +8663,7 @@ class UniCanvasWidget {
         ...(this.standalone ? { base_revision: this.stateCacheRevision ?? -1 } : {}) }),
     });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
-    if ((await res.json?.())?.status === "stale_ignored") throw new Error("A newer canvas is already saved. Reload before clearing it.");
+    if ((await res.json?.())?.status === "stale_ignored") throw new Error(tr("A newer canvas is already saved. Reload before clearing it."));
     this.stateUploadRevision = this.outputUploadRevision = revision;
     if (this.standalone) this.stateCacheRevision = revision;
     this.lastUploadedStateJSON = this.lastUploadedOutputJSON = null;
@@ -8675,11 +8676,11 @@ class UniCanvasWidget {
   }
 
   async preparePanoramaForQueue() {
-    if (this._isRestoring || this.isPointerDown || this.historyGestureActive || this.transformDraft) throw new Error("Finish the UniCanvas edit before queueing");
+    if (this._isRestoring || this.isPointerDown || this.historyGestureActive || this.transformDraft) throw new Error(tr("Finish the UniCanvas edit before queueing"));
     const loadRevision = this._stateLoadRevision;
     const checkDocument = () => {
       if (this._disposed || this._isRestoring || loadRevision !== this._stateLoadRevision) {
-        throw new Error("The UniCanvas document changed while preparing the queue. Queue again.");
+        throw new Error(tr("The UniCanvas document changed while preparing the queue. Queue again."));
       }
     };
     if (this.layers.some(layer => layer.type === "pose")) await this.poseEditor?.flush();
@@ -8690,11 +8691,11 @@ class UniCanvasWidget {
     const saved = await this.flushStateUpload();
     checkDocument();
     this.syncToNode();
-    if (!this.panorama && saved === false) throw new Error("UniCanvas state could not be saved; queue stopped to protect the latest edits");
+    if (!this.panorama && saved === false) throw new Error(tr("UniCanvas state could not be saved; queue stopped to protect the latest edits"));
     // Both document modes export the bbox composite; large source layers never need server decoding.
-    if (await this.uploadOutputSnapshot() === false) throw new Error("The canvas output could not be sent; queue stopped");
+    if (await this.uploadOutputSnapshot() === false) throw new Error(tr("The canvas output could not be sent; queue stopped"));
     checkDocument();
-    if (saved === false) this.setStatus("The panorama layers are too large to save on the server; the output was sent, but reopening this workflow may lose edits", true);
+    if (saved === false) this.setStatus(tr("The panorama layers are too large to save on the server; the output was sent, but reopening this workflow may lose edits"), true);
   }
 
   getOutputCacheId() {
@@ -8723,11 +8724,11 @@ class UniCanvasWidget {
         body: JSON.stringify({ state_id: this.getOutputCacheId(), state, revision }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
-      if ((await res.json?.())?.status === "stale_ignored") throw new Error("A newer canvas output is already saved. Reload before queueing.");
+      if ((await res.json?.())?.status === "stale_ignored") throw new Error(tr("A newer canvas output is already saved. Reload before queueing."));
       if (revision === this.outputUploadRevision) this.lastUploadedOutputJSON = payload;
       return true;
     } catch (err) {
-      this.setStatus(`Output upload failed: ${err.message || err}`, true);
+      this.setStatus(tr("Output upload failed: {error}", { error: err.message || err }), true);
       return false;
     } finally {
       this.outputUploadsPending--;
@@ -8762,7 +8763,7 @@ class UniCanvasWidget {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || `HTTP ${res.status}`);
       }
-      if ((await res.json?.())?.status === "stale_ignored") throw new Error("A newer canvas snapshot is already saved. Reload before saving.");
+      if ((await res.json?.())?.status === "stale_ignored") throw new Error(tr("A newer canvas snapshot is already saved. Reload before saving."));
       if (stateId === this.getStateCacheId()) this.stateCacheRevision = revision;
       if (state.canvas_id && state.canvas_id === this.canvasId) this._canvasPublishedStateId = stateId;
       this.confirmLocalStateBackup(backup);
@@ -8776,7 +8777,7 @@ class UniCanvasWidget {
       console.warn("[VNCCS UniCanvas] State cache upload failed", err);
       if (revision === this.stateUploadRevision && loadRevision === this._stateLoadRevision) {
         this._stateSaveFailed = !backup;
-        this.setStatus(`State cache failed: ${err.message || err}`, true);
+        this.setStatus(tr("State cache failed: {error}", { error: err.message || err }), true);
       }
       return false;
     }
@@ -8913,7 +8914,7 @@ class UniCanvasWidget {
     if (!widget?.value || widget.value === "{}") return;
     try {
       let state = JSON.parse(widget.value);
-      if (![1, 2, 3].includes(state?.version) || !Array.isArray(state.layers)) throw new Error("Unsupported or invalid canvas state.");
+      if (![1, 2, 3].includes(state?.version) || !Array.isArray(state.layers)) throw new Error(tr("Unsupported or invalid canvas state."));
       if (this.standalone && state.server_selection) {
         const catalog = await canvasRequest();
         if (this._disposed || loadRevision !== this._stateLoadRevision) return;
@@ -8948,29 +8949,29 @@ class UniCanvasWidget {
           this.stateUploadRevision = Math.max(this.stateUploadRevision || 0, Number(cached?.revision) || 0);
           this.stateCacheRevision = Number.isInteger(cached?.revision) ? cached.revision : -1;
           if ([1, 2, 3].includes(cached?.state?.version) && Array.isArray(cached.state.layers)) {
-            if (!this.standalone && Boolean(state.panorama) !== Boolean(cached.state.panorama)) throw new Error("Cached document mode does not match the workflow");
+            if (!this.standalone && Boolean(state.panorama) !== Boolean(cached.state.panorama)) throw new Error(tr("Cached document mode does not match the workflow"));
             state = this.standalone ? cached.state : this.mergeCachedState(workflowState, cached.state);
             if (this.standalone) this.canvasId = state.canvas_id || workflowState.canvas_id || null;
           } else if (res.ok) {
-            throw new Error("Cached canvas state is invalid.");
+            throw new Error(tr("Cached canvas state is invalid."));
           }
         } catch (err) {
           if (this._disposed || loadRevision !== this._stateLoadRevision) return;
           cacheRestoreFailed = true;
           console.warn("[VNCCS UniCanvas] State cache restore failed", err);
-          this.setStatus("State cache missing; trying local backup", true);
+          this.setStatus(tr("State cache missing; trying local backup"), true);
         }
       }
       if (!this.stateHasLayerPixels(state) || this.stateHasMissingLayerPixels(state)) {
         const backup = this.loadLocalStateBackup();
         if (backup) {
           state = this.mergeCachedState(state, backup);
-          this.setStatus(cacheRestoreFailed ? "Restored canvas from local backup" : "Restored canvas backup");
+          this.setStatus(cacheRestoreFailed ? tr("Restored canvas from local backup") : tr("Restored canvas backup"));
         } else if (cacheRestoreFailed) {
-          this.setStatus("State cache missing and no local image backup found", true);
+          this.setStatus(tr("State cache missing and no local image backup found"), true);
           if (!this._disposed && loadRevision === this._stateLoadRevision) {
             this._stateRestoreFailed = true;
-            this.setStatus("Canvas restore failed. Reload to recover saved pixels, or start a new canvas before saving.", true);
+            this.setStatus(tr("Canvas restore failed. Reload to recover saved pixels, or start a new canvas before saving."), true);
             if (workflowSettings) this.applySerializedSettings(workflowSettings);
           }
           return;
@@ -8978,7 +8979,7 @@ class UniCanvasWidget {
       }
       if (this.stateHasMissingLayerPixels(state)) {
         this._stateRestoreFailed = true;
-        this.setStatus("Canvas restore failed: some saved layer pixels are missing. Reload to recover them, or start a new canvas before saving.", true);
+        this.setStatus(tr("Canvas restore failed: some saved layer pixels are missing. Reload to recover them, or start a new canvas before saving."), true);
         if (workflowSettings) this.applySerializedSettings(workflowSettings);
         return;
       }
@@ -9027,7 +9028,7 @@ class UniCanvasWidget {
       console.warn("[VNCCS UniCanvas] Failed to restore state", err);
       if (!this._disposed && loadRevision === this._stateLoadRevision) {
         this._stateRestoreFailed = true;
-        this.setStatus("Canvas restore failed. Original workflow data preserved; reload or start a new canvas before saving.", true);
+        this.setStatus(tr("Canvas restore failed. Original workflow data preserved; reload or start a new canvas before saving."), true);
       }
     }
   }
@@ -9048,15 +9049,15 @@ class UniCanvasWidget {
         const merged = backup ? this.mergeCachedState(state, backup) : null;
         if (merged && this.stateHasLayerPixels(merged)) {
           state = merged;
-          this.setStatus("Recovered canvas images from local backup");
+          this.setStatus(tr("Recovered canvas images from local backup"));
         } else if (!replaceDocument && !this.stateHasMissingLayerPixels(state) && state.layers.some(layer => layer.cached !== false) && this.layers.some((layer) => this.getLayerAlphaBounds(layer))) {
-          this.setStatus("Skipped metadata-only canvas restore to protect existing images", true);
+          this.setStatus(tr("Skipped metadata-only canvas restore to protect existing images"), true);
           // The existing pixels are protected, but the saved model/generation settings still apply.
           if (state.settings) this.applySerializedSettings(state.settings);
           return;
         }
       }
-      if (this.stateHasMissingLayerPixels(state)) throw new Error("Some saved layer pixels are missing");
+      if (this.stateHasMissingLayerPixels(state)) throw new Error(tr("Some saved layer pixels are missing"));
       const panoramaSettings = normalizePanorama(state.panorama);
       restoredPanorama = panoramaSettings ? new PanoramaDocument(this, panoramaSettings) : null;
       const nextOrigin = panoramaSettings ? { x: 0, y: 0 } : (state.origin || this.origin);
@@ -9065,7 +9066,7 @@ class UniCanvasWidget {
       const nextBbox = panoramaSettings ? { x: 0, y: 0, width: view, height: view } : (state.bbox || this.bbox);
       const layers = [];
       for (const item of state.layers) {
-        if (restoredPanorama && !item.dataURL) throw new Error("Panorama layer pixels are missing from the saved document");
+        if (restoredPanorama && !item.dataURL) throw new Error(tr("Panorama layer pixels are missing from the saved document"));
         const layer = {
           id: item.id || uid(),
           name: item.name || "Layer",
@@ -9082,7 +9083,7 @@ class UniCanvasWidget {
           const img = await this.loadImage(item.dataURL);
           if (restoredPanorama) {
             const surface = restoredPanorama.ensureLayer(layer);
-            if (img.width !== surface.width || img.height !== surface.height) throw new Error("Panorama layer dimensions do not match the document");
+            if (img.width !== surface.width || img.height !== surface.height) throw new Error(tr("Panorama layer dimensions do not match the document"));
             surface.getContext("2d").drawImage(img, 0, 0);
           } else if (item.crop) {
             this.configureImageContext(layer.canvas.getContext("2d")).drawImage(img, item.crop.x || 0, item.crop.y || 0);
@@ -9103,7 +9104,7 @@ class UniCanvasWidget {
         layers.push(layer);
       }
       if (this._disposed || restoreRevision !== this._stateRestoreRevision) return;
-      if (restoredPanorama && !layers.some(layer => layer.id === panoramaSettings.baseLayerId && layer.type === "raster")) throw new Error("The panorama base layer is missing");
+      if (restoredPanorama && !layers.some(layer => layer.id === panoramaSettings.baseLayerId && layer.type === "raster")) throw new Error(tr("The panorama base layer is missing"));
       previous = Object.fromEntries(["panorama", "origin", "size", "bbox", "snapToGrid", "resizeTransformMode", "settings", "layers", "activeLayerId"].map(key => [key, this[key]]));
       this._documentRevision = (this._documentRevision || 0) + 1;
       this.poseEditor?.release();
@@ -9131,7 +9132,7 @@ class UniCanvasWidget {
         if (previous) Object.assign(this, previous);
         this._stateRestoreFailed = true;
         this.updatePanoramaControls();
-        this.setStatus(`Canvas restore failed: ${err.message || err}`, true);
+        this.setStatus(tr("Canvas restore failed: {error}", { error: err.message || err }), true);
       }
       console.warn("[VNCCS UniCanvas] Failed to restore state", err);
     } finally {
@@ -9268,7 +9269,7 @@ class UniCanvasWidget {
     panel.className = "vnccs-uc-refs-popover";
     panel.dataset.editRefsPopover = "1";
     panel.setAttribute("role", "dialog");
-    panel.setAttribute("aria-label", "Reference images");
+    panel.setAttribute("aria-label", tr("Reference images"));
     panel.addEventListener("keydown", event => {
       if (event.key === "Escape") { event.stopPropagation(); this.closeEditReferenceImages(); }
     });
@@ -9276,16 +9277,16 @@ class UniCanvasWidget {
     head.className = "vnccs-uc-refs-head";
     const title = document.createElement("div");
     title.className = "vnccs-uc-refs-title";
-    title.textContent = "Reference images";
+    title.textContent = tr("Reference images");
     const count = document.createElement("span");
     count.className = "vnccs-uc-refs-count";
-    const closeBtn = this._button("×", "vnccs-uc-icon", () => this.closeEditReferenceImages(), "Close reference images");
+    const closeBtn = this._button("×", "vnccs-uc-icon", () => this.closeEditReferenceImages(), tr("Close reference images"));
     head.append(title, count, closeBtn);
     const hint = document.createElement("div");
     hint.className = "vnccs-uc-refs-hint";
     // The prompt name of each reference follows the active family (Mode).
     hint.textContent = this.getModelBase() === "krea2_edit"
-      ? "The character to put into the working area. Krea2 Edit reads image 1 as the working area and image 2 as this reference; describe them in plain words (\"put the woman from image 2 into image 1\")."
+      ? tr("The character to put into the working area. Krea2 Edit reads image 1 as the working area and image 2 as this reference; describe them in plain words (\"put the woman from image 2 into image 1\").")
       : referenceConventionHint(this.modelDescriptors, this.settings.generation_mode);
     const grid = document.createElement("div");
     grid.className = "vnccs-uc-refs-grid";
@@ -9305,8 +9306,8 @@ class UniCanvasWidget {
         ? `${list.length + Number(layersFirst)} / ${max + Number(layersFirst)}`
         : `${list.length} / ${max}`;
       if (this.standalone || this.getModelBase() === "qwen_image21") hint.textContent = layersFirst
-        ? "Image 1 uses all visible image layers inside the selection bbox. Uploaded images follow it."
-        : "Uploaded images start at image 1. Canvas layers are not used as a reference.";
+        ? tr("Image 1 uses all visible image layers inside the selection bbox. Uploaded images follow it.")
+        : tr("Uploaded images start at image 1. Canvas layers are not used as a reference.");
       list.forEach((data, index) => {
         const label = referenceSlotName(this.modelDescriptors, this.settings.generation_mode, index + (layersFirst ? 2 : 1)).text;
         const cell = document.createElement("div");
@@ -9323,7 +9324,7 @@ class UniCanvasWidget {
           next.splice(index, 1);
           this.setEditReferenceImages(next);
           render();
-        }, "Remove " + label);
+        }, tr("Remove {name}", { name: label }));
         cell.append(img, marker, removeBtn);
         grid.appendChild(cell);
       });
@@ -9331,8 +9332,8 @@ class UniCanvasWidget {
         const add = document.createElement("button");
         add.type = "button";
         add.className = "vnccs-uc-refs-add";
-        add.title = "Add reference images";
-        add.innerHTML = "<b>+</b><span>Add</span>";
+        add.title = tr("Add reference images");
+        add.innerHTML = `<b>+</b><span>${tr("Add")}</span>`;
         add.addEventListener("click", () => fileInput.click());
         grid.appendChild(add);
       }
@@ -9346,7 +9347,7 @@ class UniCanvasWidget {
       fileInput.value = "";
       const max = this.maxEditReferenceImages();
       const room = max - this.editReferenceImages().length;
-      if (files.length > room) this.setStatus(`[VNCCS UniCanvas] Reference images: the maximum for this model is ${max}.`, true);
+      if (files.length > room) this.setStatus(tr("[VNCCS UniCanvas] Reference images: the maximum for this model is {max}.", { max }), true);
       files.slice(0, Math.max(0, room)).forEach((file) => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -9429,7 +9430,7 @@ class UniCanvasWidget {
     panel.className = "vnccs-uc-settings-popover";
     const title = document.createElement("div");
     title.style.fontWeight = "600";
-    title.textContent = "UniCanvas settings";
+    title.textContent = tr("UniCanvas settings");
     panel.appendChild(title);
     const commit = () => this.flushSettingsToWidget?.();
     // Collapsible sections: new settings go into (or add) a section, the panel stays scannable.
@@ -9488,7 +9489,7 @@ class UniCanvasWidget {
 
     // Background removal (spec 10.3): the backend and, for the Edit model backend, its own
     // generation settings (unicanvas/remove_bg.mjs).
-    section("remove_bg", "Remove background");
+    section("remove_bg", tr("Remove background"));
     buildRemoveBgSettings(s, {
       bind,
       makeSelect,
@@ -9498,7 +9499,7 @@ class UniCanvasWidget {
     });
 
     // Magic wand: on/off, always-enhance on Generate, the wand's encoder; the system prompts open in a dialog.
-    section("prompt_enhance", "Prompt enhance");
+    section("prompt_enhance", tr("Prompt enhance"));
     buildPromptEnhanceSettings(s, {
       body: target,
       bind,
@@ -9511,51 +9512,51 @@ class UniCanvasWidget {
     });
 
     // Content-based layer names. "Auto-name" in the layer menu works either way.
-    section("panorama", "Panorama");
-    checkboxRow("Keep layers at their native resolution when importing a panorama", s.panorama_native_layers === true, (checked) => { s.panorama_native_layers = checked; commit(); },
-      "Off: existing layers are scaled into a 1024x1024 editing window. On: the window grows to the largest layer (up to 4096 px) and nothing is scaled, but the generation area grows with it. Applies to the next panorama import.");
+    section("panorama", tr("Panorama"));
+    checkboxRow(tr("Keep layers at their native resolution when importing a panorama"), s.panorama_native_layers === true, (checked) => { s.panorama_native_layers = checked; commit(); },
+      tr("Off: existing layers are scaled into a 1024x1024 editing window. On: the window grows to the largest layer (up to 4096 px) and nothing is scaled, but the generation area grows with it. Applies to the next panorama import."));
 
-    section("layer_names", "Layer names");
+    section("layer_names", tr("Layer names"));
     const namingModel = makeSelect(AUTO_NAME_MODELS, resolveAutoNameModel(s));
     namingModel.addEventListener("input", () => { s[AUTO_NAME_MODEL_SETTING] = namingModel.value; commit(); });
-    bind("Naming model (downloads on first use)", namingModel);
-    checkboxRow("Auto-name new layers from their content", s[AUTO_NAME_SETTING], (checked) => { s[AUTO_NAME_SETTING] = checked; commit(); });
+    bind(tr("Naming model (downloads on first use)"), namingModel);
+    checkboxRow(tr("Auto-name new layers from their content"), s[AUTO_NAME_SETTING], (checked) => { s[AUTO_NAME_SETTING] = checked; commit(); });
 
     // Speed and memory for every draw (nodes/unicanvas/performance.py). The attention kernel is
     // ComfyUI's own startup choice (Comfy Kitchen / sage / flash); the progress bar shows it.
-    section("performance", "Performance");
-    checkboxRow("Step cache (ComfyUI EasyCache: skips near-identical steps, 10+ steps only)", s.step_cache !== false, (checked) => { s.step_cache = checked; commit(); });
-    checkboxRow("VAE chunking (tiled encode/decode for low RAM/VRAM, slower)", Boolean(s.vae_chunking), (checked) => { s.vae_chunking = checked; commit(); });
+    section("performance", tr("Performance"));
+    checkboxRow(tr("Step cache (ComfyUI EasyCache: skips near-identical steps, 10+ steps only)"), s.step_cache !== false, (checked) => { s.step_cache = checked; commit(); });
+    checkboxRow(tr("VAE chunking (tiled encode/decode for low RAM/VRAM, slower)"), Boolean(s.vae_chunking), (checked) => { s.vae_chunking = checked; commit(); });
 
-    section("inpaint", "Inpaint");
-    checkboxRow("Crop and stitch (non-edit models only)", s.inpaint_crop_to_mask === true, (checked) => { s.inpaint_crop_to_mask = checked; commit(); },
-      "Generate around the mask with extra context, then paste the masked pixels back. Off: generate the whole bbox. Edit models always generate the whole bbox and apply only the mask.");
+    section("inpaint", tr("Inpaint"));
+    checkboxRow(tr("Crop and stitch (non-edit models only)"), s.inpaint_crop_to_mask === true, (checked) => { s.inpaint_crop_to_mask = checked; commit(); },
+      tr("Generate around the mask with extra context, then paste the masked pixels back. Off: generate the whole bbox. Edit models always generate the whole bbox and apply only the mask."));
 
     // Diagnostics for bug reports and AI agents.
-    section("debug", "Debug");
-    checkboxRow("Debug mode (verbose logs in the ComfyUI console and browser console)", s.debug_mode, (checked) => {
+    section("debug", tr("Debug"));
+    checkboxRow(tr("Debug mode (verbose logs in the ComfyUI console and browser console)"), s.debug_mode, (checked) => {
       s.debug_mode = checked;
       this.applyDebugMode();
       commit();
-    }, "Logs every UniCanvas request (draw, remove bg, SAM, naming, color match) with sizes and timings, plus draw tensors.");
+    }, tr("Logs every UniCanvas request (draw, remove bg, SAM, naming, color match) with sizes and timings, plus draw tensors."));
 
     // Build identity for bug reports: git commit + web file version.
     const buildInfo = document.createElement("div");
     buildInfo.className = "vnccs-uc-build-info";
-    buildInfo.textContent = "UniCanvas build: loading...";
-    buildInfo.title = "Commit and web file version - copy this into bug reports";
+    buildInfo.textContent = tr("UniCanvas build: loading...");
+    buildInfo.title = tr("Commit and web file version - copy this into bug reports");
     fetch("/vnccs/unicanvas/build_info", { cache: "no-store" })
       .then((res) => res.json())
       .then((info) => {
-        buildInfo.textContent = "UniCanvas build: " + (info.commit || "unknown") + " - files " + (info.version || "?");
+        buildInfo.textContent = tr("UniCanvas build: {commit} - files {version}", { commit: info.commit || tr("unknown"), version: info.version || "?" });
       })
-      .catch(() => { buildInfo.textContent = "UniCanvas build: unavailable"; });
+      .catch(() => { buildInfo.textContent = tr("UniCanvas build: unavailable"); });
     panel.appendChild(buildInfo);
-    const closeBtn = this._button("Close", "vnccs-uc-btn", () => {
+    const closeBtn = this._button(tr("Close"), "vnccs-uc-btn", () => {
       panel.remove();
       this._vnccsSettingsPopover = null;
       document.removeEventListener("pointerdown", this._vnccsSettingsOutside, true);
-    }, "Close settings");
+    }, tr("Close settings"));
     panel.appendChild(closeBtn);
     this.container.appendChild(panel);
     this.anchorPopoverTo(panel, this.gearBtn, this.container);
@@ -9659,7 +9660,7 @@ app.registerExtension({
         for (const widget of widgets) {
           if (widget._disposed || widget._isRestoring || widget._canvasOperation || widget.isPointerDown
               || widget.historyGestureActive || widget.transformDraft || widget.poseEditor?.isGestureActive?.()) {
-            throw new Error("Finish the UniCanvas edit before queueing");
+            throw new Error(tr("Finish the UniCanvas edit before queueing"));
           }
         }
         // Hold every document until graph serialization, including while another widget saves.
@@ -9676,7 +9677,7 @@ app.registerExtension({
         }
         for (const widget of widgets) await widget.preparePanoramaForQueue();
         if (widgets.some(widget => widget._disposed || widget._isRestoring || revisions.get(widget) !== widget._stateLoadRevision)) {
-          throw new Error("The UniCanvas document changed while preparing the queue. Queue again.");
+          throw new Error(tr("The UniCanvas document changed while preparing the queue. Queue again."));
         }
         if (draws.some(widget => widget._stopRequested)) {
           throw Object.assign(new Error("Generation stopped"), { cancelled: true });

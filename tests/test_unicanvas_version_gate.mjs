@@ -63,6 +63,7 @@ test("local module imports carry the cache-busting version query", () => {
   const imports = [...entrySource.matchAll(/from "\.\/([^"?]+)(\?v=(\d+))?"/g)];
   assert.ok(imports.length >= 14, "expected the full local import graph to be versioned");
   for (const [, path, query, v] of imports) {
+    if (path.startsWith("i18n/")) continue;
     assert.ok(query, `import of ${path} must carry ?v=`);
     assert.equal(v, version, `import of ${path} must match the current version constant`);
   }

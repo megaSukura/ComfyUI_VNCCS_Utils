@@ -1,5 +1,6 @@
 import { normalizeState, promptId } from "./state.mjs";
 import { readPromptResponse } from "./response.mjs";
+import { t } from "../i18n/index.mjs";
 
 const PREFIX = "vnccs:prompt-designer:";
 
@@ -37,7 +38,7 @@ export class DocumentStorage {
                 draft = JSON.parse(value);
                 normalizeState(JSON.parse(draft.state));
                 if (!Number.isSafeInteger(draft.revision) || draft.revision < 0 || typeof draft.dirty !== "boolean") {
-                    throw new Error("Invalid browser draft metadata.");
+                    throw new Error(t("Invalid browser draft metadata."));
                 }
                 if (!draft.dirty && (metadata?.dirty || draft.revision < this.revision)) draft = undefined;
                 this.corruptDraft = null;
@@ -45,7 +46,7 @@ export class DocumentStorage {
         } catch (error) {
             draft = undefined;
             if (this.corruptDraft) this.restoreError = error;
-            this.status(`Browser recovery could not be read: ${error.message}. Recovery data was retained.`, true);
+            this.status(t("Browser recovery could not be read: {error}. Recovery data was retained.", { error: error.message }), true);
         }
         // The property mirror also survives ComfyUI widget ordering changes.
         this.revision = draft?.revision ?? this.revision;
@@ -62,8 +63,8 @@ export class DocumentStorage {
         try {
             const response = await this.api.fetchApi(`/vnccs/prompt_designer/documents/${this.id}`, { signal: this.restoreRequest.signal });
             const result = await readPromptResponse(response);
-            if (!response.ok) throw new Error(result.error || "Disk recovery failed.");
-            if (!Number.isSafeInteger(result.revision) || result.revision < 0) throw new Error("Invalid disk revision.");
+            if (!response.ok) throw new Error(result.error || t("Disk recovery failed."));
+            if (!Number.isSafeInteger(result.revision) || result.revision < 0) throw new Error(t("Invalid disk revision."));
             const dirty = draft ? draft.dirty : metadata?.dirty;
             if (result.state && (!dirty && result.revision > this.revision || !state)) {
                 state = normalizeState(result.state);
@@ -72,7 +73,7 @@ export class DocumentStorage {
             }
         } catch (error) {
             this.error = error;
-            this.status(`Disk recovery unavailable: ${error.message}`, true);
+            this.status(t("Disk recovery unavailable: {error}", { error: error.message }), true);
         } finally {
             clearTimeout(timeout);
         }
@@ -83,7 +84,7 @@ export class DocumentStorage {
     write(value) {
         this.pending = value;
         this.mirror(value, true);
-        if (!this.localError) this.status("Saving edits to disk · Browser backup ready");
+        if (!this.localError) this.status(t("Saving edits to disk · Browser backup ready"));
         clearTimeout(this.timer);
         this.timer = setTimeout(() => this.flush(), 250);
     }
@@ -91,7 +92,7 @@ export class DocumentStorage {
     mirror(value, dirty) {
         if (!this.disposed) this.node.properties.promptDesigner = { id: this.id, revision: this.revision, state: value, dirty };
         try {
-            if (!this.storage) throw new Error("Browser recovery storage is unavailable.");
+            if (!this.storage) throw new Error(t("Browser recovery storage is unavailable."));
             if (this.corruptDraft) {
                 this.storage.setItem(`${PREFIX}${this.id}:corrupt:${promptId()}`, this.corruptDraft);
                 this.corruptDraft = null;
@@ -110,7 +111,7 @@ export class DocumentStorage {
             this.localError = null;
         } catch (error) {
             this.localError = error;
-            this.status(`Browser backup failed: ${error.message}. Waiting for disk save.`, true);
+            this.status(t("Browser backup failed: {error}. Waiting for disk save.", { error: error.message }), true);
         }
     }
 
@@ -132,24 +133,24 @@ export class DocumentStorage {
                 this.revision = 0;
                 this.mirror(this.pending, true);
                 if (!this.disposed) this.node.graph?.change?.();
-                this.status("Concurrent edits preserved as a separate document.");
+                this.status(t("Concurrent edits preserved as a separate document."));
                 return;
             }
             if (!response.ok) {
-                const error = new Error(result.error || "Disk save failed.");
+                const error = new Error(result.error || t("Disk save failed."));
                 error.status = response.status;
                 throw error;
             }
-            if (!Number.isSafeInteger(result.revision) || result.revision < 1 || result.revision < this.revision) throw new Error("Invalid disk save acknowledgement.");
+            if (!Number.isSafeInteger(result.revision) || result.revision < 1 || result.revision < this.revision) throw new Error(t("Invalid disk save acknowledgement."));
             this.revision = result.revision;
             this.error = null;
             if (this.pending === value) this.pending = null;
             this.mirror(this.pending ?? value, !!this.pending);
             if (!this.disposed) this.node.graph?.change?.();
-            this.status(this.pending ? "Saving latest edits to disk" : this.localError ? "Saved on disk · Browser backup unavailable" : "Saved on disk · Browser backup ready", !!this.localError);
+            this.status(this.pending ? t("Saving latest edits to disk") : this.localError ? t("Saved on disk · Browser backup unavailable") : t("Saved on disk · Browser backup ready"), !!this.localError);
         } catch (error) {
             this.error = error;
-            this.status(`Not saved on disk: ${error.message}. Your draft is retained.`, true);
+            this.status(t("Not saved on disk: {error}. Your draft is retained.", { error: error.message }), true);
         } finally {
             this.busy = false;
             if (this.pending && ![404, 405].includes(this.error?.status) && (!this.disposed || !this.error)) {

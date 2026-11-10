@@ -1,4 +1,5 @@
 import { normalizePanorama } from "./panorama.mjs";
+import { t } from "../i18n/index.mjs";
 
 const RAD = Math.PI / 180;
 const AXES = [
@@ -112,7 +113,7 @@ export class PanoramaOrbitControl {
     this.abort = new AbortController();
     canvas.tabIndex = 0;
     canvas.setAttribute("role", "group");
-    canvas.setAttribute("aria-label", "Panorama orientation. Drag the sphere to look around; drag the outer ring to roll. Scroll to zoom. Arrow keys rotate, Q and E roll, plus and minus zoom.");
+    canvas.setAttribute("aria-label", t("Panorama orientation. Drag the sphere to look around; drag the outer ring to roll. Scroll to zoom. Arrow keys rotate, Q and E roll, plus and minus zoom."));
     const on = (name, fn, options = {}) => canvas.addEventListener(name, fn, { ...options, signal: this.abort.signal });
     on("pointerdown", event => this.pointerDown(event));
     on("pointermove", event => this.pointerMove(event));

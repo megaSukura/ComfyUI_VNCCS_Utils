@@ -1,4 +1,5 @@
 import { acceptNumericDraft } from "./property_descriptors.mjs";
+import { t } from "../../i18n/index.mjs";
 
 /** One live scalar gesture, resolved against current entities on every update. */
 export class FactoryPropertyGesture {
@@ -11,7 +12,7 @@ export class FactoryPropertyGesture {
         if (this.pending && (this.pending.ref.id !== ref.id || this.pending.ref.kind !== ref.kind
             || this.pending.ref.sceneId !== ref.sceneId || this.pending.path !== descriptor.id)) this.commit();
         const current = this.read(ref, descriptor.id);
-        if (!Number.isFinite(current)) return { valid: false, message: "This object is no longer available." };
+        if (!Number.isFinite(current)) return { valid: false, message: t("This object is no longer available.") };
         const accepted = acceptNumericDraft(descriptor, draft, this.pending?.before ?? current);
         if (!accepted.valid) return accepted;
         this.pending ||= { ref: { ...ref }, path: descriptor.id, before: current, after: current,

@@ -1,4 +1,5 @@
 import { normalizedWorkspace, fitWorkspaceDocks } from "../core/editor_migrations.mjs";
+import { t } from "../../i18n/index.mjs";
 
 /** A tab owns one panel, in both resizable and fixed-width layouts. */
 export function activateWorkspaceTab(buttons, panels, side, tab) {
@@ -20,7 +21,7 @@ function button(label, action) {
     const control = document.createElement("button");
     control.type = "button";
     control.className = "vnccs-i3s__button";
-    control.textContent = label;
+    control.textContent = t(label);
     control.addEventListener("click", action);
     return control;
 }
@@ -109,7 +110,7 @@ export class FactoryWorkspace {
         grip.dataset.property = property;
         grip.tabIndex = 0;
         grip.setAttribute("role", "separator");
-        grip.setAttribute("aria-label", label);
+        grip.setAttribute("aria-label", t(label));
         grip.setAttribute("aria-orientation", orientation);
         const limits = property === "left_width" ? [180, 420] : [240, 480];
         grip.setAttribute("aria-valuemin", String(limits[0]));
@@ -160,16 +161,16 @@ export class FactoryWorkspace {
             this.overlay.className = "vnccs-factory-expanded-host";
             this.overlay.setAttribute("role", "dialog");
             this.overlay.setAttribute("aria-modal", "true");
-            this.overlay.setAttribute("aria-label", "Expanded 3D Factory editor");
+            this.overlay.setAttribute("aria-label", t("Expanded 3D Factory editor"));
             document.body.append(this.overlay);
             this.overlay.append(this.root);
             this.root.classList.add("is-expanded-editor");
-            this.expand.title = "Close expanded editor";
+            this.expand.title = t("Close expanded editor");
         } else {
             this.placeholder.replaceWith(this.root);
             this.overlay.remove(); this.overlay = null; this.placeholder = null;
             this.root.classList.remove("is-expanded-editor");
-            this.expand.title = "Expand editor";
+            this.expand.title = t("Expand editor");
         }
         this.expand.setAttribute("aria-label", this.expand.title);
         this.expand.setAttribute("aria-pressed", String(enabled));

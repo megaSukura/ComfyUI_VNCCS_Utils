@@ -60,8 +60,8 @@ test("Factory widget registers the renamed node and persists opaque state", () =
     assert.match(studio, /factory3d\/styles\.css\?v=20261107\.1/);
     assert.doesNotMatch(studio, /vnccs-i3s__brand/);
     assert.doesNotMatch(studio, /Image to Gaussian scene/);
-    assert.match(studio, /<option value="524288">524K · Experimental<\/option>/);
-    assert.match(studio, /<option value="1048576">1\.05M · Extreme<\/option>/);
+    assert.match(studio, /<option value="524288">\$\{t\("524K · Experimental"\)\}<\/option>/);
+    assert.match(studio, /<option value="1048576">\$\{t\("1\.05M · Extreme"\)\}<\/option>/);
     assert.match(studio, /Experimental 2× density/);
     assert.match(studio, /Extreme 4× density/);
     assert.match(studio, /widget\.hidden = true/);
@@ -288,7 +288,7 @@ test("Architecture shadows use closed geometry without hidden full-wall shadow c
 
 test("Factory provides a persistent equirectangular skydome with professional controls", () => {
     assert.match(studio, /ENDPOINTS\.skydome\(this\.sceneId\)/);
-    assert.match(studio, /title="Skydome"/);
+    assert.match(studio, /title="\$\{t\("Skydome"\)\}"/);
     assert.match(studio, /Equirectangular environment background/);
     assert.match(studio, /Horizontal rotation/);
     assert.match(studio, /Horizon tilt/);
@@ -399,7 +399,7 @@ test("TripoSplat setup separates models, inference, and persisted SPLAT cache se
     assert.match(studio, /this\.settings\.splat_cache_limit_gb = draft\.splat_cache_limit_gb/);
     assert.doesNotMatch(studio, /No API, CLI, or external inference server/);
     assert.match(studio, /form\.append\("prevent_upscale", this\.settings\.prevent_upscale \? "1" : "0"\)/);
-    assert.match(studio, /this\.settings\.prevent_upscale \? "native cap" : ""/);
+    assert.match(studio, /this\.settings\.prevent_upscale \? t\("native cap"\) : ""/);
     assert.match(styles, /\.vnccs-i3s__setup-grid/);
     assert.match(styles, /\.vnccs-i3s__setup-block--cache/);
     assert.match(styles, /\.vnccs-i3s__cache-limit-controls/);
@@ -434,9 +434,9 @@ test("Factory generation switches between TripoSplat, Pixal3D, and TRELLIS.2 wit
 });
 
 test("Generator selector keeps its name, status, and actions in a compact overflow-safe row", () => {
-    assert.match(studio, /aria-label="Choose 3D generator"/);
-    assert.match(studio, /aria-label="Open model setup"/);
-    assert.match(studio, /\$\{generator\.output_label \|\| "3D model"\} · Ready/);
+    assert.match(studio, /aria-label="\$\{t\("Choose 3D generator"\)\}"/);
+    assert.match(studio, /aria-label="\$\{t\("Open model setup"\)\}"/);
+    assert.match(studio, /t\("\{output\} · Ready", \{ output: generator\.output_label \|\| t\("3D model"\) \}\)/);
     assert.match(styles, /\.vnccs-i3s__generator-card \{[\s\S]*grid-template-columns: minmax\(0,1fr\)/);
     assert.match(styles, /\.vnccs-i3s__provider-copy \{[^}]*display: grid/);
     assert.match(styles, /\.vnccs-i3s__provider-model \{[^}]*text-overflow: ellipsis/);
@@ -2047,9 +2047,9 @@ test("Factory viewer and every vendored Three/Spark dependency can actually impo
 test("Optional mesh refinement needs no prompt and publishes live progress", () => {
     assert.doesNotMatch(studio, /mesh_texture_pass|mesh_texture_prompt|_syncTexturePass/);
     assert.match(studio, /mesh_refine_textures: false/);
-    assert.match(studio, /aria-label="Refine Textures and Materials"/);
+    assert.match(studio, /aria-label="\$\{t\("Refine Textures and Materials"\)\}"/);
     assert.match(studio, /form\.append\("refine_textures", this\.settings\.mesh_refine_textures === true \? "1" : "0"\)/);
-    assert.match(studio, /<summary>Advanced sampling<\/summary>/);
+    assert.match(studio, /<summary>\$\{t\("Advanced sampling"\)\}<\/summary>/);
     assert.match(studio, /this\._renderTexturingViews\(job\.texturing\)/);
     assert.match(studio, /this\.viewer\.updateGenerationPreview\(job\.texturing\)/);
     assert.match(studio, /this\.viewer\.clearGenerationPreview\(\)/);

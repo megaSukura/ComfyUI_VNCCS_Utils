@@ -22,6 +22,7 @@ import {
     translateCharacterPosition,
     wrapDegrees,
 } from "./character_transform.mjs?v=20261107.1";
+import { t } from "../i18n/index.mjs";
 
 // Render layer seen only by the editor camera: the gizmo never reaches a capture.
 export const CHARACTER_GIZMO_EDITOR_LAYER = 2;
@@ -627,14 +628,14 @@ export class PoseCharacterTransformController {
         const toolbar = doc.createElement("div");
         toolbar.className = "vnccs-ps-transform-toolbar";
         toolbar.setAttribute("role", "toolbar");
-        toolbar.setAttribute("aria-label", "Viewport edit mode");
+        toolbar.setAttribute("aria-label", t("Viewport edit mode"));
         const modes = doc.createElement("div");
         modes.className = "vnccs-ps-toggle";
         for (const mode of ["pose", "move", "rotate"]) {
             const button = doc.createElement("button");
             button.type = "button";
             button.className = "vnccs-ps-toggle-btn";
-            button.textContent = MODE_LABELS[mode];
+            button.textContent = t(MODE_LABELS[mode]);
             button.dataset.mode = mode;
             button.addEventListener("click", () => this.setMode(mode));
             this.modeButtons[mode] = button;
@@ -660,13 +661,13 @@ export class PoseCharacterTransformController {
             button.classList.toggle("active", active);
             button.setAttribute("aria-pressed", String(active));
             button.disabled = mode !== "pose" && !available;
-            button.title = button.disabled && reason ? reason : MODE_TITLES[mode];
+            button.title = button.disabled && reason ? t(reason) : t(MODE_TITLES[mode]);
         }
         if (this.spaceButton) {
-            this.spaceButton.textContent = this.space === "world" ? "World" : "Local";
+            this.spaceButton.textContent = this.space === "world" ? t("World") : t("Local");
             this.spaceButton.title = this.space === "world"
-                ? "Gizmo axes: World (click for the character's Local axes)"
-                : "Gizmo axes: Local to the character (click for World axes)";
+                ? t("Gizmo axes: World (click for the character's Local axes)")
+                : t("Gizmo axes: Local to the character (click for World axes)");
             this.spaceButton.hidden = this.mode === "pose";
         }
     }
@@ -681,23 +682,25 @@ export class PoseCharacterTransformController {
         const title = doc.createElement("div");
         title.className = "vnccs-ps-character-transform-title";
         const name = doc.createElement("span");
-        name.textContent = "Transform";
+        name.textContent = t("Transform");
         const hint = doc.createElement("small");
-        hint.textContent = "selected character";
+        hint.textContent = t("selected character");
         title.append(name, hint);
         section.appendChild(title);
 
         const inputs = { position: {}, rotation: {} };
         const rows = [
             ["position", "Position", "Position in world units. X / Y match the Positioning Radar; Z is depth."],
-            ["rotation", "Rotation", `Model Rotation in degrees, Euler order ${MODEL_ROTATION_ORDER}, about the pelvis.`],
+            ["rotation", "Rotation", "Model Rotation in degrees, Euler order {order}, about the pelvis."],
         ];
         for (const [kind, label, help] of rows) {
             const row = doc.createElement("div");
             row.className = "vnccs-ps-character-transform-row";
-            row.title = help;
+            row.title = t(help, { order: MODEL_ROTATION_ORDER });
             const caption = doc.createElement("span");
-            caption.textContent = kind === "position" ? `${label} (units)` : `${label} (°, ${MODEL_ROTATION_ORDER})`;
+            caption.textContent = kind === "position"
+                ? t("{label} (units)", { label: t(label) })
+                : t("{label} (°, {order})", { label: t(label), order: MODEL_ROTATION_ORDER });
             const axes = doc.createElement("div");
             axes.className = "vnccs-ps-character-transform-axes";
             row.append(caption, axes);
@@ -718,7 +721,7 @@ export class PoseCharacterTransformController {
                     input.max = "180";
                     input.step = "1";
                 }
-                input.setAttribute("aria-label", `${label} ${axis.toUpperCase()}`);
+                input.setAttribute("aria-label", t("{label} {axis}", { label: t(label), axis: axis.toUpperCase() }));
                 input.addEventListener("input", () => this.handleFieldInput(kind, axis, input.value));
                 input.addEventListener("change", () => this.finishFieldEdit());
                 input.addEventListener("blur", () => this.finishFieldEdit());
@@ -740,14 +743,14 @@ export class PoseCharacterTransformController {
         const resetPosition = doc.createElement("button");
         resetPosition.type = "button";
         resetPosition.className = "vnccs-ps-btn";
-        resetPosition.textContent = "Reset Position";
-        resetPosition.title = "Move the selected character to X 0, Y 0, Z 0";
+        resetPosition.textContent = t("Reset Position");
+        resetPosition.title = t("Move the selected character to X 0, Y 0, Z 0");
         resetPosition.addEventListener("click", () => this.resetPosition());
         const resetRotation = doc.createElement("button");
         resetRotation.type = "button";
         resetRotation.className = "vnccs-ps-btn";
-        resetRotation.textContent = "Reset Rotation";
-        resetRotation.title = "Set Model Rotation to 0° (the pelvis stays in place)";
+        resetRotation.textContent = t("Reset Rotation");
+        resetRotation.title = t("Set Model Rotation to 0° (the pelvis stays in place)");
         resetRotation.addEventListener("click", () => this.resetRotation());
         actions.append(resetPosition, resetRotation);
         section.appendChild(actions);
@@ -856,7 +859,7 @@ export class PoseCharacterTransformController {
         }
         fields.resetPosition.disabled = !available;
         fields.resetRotation.disabled = !available;
-        fields.note.textContent = reason;
+        fields.note.textContent = t(reason);
         fields.note.hidden = !reason;
     }
 

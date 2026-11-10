@@ -7,6 +7,7 @@ import { MTLLoader } from "../vendor/spark/loaders/MTLLoader.js";
 import { STLLoader } from "../vendor/spark/loaders/STLLoader.js";
 import { TGALoader } from "../vendor/spark/loaders/TGALoader.js";
 import { MeshoptDecoder } from "../vendor/spark/libs/meshopt_decoder.module.js";
+import { t } from "../i18n/index.mjs";
 
 
 const COLOR_TEXTURE_SLOTS = new Set(["map", "emissiveMap", "sheenColorMap", "specularColorMap"]);
@@ -87,11 +88,11 @@ function normalizeModel(root) {
     const bounds = new THREE.Box3().setFromObject(root);
     if (bounds.isEmpty() || !bounds.min.toArray().every(Number.isFinite)
         || !bounds.max.toArray().every(Number.isFinite)) {
-        throw new Error("The imported model has no finite renderable geometry");
+        throw new Error(t("The imported model has no finite renderable geometry"));
     }
     const size = bounds.getSize(new THREE.Vector3());
     const maximum = Math.max(size.x, size.y, size.z);
-    if (!(maximum > 1e-9)) throw new Error("The imported model has zero-size geometry");
+    if (!(maximum > 1e-9)) throw new Error(t("The imported model has zero-size geometry"));
     const scale = 2 / maximum;
     const center = bounds.getCenter(new THREE.Vector3());
     const normalized = new THREE.Group();
@@ -129,7 +130,7 @@ export async function loadFactoryModel(
     const format = String(item?.source?.format || "").toLowerCase();
     const modelPath = String(item?.source?.model_path || item?.source?.filename || "");
     const modelUrl = resolveAssetURL(item?.urls?.model || "");
-    if (!modelUrl) throw new Error(`Object ${item?.object_id || ""} has no model asset URL`);
+    if (!modelUrl) throw new Error(t("Object {id} has no model asset URL", { id: item?.object_id || "" }));
     const resourceUrls = Object.fromEntries(
         Object.entries(item?.urls?.resources || {}).map(([path, url]) => [path, resolveAssetURL(url)]),
     );
@@ -198,9 +199,9 @@ export async function loadFactoryModel(
             }),
         );
     } else {
-        throw new Error(`Unsupported imported model format: ${format || "unknown"}`);
+        throw new Error(t("Unsupported imported model format: {format}", { format: format || t("unknown") }));
     }
-    if (!root) throw new Error("The imported model did not contain a displayable scene");
+    if (!root) throw new Error(t("The imported model did not contain a displayable scene"));
     configureMaterials(root);
     const normalized = normalizeModel(root);
     normalized.root.userData.factoryImportedModel = true;

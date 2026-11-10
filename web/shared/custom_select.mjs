@@ -1,3 +1,5 @@
+import { t } from "../i18n/index.mjs";
+
 const SELECT_STATE = new WeakMap();
 const ACTIVE_SELECT_BY_DOCUMENT = new WeakMap();
 const STYLE_ID = "vnccs-custom-select-menu-styles";
@@ -398,7 +400,7 @@ function openCustomSelect(state) {
     menu.className = `vnccs-custom-select-menu vnccs-custom-select-menu--${state.config.theme}`;
     menu.id = `${state.id}-menu`;
     menu.setAttribute("role", "listbox");
-    menu.setAttribute("aria-label", state.select.getAttribute("aria-label") || state.select.title || "Options");
+    menu.setAttribute("aria-label", state.select.getAttribute("aria-label") || state.select.title || t("Options"));
 
     for (const entry of collectMenuEntries(state.select)) {
         if (entry.type === "group") {

@@ -1,3 +1,5 @@
+import { t } from "../i18n/index.mjs";
+
 const styles = `
 .vnccs-pose-creator{box-sizing:border-box;width:100%;height:100%;min-height:380px;display:flex;flex-direction:column;gap:12px;padding:16px;background:#12121a;color:#e8e8f0;font:13px Sora,system-ui,sans-serif;pointer-events:none}
 .vnccs-pose-creator *{box-sizing:border-box}
@@ -36,19 +38,19 @@ export class PoseLibraryCreatorWidget {
         this.preview.className = "vnccs-pose-creator-preview";
         const empty = document.createElement("p");
         empty.className = "vnccs-pose-creator-empty";
-        empty.textContent = "Connect a pose image and a character reference, then run the workflow.";
+        empty.textContent = t("Connect a pose image and a character reference, then run the workflow.");
         this.preview.append(empty);
         this.name = document.createElement("p");
         this.name.className = "vnccs-pose-creator-name";
-        this.name.textContent = "New library pose";
+        this.name.textContent = t("New library pose");
         this.category = document.createElement("p");
         this.category.className = "vnccs-pose-creator-category";
-        this.category.textContent = "Local User Poses";
+        this.category.textContent = t("Local User Poses");
         this.status = document.createElement("p");
         this.status.className = "vnccs-pose-creator-status";
         this.status.setAttribute("role", "status");
         this.status.setAttribute("aria-live", "polite");
-        this.status.textContent = "The name, category and tags are filled automatically.";
+        this.status.textContent = t("The name, category and tags are filled automatically.");
         this.container.append(this.preview, this.name, this.category, this.status);
     }
 
@@ -83,7 +85,7 @@ export class PoseLibraryCreatorWidget {
         this.category.textContent = result.category;
         this.container.dataset.stage = "done";
         this.container.setAttribute("aria-busy", "false");
-        this.status.textContent = "Saved to Local User Poses";
+        this.status.textContent = t("Saved to Local User Poses");
         const sequence = ++this.imageSequence;
         const image = new Image();
         image.alt = result.name;
@@ -93,7 +95,7 @@ export class PoseLibraryCreatorWidget {
         };
         image.onerror = () => {
             if (!this.disposed && sequence === this.imageSequence) {
-                this.status.textContent = "Pose saved. Open Pose Studio to view its image.";
+                this.status.textContent = t("Pose saved. Open Pose Studio to view its image.");
             }
         };
         const query = new URLSearchParams({ repository: result.repository, category: result.category,
@@ -107,7 +109,7 @@ export class PoseLibraryCreatorWidget {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ...payload, node_id: `${detail.node_id}_${detail.run_id}`, sync_token: detail.run_id }),
         });
-        if (!response.ok) throw new Error(`Pose capture upload failed (HTTP ${response.status}).`);
+        if (!response.ok) throw new Error(t("Pose capture upload failed (HTTP {status}).", { status: response.status }));
     }
 
     async render(detail) {
@@ -116,7 +118,7 @@ export class PoseLibraryCreatorWidget {
         const controller = this.renderController = new AbortController();
         const assertCurrent = () => {
             if (this.disposed || controller.signal.aborted || this.runId !== detail.run_id) {
-                throw new Error("Pose creation was cancelled or replaced.");
+                throw new Error(t("Pose creation was cancelled or replaced."));
             }
         };
         let studio;
@@ -131,7 +133,7 @@ export class PoseLibraryCreatorWidget {
             studio.container.setAttribute("aria-hidden", "true");
             document.body.append(studio.container);
             Object.assign(studio.exportParams, { samApplyCamera: true, capture_image_size: true, keep_models_loaded: true });
-            if (!studio.applyCapturedImageSize(detail.width, detail.height)) throw new Error("Invalid pose capture dimensions.");
+            if (!studio.applyCapturedImageSize(detail.width, detail.height)) throw new Error(t("Invalid pose capture dimensions."));
             await studio.loadModel(false);
             assertCurrent();
             await studio.awaitReadyForCompositeCapture();
@@ -142,7 +144,7 @@ export class PoseLibraryCreatorWidget {
             studio.commitViewerPoseToCurrentEditor({ fullCapture: true, syncOptions: { executionCapture: true } });
             const pose = studio.buildLibraryAsset("");
             const captures = studio._executionCaptureSnapshot || studio.poseCaptures;
-            if (captures?.length !== 1 || !captures[0]) throw new Error("Pose Studio did not render a pose image.");
+            if (captures?.length !== 1 || !captures[0]) throw new Error(t("Pose Studio did not render a pose image."));
             await this.upload(detail, { pose, captured_images: [captures[0]] });
         } catch (error) {
             if (!controller.signal.aborted && !this.disposed) {

@@ -1,5 +1,7 @@
 // Double-click the scale label to enter MP in the standalone tab or a side multiplier in the node.
 
+import { t } from "../i18n/index.mjs";
+
 export const INFERENCE_SCALE_MIN = 0.5;
 export const INFERENCE_SCALE_MAX = 3;
 export const INFERENCE_SCALE_MP_MIN = 1;
@@ -34,8 +36,8 @@ export function editInferenceScale(widget, label) {
     input.className = "vnccs-uc-input vnccs-uc-infer-scale-edit";
     const originalScale = widget.settings.inference_scale;
     input.value = widget.standalone ? inferenceScaleMegapixels(originalScale).toFixed(1) : String(Number(originalScale) || 1);
-    input.title = widget.standalone ? "Inference scale in megapixels: 1–4 MP, step 0.1. Enter applies, Esc cancels." : "Scale relative to the Generation box: 1 = box size, 1.5 = one and a half times. Enter applies, Esc cancels.";
-    input.setAttribute("aria-label", "Inference scale");
+    input.title = widget.standalone ? t("Inference scale in megapixels: 1–4 MP, step 0.1. Enter applies, Esc cancels.") : t("Scale relative to the Generation box: 1 = box size, 1.5 = one and a half times. Enter applies, Esc cancels.");
+    input.setAttribute("aria-label", t("Inference scale"));
     label.dataset.editing = "1";
     label.hidden = true;
     label.after(input);

@@ -4,6 +4,8 @@
  * English source strings are the keys: `t("Reset Joint")` returns the
  * translation for the ComfyUI language (Settings > Comfy > Locale) or the
  * English text itself. `{name}` placeholders are filled from `params`.
+ * When one English word needs different translations in different widgets,
+ * pass a `context`; a `"context::Text"` entry then takes precedence.
  * The language is read when a string is rendered, so a language change shows
  * after the widget is rebuilt (reload the page).
  */
@@ -40,8 +42,9 @@ export function currentLocale() {
     return /^zh(-(CN|SG|Hans))?$/i.test(String(locale || "")) ? "zh" : "en";
 }
 
-export function t(text, params = null) {
-    const translated = TRANSLATIONS[currentLocale()]?.[text] ?? text;
+export function t(text, params = null, context = null) {
+    const dictionary = TRANSLATIONS[currentLocale()];
+    const translated = (context ? dictionary?.[`${context}::${text}`] : undefined) ?? dictionary?.[text] ?? text;
     if (!params) return translated;
     return translated.replace(/\{(\w+)\}/g, (match, key) => (key in params ? String(params[key]) : match));
 }

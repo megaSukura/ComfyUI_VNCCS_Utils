@@ -1,6 +1,8 @@
+import { t } from "../../i18n/index.mjs";
+
 export function migrateScene11To12(scene) {
     const version = scene.schema_version ?? 11;
-    if (![11, 12].includes(version)) throw new Error("Normalize legacy scenes to version 11 before upgrading; future versions are unsupported");
+    if (![11, 12].includes(version)) throw new Error(t("Normalize legacy scenes to version 11 before upgrading; future versions are unsupported"));
     const result = structuredClone(scene);
     if (version === 12) return result;
     result.schema_version = 12;

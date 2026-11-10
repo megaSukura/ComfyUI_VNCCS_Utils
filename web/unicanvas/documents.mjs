@@ -1,8 +1,10 @@
 /** Durable canvas selection; staging never belongs to a document. */
+import { t } from "../i18n/index.mjs";
+
 const ROOT = "/vnccs/unicanvas/documents";
 
 function formatCacheBytes(bytes) {
-  if (!Number.isFinite(bytes) || bytes < 0) return "Unavailable";
+  if (!Number.isFinite(bytes) || bytes < 0) return t("Unavailable");
   const units = ["B", "KiB", "MiB", "GiB", "TiB"];
   let unit = 0;
   while (bytes >= 1024 && unit < units.length - 1) { bytes /= 1024; unit++; }
@@ -21,7 +23,7 @@ export async function canvasRequest(path = "", method = "GET", body) {
 
 function available(widget) {
   if (widget.isPointerDown || widget.historyGestureActive || widget.transformDraft || widget.poseEditor?.isGestureActive?.()) {
-    widget.setStatus("Finish the current edit before managing canvases.", true);
+    widget.setStatus(t("Finish the current edit before managing canvases."), true);
     return false;
   }
   return !widget._disposed && !widget.editingBlocked && !widget.drawInProgress && !widget._canvasOperation && !widget._isRestoring;
@@ -29,12 +31,12 @@ function available(widget) {
 
 export async function ensureCanvasDocument(widget) {
   const loadRevision = widget._stateLoadRevision;
-  if (await widget.flushStateUpload() === false) throw new Error("Save the current canvas before managing documents.");
-  if (widget._disposed || loadRevision !== widget._stateLoadRevision) throw new Error("The canvas editor changed while saving.");
+  if (await widget.flushStateUpload() === false) throw new Error(t("Save the current canvas before managing documents."));
+  if (widget._disposed || loadRevision !== widget._stateLoadRevision) throw new Error(t("The canvas editor changed while saving."));
   if (!widget.canvasId) {
     const stateId = widget.getStateCacheId();
     const { document } = await canvasRequest("", "POST", { state_id: stateId });
-    if (widget._disposed || loadRevision !== widget._stateLoadRevision || stateId !== widget.getStateCacheId()) throw new Error("The canvas editor changed while saving.");
+    if (widget._disposed || loadRevision !== widget._stateLoadRevision || stateId !== widget.getStateCacheId()) throw new Error(t("The canvas editor changed while saving."));
     widget.canvasId = document.canvas_id;
     widget._canvasPublishedStateId = document.state_id;
     if (widget._capturedStateJSON) {
@@ -45,14 +47,14 @@ export async function ensureCanvasDocument(widget) {
     widget.syncToNode();
   }
   const { document } = await canvasRequest(`/${widget.canvasId}`);
-  if (widget._disposed || loadRevision !== widget._stateLoadRevision) throw new Error("The canvas editor changed while saving.");
+  if (widget._disposed || loadRevision !== widget._stateLoadRevision) throw new Error(t("The canvas editor changed while saving."));
   return document;
 }
 
 async function leaveStaging(widget) {
   if (!widget.stagingItems?.length) return true;
-  return widget.confirmInWidget("Discard unaccepted results?",
-    "Unaccepted results are not saved. Switching canvases will discard them.", "Discard and continue");
+  return widget.confirmInWidget(t("Discard unaccepted results?"),
+    t("Unaccepted results are not saved. Switching canvases will discard them."), t("Discard and continue"));
 }
 
 function rememberSession(widget) {
@@ -66,11 +68,11 @@ function rememberSession(widget) {
 export async function applyCanvasDocument(widget, metadata) {
   const loadRevision = widget._stateLoadRevision;
   const response = await fetch(`/vnccs/unicanvas_state/${encodeURIComponent(metadata.state_id)}`, { cache: "no-store" });
-  if (!response.ok) throw new Error("The selected canvas cache could not be loaded.");
+  if (!response.ok) throw new Error(t("The selected canvas cache could not be loaded."));
   const cached = await response.json();
   const state = cached.state;
   if (![1, 2, 3].includes(state?.version) || !Array.isArray(state.layers) || widget.stateHasMissingLayerPixels(state)) {
-    throw new Error("The selected canvas has invalid or missing saved pixels.");
+    throw new Error(t("The selected canvas has invalid or missing saved pixels."));
   }
   if (widget._disposed || loadRevision !== widget._stateLoadRevision) return false;
   const identity = {
@@ -92,7 +94,7 @@ export async function applyCanvasDocument(widget, metadata) {
   try {
     const restored = await widget.applySerializedState(state, { replaceDocument: true });
     if (widget._disposed || restoreRevision !== widget._stateLoadRevision) return false;
-    if (!restored) throw new Error("Canvas restoration failed; the previous canvas is retained.");
+    if (!restored) throw new Error(t("Canvas restoration failed; the previous canvas is retained."));
     widget.canvasId = metadata.canvas_id;
     widget._canvasPublishedStateId = metadata.state_id;
     widget.stateCacheRevision = Number.isInteger(cached.revision) ? cached.revision : -1;
@@ -128,7 +130,7 @@ export async function applyCanvasDocument(widget, metadata) {
   } catch (error) {
     if (!widget._disposed && restoreRevision === widget._stateLoadRevision) {
       Object.assign(widget, identity);
-      widget.setStatus(`Canvas manager: ${error.message || error}`, true);
+      widget.setStatus(t("Canvas manager: {message}", { message: error.message || error }), true);
     }
     throw error;
   } finally {
@@ -140,12 +142,12 @@ export async function applyCanvasDocument(widget, metadata) {
     try { await canvasRequest("/active", "POST", { canvas_id: metadata.canvas_id }); }
     catch (error) {
       if (widget._disposed || restoreRevision !== widget._stateLoadRevision) return false;
-      widget.setStatus(`Opened canvas: ${metadata.name}. Server selection could not be remembered: ${error.message}`, true);
+      widget.setStatus(t("Opened canvas: {name}. Server selection could not be remembered: {message}", { name: metadata.name, message: error.message }), true);
       return true;
     }
   }
   if (widget._disposed || restoreRevision !== widget._stateLoadRevision) return false;
-  widget.setStatus(`Opened canvas: ${metadata.name}`);
+  widget.setStatus(t("Opened canvas: {name}", { name: metadata.name }));
   return true;
 }
 
@@ -156,7 +158,7 @@ async function operation(widget, action) {
   widget.syncInteractionLock?.();
   try { return await action(); }
   catch (error) {
-    if (!widget._disposed && loadRevision === widget._stateLoadRevision) widget.setStatus(`Canvas manager: ${error.message || error}`, true);
+    if (!widget._disposed && loadRevision === widget._stateLoadRevision) widget.setStatus(t("Canvas manager: {message}", { message: error.message || error }), true);
     return false;
   }
   finally { widget._canvasOperation = false; widget.syncInteractionLock?.(); }
@@ -181,7 +183,7 @@ async function createSavedCanvas(widget, name) {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ state_id: state.state_id, state, revision: Date.now(), base_revision: -1 }),
   });
-  if (!response.ok) throw new Error((await response.json()).error || "New canvas could not be saved.");
+  if (!response.ok) throw new Error((await response.json()).error || t("New canvas could not be saved."));
   const { document } = await canvasRequest("", "POST", { state_id: state.state_id, name });
   return document;
 }
@@ -189,7 +191,7 @@ async function createSavedCanvas(widget, name) {
 export async function createCanvasDocument(widget) {
   if (!available(widget)) return false;
   const loadRevision = widget._stateLoadRevision;
-  const name = await widget.promptInWidget("New canvas", "Canvas name", "Untitled canvas");
+  const name = await widget.promptInWidget(t("New canvas"), t("Canvas name"), "Untitled canvas");
   if (name === null || !available(widget) || loadRevision !== widget._stateLoadRevision
       || !await leaveStaging(widget) || !available(widget) || loadRevision !== widget._stateLoadRevision) return false;
   return operation(widget, async () => {
@@ -204,8 +206,8 @@ export async function createCanvasDocument(widget) {
 export async function deleteCanvasDocument(widget, metadata) {
   if (!available(widget)) return false;
   const loadRevision = widget._stateLoadRevision;
-  const confirmed = await widget.confirmInWidget("Delete canvas?",
-    "Remove this canvas from the manager? Saved workflow snapshots remain available.", "Delete canvas");
+  const confirmed = await widget.confirmInWidget(t("Delete canvas?"),
+    t("Remove this canvas from the manager? Saved workflow snapshots remain available."), t("Delete canvas"));
   if (!confirmed || !available(widget) || loadRevision !== widget._stateLoadRevision) return false;
   if (metadata.canvas_id === widget.canvasId && (!await leaveStaging(widget) || !available(widget) || loadRevision !== widget._stateLoadRevision)) return false;
   return operation(widget, async () => {
@@ -234,12 +236,12 @@ export async function openCanvasManager(widget) {
   modal.className = "vnccs-uc-modal vnccs-uc-canvas-manager";
   modal.setAttribute("role", "dialog");
   modal.setAttribute("aria-modal", "true");
-  modal.setAttribute("aria-label", "Canvas manager");
+  modal.setAttribute("aria-label", t("Canvas manager"));
   const title = document.createElement("div");
   title.className = "vnccs-uc-modal-title";
-  title.textContent = "Canvas manager";
+  title.textContent = t("Canvas manager");
   const note = document.createElement("p");
-  note.textContent = "Each canvas keeps its own layers, references and generation settings.";
+  note.textContent = t("Each canvas keeps its own layers, references and generation settings.");
   const list = document.createElement("div");
   list.className = "vnccs-uc-canvas-list";
   const message = document.createElement("div");
@@ -248,20 +250,20 @@ export async function openCanvasManager(widget) {
   actions.className = "vnccs-uc-modal-actions";
   const previousFocus = document.activeElement;
   const close = () => { overlay.remove(); previousFocus?.focus?.(); };
-  const closeButton = widget._button("Close", "vnccs-uc-btn", close);
-  const create = widget._button("New canvas", "vnccs-uc-btn primary", async () => {
+  const closeButton = widget._button(t("Close"), "vnccs-uc-btn", close);
+  const create = widget._button(t("New canvas"), "vnccs-uc-btn primary", async () => {
     if (await createCanvasDocument(widget)) close();
-    else message.textContent = widget.status?.textContent || "Canvas could not be created.";
+    else message.textContent = widget.status?.textContent || t("Canvas could not be created.");
   });
   actions.append(closeButton, create);
   modal.append(title, note, list, message, actions);
   overlay.append(modal);
   const reload = async () => {
     const scrollTop = list.scrollTop;
-    message.textContent = "Loading canvases…";
+    message.textContent = t("Loading canvases…");
     try {
       const catalog = await operation(widget, async () => { if (!widget._stateRestoreFailed) await ensureCanvasDocument(widget); return canvasRequest(); });
-      if (!catalog) { message.textContent = "Canvases could not be loaded. Check the editor status."; return; }
+      if (!catalog) { message.textContent = t("Canvases could not be loaded. Check the editor status."); return; }
       const { documents } = catalog;
       if (!overlay.isConnected || widget._disposed) return;
       list.replaceChildren();
@@ -274,24 +276,24 @@ export async function openCanvasManager(widget) {
         const name = document.createElement("strong");
         name.textContent = item.name;
         const details = document.createElement("small");
-        details.textContent = `${item.layer_count} layers · ${item.panorama ? "Panorama" : "Canvas"} · Cache: ${formatCacheBytes(item.cache_bytes)} · #${item.canvas_id.slice(0, 8)}`;
-        details.title = `Disk usage of saved snapshots and output caches. Current snapshot: ${formatCacheBytes(item.current_cache_bytes)}. Saved snapshots: ${item.snapshot_count ?? "Unavailable"}.`;
+        details.textContent = t("{count} layers · {kind} · Cache: {size} · #{id}", { count: item.layer_count, kind: item.panorama ? t("Panorama") : t("Canvas"), size: formatCacheBytes(item.cache_bytes), id: item.canvas_id.slice(0, 8) });
+        details.title = t("Disk usage of saved snapshots and output caches. Current snapshot: {current}. Saved snapshots: {saved}.", { current: formatCacheBytes(item.current_cache_bytes), saved: item.snapshot_count ?? t("Unavailable") });
         copy.append(name, details);
         const current = item.canvas_id === widget.canvasId && item.state_id === widget.getStateCacheId();
-        const open = widget._button(current ? "Current" : "Open", "vnccs-uc-btn", async () => {
+        const open = widget._button(current ? t("Current") : t("Open"), "vnccs-uc-btn", async () => {
           if (await openCanvasDocument(widget, item)) close();
-          else message.textContent = widget.status?.textContent || "Canvas could not be opened.";
+          else message.textContent = widget.status?.textContent || t("Canvas could not be opened.");
         });
         open.disabled = current;
-        const rename = widget._button("Rename", "vnccs-uc-btn", async () => {
+        const rename = widget._button(t("Rename"), "vnccs-uc-btn", async () => {
           const loadRevision = widget._stateLoadRevision;
-          const name = await widget.promptInWidget("Rename canvas", "Canvas name", item.name);
+          const name = await widget.promptInWidget(t("Rename canvas"), t("Canvas name"), item.name);
           if (name === null || !available(widget) || loadRevision !== widget._stateLoadRevision) return;
           await operation(widget, async () => canvasRequest(`/${item.canvas_id}`, "PATCH", { name, expected_state_id: item.state_id }));
           if (widget._disposed || loadRevision !== widget._stateLoadRevision) return;
           await reload();
         });
-        const remove = widget._button("Delete", "vnccs-uc-btn danger", async () => {
+        const remove = widget._button(t("Delete"), "vnccs-uc-btn danger", async () => {
           await deleteCanvasDocument(widget, item);
           await reload();
         });
@@ -299,7 +301,7 @@ export async function openCanvasManager(widget) {
         list.append(row);
       }
       list.scrollTop = scrollTop;
-      message.textContent = documents.length ? "" : "No saved canvases.";
+      message.textContent = documents.length ? "" : t("No saved canvases.");
     } catch (error) { message.textContent = error.message || String(error); }
   };
   overlay.addEventListener("pointerdown", event => { if (event.target === overlay) close(); });
@@ -323,10 +325,10 @@ export async function openCanvasManager(widget) {
 export function installCanvasDocuments(widget) {
   widget.openCanvasManager = () => openCanvasManager(widget);
   widget.createCanvasDocument = () => createCanvasDocument(widget);
-  const button = widget._button("Canvases", "vnccs-uc-btn vnccs-uc-canvas-manager-button", widget.openCanvasManager, "Manage canvases");
+  const button = widget._button(t("Canvases"), "vnccs-uc-btn vnccs-uc-canvas-manager-button", widget.openCanvasManager, t("Manage canvases"));
   const create = widget._button('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
-    "vnccs-uc-btn vnccs-uc-icon vnccs-uc-new-canvas", widget.createCanvasDocument, "New canvas");
-  create.setAttribute("aria-label", "New canvas");
+    "vnccs-uc-btn vnccs-uc-icon vnccs-uc-new-canvas", widget.createCanvasDocument, t("New canvas"));
+  create.setAttribute("aria-label", t("New canvas"));
   const actions = document.createElement("div");
   actions.className = "vnccs-uc-canvas-actions";
   actions.append(button, create);

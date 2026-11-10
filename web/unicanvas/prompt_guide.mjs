@@ -5,6 +5,8 @@
 // family therefore gets its prompt help without any frontend change. The guide text comes
 // from the server and is only ever written with textContent.
 
+import { t } from "../i18n/index.mjs";
+
 export const PROMPT_GUIDE_CSS = `
 .vnccs-uc-prompt-head { display:flex; align-items:center; justify-content:space-between; gap:6px; }
 .vnccs-uc-prompt-help { width:18px; height:18px; padding:0; border-radius:50%; border:1px solid var(--uc-border); background:rgba(255,255,255,.06); color:var(--uc-text); font:inherit; font-size:11px; line-height:16px; cursor:pointer; }
@@ -79,58 +81,58 @@ export function referenceUsageLines(guide) {
     const tag = /[<>@]/.test(slots[0]);
     const example = `Put the character from ${slots[1] || slots[0]} into ${slots[0]}, keep the lighting of ${slots[0]}.`;
     return [
-      `Referring to images: ${slots[0]} is the working area (the canvas inside the bbox); ${slots.slice(1, 4).join(", ")}${slots.length > 4 ? ", ..." : ""} are the reference images in upload / VNCSS Config order.`,
+      t("Referring to images: {slot} is the working area (the canvas inside the bbox); {refs} are the reference images in upload / VNCSS Config order.", { slot: slots[0], refs: `${slots.slice(1, 4).join(", ")}${slots.length > 4 ? ", ..." : ""}` }),
       tag
-        ? `Write the tags exactly as shown (with the angle brackets), e.g. "${example}"`
-        : `Write the names in plain words, e.g. "${example}"`,
+        ? t('Write the tags exactly as shown (with the angle brackets), e.g. "{example}"', { example })
+        : t('Write the names in plain words, e.g. "{example}"', { example }),
     ];
   }
   if (guide.role === "edit") {
-    return ["Referring to images: this model has no image tags - describe what to change in the working area in plain words (\"the woman\", \"the background\")."];
+    return [t('Referring to images: this model has no image tags - describe what to change in the working area in plain words ("the woman", "the background").')];
   }
   return [];
 }
 
 // Plain-text form of the guide for the Copy button, ready to paste into an LLM.
 export function promptGuideText(guide) {
-  if (!guide) return "No prompt guide for this model.";
-  const lines = [guide.task ? `${guide.label} - ${guide.task} - how to prompt` : `${guide.label} - how to prompt`, ""];
+  if (!guide) return t("No prompt guide for this model.");
+  const lines = [guide.task ? `${guide.label} - ${guide.task} - ${t("how to prompt")}` : `${guide.label} - ${t("how to prompt")}`, ""];
   for (const paragraph of guide.paragraphs) lines.push(paragraph, "");
   for (const line of referenceUsageLines(guide)) lines.push(line);
-  if (!guide.negativePrompt) lines.push("This model does not use the negative prompt.");
-  if (guide.tasks.length) lines.push(`Tasks: ${guide.tasks.join(", ")}`);
-  for (const entry of guide.taskGuides || []) lines.push(`${entry.task} prompts differently: ${entry.hint}`);
+  if (!guide.negativePrompt) lines.push(t("This model does not use the negative prompt."));
+  if (guide.tasks.length) lines.push(t("Tasks: {list}", { list: guide.tasks.join(", ") }));
+  for (const entry of guide.taskGuides || []) lines.push(t("{task} prompts differently: {hint}", { task: entry.task, hint: entry.hint }));
   if (guide.examples.length) {
-    lines.push("", "Examples:");
+    lines.push("", t("Examples:"));
     for (const example of guide.examples) lines.push(`- ${example}`);
   }
-  if (guide.sources?.length) lines.push("", `Sources: ${guide.sources.join(" | ")}`);
+  if (guide.sources?.length) lines.push("", t("Sources: {list}", { list: guide.sources.join(" | ") }));
   return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 export function renderPromptGuide(container, guide, doc = globalThis.document) {
   if (!guide) {
-    container.replaceChildren(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", "No prompt guide for this model."));
+    container.replaceChildren(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", t("No prompt guide for this model.")));
     return;
   }
-  const title = guide.task ? `${guide.label} - ${guide.task} - how to prompt` : `${guide.label} - how to prompt`;
+  const title = guide.task ? `${guide.label} - ${guide.task} - ${t("how to prompt")}` : `${guide.label} - ${t("how to prompt")}`;
   const nodes = [textElement(doc, "div", "vnccs-uc-prompt-guide-title", title)];
   for (const paragraph of guide.paragraphs) nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-text", paragraph));
   for (const line of referenceUsageLines(guide)) nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", line));
-  if (!guide.negativePrompt) nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", "This model does not use the negative prompt."));
-  if (guide.tasks.length) nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", `Tasks: ${guide.tasks.join(", ")}`));
-  if (guide.plannedTasks.length) nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", `Coming later: ${guide.plannedTasks.join(", ")}`));
+  if (!guide.negativePrompt) nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", t("This model does not use the negative prompt.")));
+  if (guide.tasks.length) nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", t("Tasks: {list}", { list: guide.tasks.join(", ") })));
+  if (guide.plannedTasks.length) nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", t("Coming later: {list}", { list: guide.plannedTasks.join(", ") })));
   for (const entry of guide.taskGuides || []) {
-    nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", `${entry.task} prompts differently: ${entry.hint}`));
+    nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", t("{task} prompts differently: {hint}", { task: entry.task, hint: entry.hint })));
   }
   if (guide.examples.length) {
-    nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", "Examples:"));
+    nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", t("Examples:")));
     const list = doc.createElement("ul");
     list.className = "vnccs-uc-prompt-guide-examples";
     list.append(...guide.examples.map((example) => textElement(doc, "li", "", example)));
     nodes.push(list);
   }
-  if (guide.sources?.length) nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", `Sources: ${guide.sources.join(" | ")}`));
+  if (guide.sources?.length) nodes.push(textElement(doc, "div", "vnccs-uc-prompt-guide-meta", t("Sources: {list}", { list: guide.sources.join(" | ") })));
   container.replaceChildren(...nodes);
 }
 
@@ -150,10 +152,10 @@ export function referenceConventionHint(index, generationMode) {
   const first = referenceSlotName(index, generationMode, 1);
   const second = referenceSlotName(index, generationMode, 2);
   const third = referenceSlotName(index, generationMode, 3);
-  if (!first.known) return "The reference name follows the linked UniCanvas Mode (model family).";
+  if (!first.known) return t("The reference name follows the linked UniCanvas Mode (model family).");
   if (first.natural) {
-    return `${first.family}: no reference tags - describe each reference in plain words (e.g. "the character from the second image").`;
+    return t('{family}: no reference tags - describe each reference in plain words (e.g. "the character from the second image").', { family: first.family });
   }
-  if (first.tag) return `${first.family}: references are ${second.text}, ${third.text}, ... in the prompt; ${first.text} is the working area.`;
-  return `${first.family}: say "${second.text}", "${third.text}", ... in plain words; ${first.text} is the working area.`;
+  if (first.tag) return t("{family}: references are {second}, {third}, ... in the prompt; {first} is the working area.", { family: first.family, second: second.text, third: third.text, first: first.text });
+  return t('{family}: say "{second}", "{third}", ... in plain words; {first} is the working area.', { family: first.family, second: second.text, third: third.text, first: first.text });
 }

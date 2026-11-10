@@ -30,6 +30,7 @@ import { clamp } from "./input_tools.mjs";
 import { installCustomSelects } from "../shared/custom_select.mjs?v=20261104-scaled-menu";
 import { REMOVE_BG_DEFAULT_PROMPT, removeBgEditSettings, resolveRemoveBgSelection } from "./remove_bg.mjs";
 import { autoNameLayers } from "./naming.mjs";
+import { t } from "../i18n/index.mjs";
 
 // Small inline stroke icons (14px in the menu): UI_ICONS lives inside
 // vnccs_unicanvas.js and is not exported, so the menu owns its own set.
@@ -186,7 +187,7 @@ function createPsdLayer(uc, entry) {
   const worldX = uc.bbox.x + left;
   const worldY = uc.bbox.y + top;
   if (!uc.ensureWorldRectBounds({ x: worldX, y: worldY, width: source.width, height: source.height }, 64)) {
-    throw new Error(`Canvas could not fit PSD layer "${entry.name || "Unnamed"}".`);
+    throw new Error(t('Canvas could not fit PSD layer "{name}".', { name: entry.name || "Unnamed" }));
   }
   const layer = uc.addLayer("raster", entry.name || "PSD Layer", true, true);
   layer.visible = entry.hidden ? false : true;
@@ -204,10 +205,10 @@ async function importPSDFile(uc, file) {
   const documentRevision = uc._documentRevision;
   const current = () => !uc._disposed && !uc.editingBlocked && revision === uc._importRevision && documentRevision === uc._documentRevision;
   try {
-    uc.setStatus("[VNCCS UniCanvas] Reading PSD...");
+    uc.setStatus(t("[VNCCS UniCanvas] Reading PSD..."));
     const { readPsd } = await uc.loadAgPsd();
     if (!current()) return;
-    if (typeof readPsd !== "function") throw new Error("ag-psd readPsd is not available");
+    if (typeof readPsd !== "function") throw new Error(t("ag-psd readPsd is not available"));
     const buffer = await file.arrayBuffer();
     if (!current()) return;
     const psd = readPsd(new Uint8Array(buffer), { useImageData: true });
@@ -224,7 +225,7 @@ async function importPSDFile(uc, file) {
     uc.setStatus(formatPsdImportReport(imported.length, skipped));
   } catch (err) {
     if (!current()) return;
-    uc.setStatus(`[VNCCS UniCanvas] PSD import failed: ${err.message || err}`, true);
+    uc.setStatus(t("[VNCCS UniCanvas] PSD import failed: {message}", { message: err.message || err }), true);
   }
 }
 
@@ -246,7 +247,7 @@ function layerImageCanvas(uc, layer) {
 function layerPngBlob(uc, layer) {
   const source = layerImageCanvas(uc, layer);
   return new Promise((resolve, reject) => {
-    source.toBlob(value => value ? resolve(value) : reject(new Error("PNG encoding failed")), "image/png");
+    source.toBlob(value => value ? resolve(value) : reject(new Error(t("PNG encoding failed"))), "image/png");
   });
 }
 
@@ -259,16 +260,16 @@ function openLayerCopyPreview(uc, layer, blob) {
   modal.className = "vnccs-uc-modal vnccs-uc-copy-preview";
   modal.setAttribute("role", "dialog");
   modal.setAttribute("aria-modal", "true");
-  modal.setAttribute("aria-label", "Copy image");
+  modal.setAttribute("aria-label", t("Copy image"));
   const title = document.createElement("div");
   title.className = "vnccs-uc-modal-title";
-  title.textContent = "Copy image";
+  title.textContent = t("Copy image");
   const hint = document.createElement("div");
   hint.className = "vnccs-uc-modal-message";
-  hint.textContent = "Right-click the image below and choose Copy image from the browser menu.";
+  hint.textContent = t("Right-click the image below and choose Copy image from the browser menu.");
   const image = document.createElement("img");
   image.className = "vnccs-uc-copy-image";
-  image.alt = layer.name || "Layer image";
+  image.alt = layer.name || t("Layer image");
   image.tabIndex = 0;
   const url = URL.createObjectURL(blob);
   image.src = url;
@@ -285,7 +286,7 @@ function openLayerCopyPreview(uc, layer, blob) {
   };
   const actions = document.createElement("div");
   actions.className = "vnccs-uc-modal-actions";
-  const closeButton = uc._button("Close", "vnccs-uc-btn", close, "Close image preview");
+  const closeButton = uc._button(t("Close"), "vnccs-uc-btn", close, t("Close image preview"));
   actions.append(closeButton);
   modal.append(title, hint, image, actions);
   overlay.append(modal);
@@ -321,9 +322,9 @@ async function copyLayerToClipboard(uc, layer) {
       openLayerCopyPreview(uc, layer, await blob);
       return;
     }
-    if (!uc._disposed) uc.showToast("Layer copied to clipboard");
+    if (!uc._disposed) uc.showToast(t("Layer copied to clipboard"));
   } catch (err) {
-    if (!uc._disposed) uc.showToast("Clipboard copy failed", err.message || String(err), "error");
+    if (!uc._disposed) uc.showToast(t("Clipboard copy failed"), err.message || String(err), "error");
   }
 }
 
@@ -333,9 +334,9 @@ async function saveLayerAsImage(uc, layer) {
     if (uc._disposed) return;
     const name = String(layer.name || "Layer").replace(/[\\/:*?"<>|]/g, "_").replace(/\.png$/i, "").replace(/[.\s]+$/g, "") || "Layer";
     uc.downloadBlob(blob, `${name}.png`);
-    uc.showToast("Image downloaded", `${name}.png`);
+    uc.showToast(t("Image downloaded"), `${name}.png`);
   } catch (err) {
-    if (!uc._disposed) uc.showToast("Image download failed", err.message || String(err), "error");
+    if (!uc._disposed) uc.showToast(t("Image download failed"), err.message || String(err), "error");
   }
 }
 
@@ -351,9 +352,9 @@ function startSamRemoveBackground(uc, layer) {
   uc.sam.mode = "add";
   uc.clearSamPrompt?.();
   uc.setTool("sam");
-  uc.sam.status = "Add green keep points or Subtract red remove points, then Segment and Apply.";
+  uc.sam.status = t("Add green keep points or Subtract red remove points, then Segment and Apply.");
   uc.renderSamPanel?.();
-  uc.setStatus("[VNCCS UniCanvas] Remove bg – SAM 3: use Add / Subtract, then Segment and Apply.");
+  uc.setStatus(t("[VNCCS UniCanvas] Remove bg – SAM 3: use Add / Subtract, then Segment and Apply."));
 }
 
 /**
@@ -376,10 +377,10 @@ function openRemoveBgPromptPopover(uc, layer, point) {
   element.style.cssText = "position:absolute; z-index:40; width:300px; padding:10px; border-radius:10px; background:rgba(20,16,30,.97); border:1px solid rgba(255,255,255,.14); color:#e8e8f0; font:11px sans-serif; display:grid; gap:8px; box-shadow:0 8px 24px rgba(0,0,0,.45);";
   const title = document.createElement("div");
   title.style.fontWeight = "600";
-  title.textContent = "Remove background with prompt";
+  title.textContent = t("Remove background with prompt");
   const hint = document.createElement("div");
   hint.style.cssText = "opacity:.75; line-height:1.35;";
-  hint.textContent = "Added on a new line after the Remove bg prompt from UniCanvas settings, e.g. \"Keep the sword and the shadow under her feet.\" Ctrl+Enter runs.";
+  hint.textContent = t('Added on a new line after the Remove bg prompt from UniCanvas settings, e.g. "Keep the sword and the shadow under her feet." Ctrl+Enter runs.');
   const text = document.createElement("textarea");
   text.className = "vnccs-uc-textarea";
   text.rows = 4;
@@ -392,8 +393,8 @@ function openRemoveBgPromptPopover(uc, layer, point) {
     close();
     removeLayerBackground(uc, layer, text.value);
   };
-  const cancelBtn = uc._button("Cancel", "vnccs-uc-btn", close, "Close without running");
-  const runBtn = uc._button("Remove background", "vnccs-uc-btn primary", run, "Run the Edit model with this prompt");
+  const cancelBtn = uc._button(t("Cancel"), "vnccs-uc-btn", close, t("Close without running"));
+  const runBtn = uc._button(t("Remove background"), "vnccs-uc-btn primary", run, t("Run the Edit model with this prompt"));
   buttons.append(cancelBtn, runBtn);
   text.addEventListener("keydown", (e) => {
     e.stopPropagation(); // typing must not trigger canvas shortcuts
@@ -411,7 +412,7 @@ async function removeLayerBackground(uc, layer, extraPrompt = "") {
   const { method, editModel } = resolveRemoveBgSelection(uc.settings);
   if (method === "sam3") {
     if (layer.locked) {
-      uc.setStatus("[VNCCS UniCanvas] Remove bg: layer is locked.", true);
+      uc.setStatus(t("[VNCCS UniCanvas] Remove bg: layer is locked."), true);
       return;
     }
     startSamRemoveBackground(uc, layer);
@@ -419,20 +420,20 @@ async function removeLayerBackground(uc, layer, extraPrompt = "") {
   }
   const editModelLabel = "Qwen Edit 2.1";
   const label = method === "edit"
-    ? `Remove bg – Edit model (${editModelLabel})`
-    : `Remove bg – ${{ birefnet: "BiRefNet", rembg: "rembg", sam3: "SAM 3" }[method] || "Edit model"}`;
+    ? t("Remove bg – Edit model ({model})", { model: editModelLabel })
+    : t("Remove bg – {backend}", { backend: { birefnet: "BiRefNet", rembg: "rembg", sam3: "SAM 3" }[method] || t("Edit model") });
   const crop = layerEditCrop(uc, layer);
   if (!crop) {
-    uc.setStatus("[VNCCS UniCanvas] Remove bg: layer is empty.", true);
+    uc.setStatus(t("[VNCCS UniCanvas] Remove bg: layer is empty."), true);
     return;
   }
   if (layer.locked) {
-    uc.setStatus("[VNCCS UniCanvas] Remove bg: layer is locked.", true);
+    uc.setStatus(t("[VNCCS UniCanvas] Remove bg: layer is locked."), true);
     return;
   }
   const layerState = uc.captureLayerEditState(layer);
   const source = layer.hiresCanvas && layer.hiresRect ? layer.hiresCanvas : uc.cloneCanvasCrop(layer.canvas, crop);
-  uc.setStatus(`[VNCCS UniCanvas] ${label} running...`);
+  uc.setStatus(t("[VNCCS UniCanvas] {label} running...", { label }));
   try {
     const res = await fetch(REMOVE_BG_ROUTE, {
       method: "POST",
@@ -448,7 +449,7 @@ async function removeLayerBackground(uc, layer, extraPrompt = "") {
     if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
     const alpha = await uc.loadImage(data.alpha);
     if (!uc.isLayerEditStateCurrent(layerState)) {
-      uc.setStatus(`[VNCCS UniCanvas] ${label}: layer changed; run again.`, true);
+      uc.setStatus(t("[VNCCS UniCanvas] {label}: layer changed; run again.", { label }), true);
       return;
     }
     const before = uc.createLayerPixelSnapshot(layer);
@@ -472,9 +473,9 @@ async function removeLayerBackground(uc, layer, extraPrompt = "") {
     uc.requestRender();
     uc.syncLightStateToWidget();
     uc.scheduleFullSync();
-    uc.setStatus(`[VNCCS UniCanvas] ${label} complete.`);
+    uc.setStatus(t("[VNCCS UniCanvas] {label} complete.", { label }));
   } catch (err) {
-    uc.setStatus(`[VNCCS UniCanvas] ${label} failed: ${err.message || err}`, true);
+    uc.setStatus(t("[VNCCS UniCanvas] {label} failed: {message}", { label, message: err.message || err }), true);
   }
 }
 
@@ -617,7 +618,7 @@ async function loadColorMatchMethod(uc, preview, method) {
   }
   const seq = preview.seq;
   preview.loading = true;
-  preview.setNote("Computing the match…");
+  preview.setNote(t("Computing the match…"));
   try {
     const resultImage = await uc.loadImage(await requestColorMatch(preview.targetBase, preview.referenceBase, method));
     if (seq !== preview.seq || !colorMatchIsCurrent(uc, preview)) return;
@@ -639,8 +640,8 @@ async function loadColorMatchMethod(uc, preview, method) {
   } catch (err) {
     if (seq !== preview.seq || !colorMatchIsCurrent(uc, preview)) return;
     preview.loading = false;
-    preview.setNote(`Failed: ${err.message || err}`, true);
-    uc.setStatus(`[VNCCS UniCanvas] Color match failed: ${err.message || err}`, true);
+    preview.setNote(t("Failed: {message}", { message: err.message || err }), true);
+    uc.setStatus(t("[VNCCS UniCanvas] Color match failed: {message}", { message: err.message || err }), true);
   }
 }
 
@@ -665,7 +666,7 @@ function closeColorMatchPreview(uc, commit) {
     uc.syncLightStateToWidget();
     uc.scheduleFullSync();
   } else if (commit && current) {
-    uc.setStatus("[VNCCS UniCanvas] Color match applied.");
+    uc.setStatus(t("[VNCCS UniCanvas] Color match applied."));
   }
   preview.element?.remove();
 }
@@ -684,12 +685,12 @@ function openColorMatchPopover(uc, layer, point = null) {
   if (!uc.isLayerEditStateCurrent(uc.captureLayerEditState(layer))) return;
   const crop = layerEditCrop(uc, layer);
   if (!crop) {
-    uc.setStatus("[VNCCS UniCanvas] Color match to below: layer is empty.", true);
+    uc.setStatus(t("[VNCCS UniCanvas] Color match to below: layer is empty."), true);
     return;
   }
   const referenceBase = buildColorMatchReference(uc, layer, crop);
   if (!referenceBase) {
-    uc.setStatus("[VNCCS UniCanvas] Color match to below needs a visible reference layer.", true);
+    uc.setStatus(t("[VNCCS UniCanvas] Color match to below needs a visible reference layer."), true);
     return;
   }
   const targetBase = layer.hiresCanvas && layer.hiresRect ? uc.cloneCanvas(layer.hiresCanvas) : uc.cloneCanvasCrop(layer.canvas, crop);
@@ -697,21 +698,21 @@ function openColorMatchPopover(uc, layer, point = null) {
   element.className = "vnccs-uc-color-match-popover";
   element.style.cssText = "position:absolute; z-index:30; width:270px; padding:10px; border-radius:10px; background:rgba(20,16,30,.97); border:1px solid rgba(255,255,255,.14); color:#e8e8f0; font:11px sans-serif; display:grid; gap:8px; box-shadow:0 8px 24px rgba(0,0,0,.45);";
   const methodOptions = COLOR_MATCH_METHODS
-    .map((method) => `<option value="${method}">${COLOR_MATCH_LABELS[method] || method}</option>`)
+    .map((method) => `<option value="${method}">${escapeText(t(COLOR_MATCH_LABELS[method] || method))}</option>`)
     .join("");
   element.innerHTML = `
-    <div style="font-weight:600;">Color match to below – ${escapeText(layer.name || "layer")}</div>
-    <div style="opacity:.75; line-height:1.35;">Recolors this layer to fit the layers under it. Once the method is ready, drag Strength to update the canvas immediately. Apply keeps the result, Cancel restores the layer.</div>
-    <label style="display:grid; gap:4px;">Method
+    <div style="font-weight:600;">${t("Color match to below – {name}", { name: escapeText(layer.name || t("layer")) })}</div>
+    <div style="opacity:.75; line-height:1.35;">${t("Recolors this layer to fit the layers under it. Once the method is ready, drag Strength to update the canvas immediately. Apply keeps the result, Cancel restores the layer.")}</div>
+    <label style="display:grid; gap:4px;">${t("Method")}
       <select class="vnccs-uc-select" data-control="colorMatchMethod">${methodOptions}</select>
     </label>
-    <label style="display:grid; gap:4px;"><span>Strength <span data-color-match-readout>10.0</span></span>
+    <label style="display:grid; gap:4px;"><span>${t("Strength")} <span data-color-match-readout>10.0</span></span>
       <input class="vnccs-uc-range" type="range" min="0" max="${COLOR_MATCH_STRENGTH_MAX}" step="0.1" value="${COLOR_MATCH_STRENGTH_MAX}" data-control="colorMatchStrength">
     </label>
     <div data-color-match-note style="min-height:14px; opacity:.8;"></div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-      <button class="vnccs-uc-btn" type="button" data-control="colorMatchCancel">Cancel</button>
-      <button class="vnccs-uc-btn primary" type="button" data-control="colorMatchClose">Apply</button>
+      <button class="vnccs-uc-btn" type="button" data-control="colorMatchCancel">${t("Cancel")}</button>
+      <button class="vnccs-uc-btn primary" type="button" data-control="colorMatchClose">${t("Apply")}</button>
     </div>`;
   uc.container.appendChild(element);
   installCustomSelects(element);
@@ -802,14 +803,14 @@ function openLayerContextMenu(uc, layer, e) {
       group = item.group;
       const head = document.createElement("div");
       head.className = "vnccs-uc-layer-menu-group";
-      head.textContent = group;
+      head.textContent = t(group);
       head.style.cssText = "padding:5px 7px 2px; color:rgba(232,232,240,.45); font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; user-select:none; pointer-events:none;";
       menu.appendChild(head);
     }
     const entry = document.createElement("button");
     entry.type = "button";
     entry.className = "vnccs-uc-layer-menu-item";
-    entry.innerHTML = `${item.icon}<span>${escapeText(item.label)}</span>`;
+    entry.innerHTML = `${item.icon}<span>${escapeText(t(item.label))}</span>`;
     entry.style.cssText = "display:flex; align-items:center; gap:7px; text-align:left; padding:4px 7px; border:0; border-radius:6px; background:transparent; color:#e8e8f0; cursor:pointer; font:inherit; font-size:12px; line-height:1.2;";
     const icon = entry.querySelector("svg");
     if (icon) icon.style.cssText = "width:14px; height:14px; flex:0 0 auto; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;";
@@ -838,12 +839,12 @@ function runLayerMenuAction(uc, layer, item, point = null) {
   if (item.id === "auto-name") return autoNameLayers(uc, [layer]);
   if (item.id === "rasterize") {
     if (typeof uc.rasterizePoseLayer === "function") return uc.rasterizePoseLayer(layer);
-    uc.setStatus(POSE_TOOLS_UNAVAILABLE);
+    uc.setStatus(t(POSE_TOOLS_UNAVAILABLE));
     return undefined;
   }
   if (item.id === "edit-pose") {
     if (typeof uc.editPoseLayer === "function") return uc.editPoseLayer(layer);
-    uc.setStatus(POSE_TOOLS_UNAVAILABLE);
+    uc.setStatus(t(POSE_TOOLS_UNAVAILABLE));
     return undefined;
   }
   return undefined;

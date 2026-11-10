@@ -9,6 +9,7 @@
 
 
 import { installCustomSelects } from "../shared/custom_select.mjs?v=20261104-scaled-menu";
+import { t as tr } from "../i18n/index.mjs";
 
 export const POSE_ANIMATION_SCHEMA_VERSION = 2;
 export const MODEL_ROTATION_TRACK = "@modelRotation";
@@ -208,7 +209,7 @@ export function validatedAnimationCharacterTransform(source) {
         || !Number.isFinite(source.z)
         || !Number.isFinite(source.zoom)
     ) {
-        throw new TypeError("Animation character transform requires finite x, y, z, and zoom.");
+        throw new TypeError(tr("Animation character transform requires finite x, y, z, and zoom."));
     }
     if (
         Math.abs(source.x) > 50
@@ -216,7 +217,7 @@ export function validatedAnimationCharacterTransform(source) {
         || source.z < -40 || source.z > 40
         || source.zoom < 0.1 || source.zoom > 7
     ) {
-        throw new RangeError("Animation character transform is outside the supported range.");
+        throw new RangeError(tr("Animation character transform is outside the supported range."));
     }
     return {
         x: source.x,
@@ -266,24 +267,24 @@ function isValidTrackValue(trackName, value) {
 
 function canonicalTrackValue(trackName, value) {
     if (isBonePositionTrack(trackName)) {
-        if (!isValidTrackValue(trackName, value)) throw new TypeError("Bone position key must be a finite vector3.");
+        if (!isValidTrackValue(trackName, value)) throw new TypeError(tr("Bone position key must be a finite vector3."));
         return value.slice();
     }
     if (trackName === CHARACTER_POSITION_TRACK) {
         if (!isValidTrackValue(trackName, value)) {
-            throw new TypeError("Character position key must be [x, y].");
+            throw new TypeError(tr("Character position key must be [x, y]."));
         }
         if (Math.abs(value[0]) > 50 || Math.abs(value[1]) > 50) {
-            throw new RangeError("Character position key is outside the supported range.");
+            throw new RangeError(tr("Character position key is outside the supported range."));
         }
         return value.slice();
     }
     if (trackName === CHARACTER_ZOOM_TRACK) {
         if (!isValidTrackValue(trackName, value)) {
-            throw new TypeError("Character zoom key must be a finite number.");
+            throw new TypeError(tr("Character zoom key must be a finite number."));
         }
         if (value < 0.1 || value > 7) {
-            throw new RangeError("Character zoom key is outside the supported range.");
+            throw new RangeError(tr("Character zoom key is outside the supported range."));
         }
         return value;
     }
@@ -602,7 +603,7 @@ export function createAnimationStateFromPoses(poses, options = {}) {
     const frames = Array.isArray(poses)
         ? poses.filter(pose => pose && typeof pose === "object").map(pose => normalizePose(pose))
         : [];
-    if (!frames.length) throw new Error("Animation contains no pose frames.");
+    if (!frames.length) throw new Error(tr("Animation contains no pose frames."));
     if (frames.length === 1) frames.push(normalizePose(frames[0]));
 
     const explicitPoseFrameIndices = Array.isArray(options.poseFrameIndices)
@@ -1245,28 +1246,29 @@ function timelineExpansionIdsForTrack(trackName) {
     return ids;
 }
 
-function sidePrefix(name) {
-    const side = trackSide(name);
-    return side === "left" ? "Left " : side === "right" ? "Right " : "";
+function localizedSideName(side, part) {
+    if (side === "left") return tr("Left {part}", { part });
+    if (side === "right") return tr("Right {part}", { part });
+    return part;
 }
 
 function numberedPartLabel(base, number) {
     if (!number) return base;
     const normalized = Number(number);
-    if (normalized === 1) return `${base} — Base`;
-    if (normalized === 2) return `${base} — Middle`;
-    if (normalized === 3) return `${base} — Tip`;
-    return `${base} ${String(number).padStart(2, "0")}`;
+    if (normalized === 1) return tr("{part} — Base", { part: base });
+    if (normalized === 2) return tr("{part} — Middle", { part: base });
+    if (normalized === 3) return tr("{part} — Tip", { part: base });
+    return tr("{part} {number}", { part: base, number: String(number).padStart(2, "0") });
 }
 
 export function humanizeBoneName(name) {
-    if (isBonePositionTrack(name)) return `${humanizeBoneName(boneNameForPositionTrack(name))} Position`;
-    if (name === MODEL_ROTATION_TRACK) return "Model Rotation";
-    if (name === CHARACTER_POSITION_TRACK) return "Position in Frame";
-    if (name === CHARACTER_ZOOM_TRACK) return "Model Zoom";
+    if (isBonePositionTrack(name)) return tr("{name} Position", { name: humanizeBoneName(boneNameForPositionTrack(name)) });
+    if (name === MODEL_ROTATION_TRACK) return tr("Model Rotation");
+    if (name === CHARACTER_POSITION_TRACK) return tr("Position in Frame");
+    if (name === CHARACTER_ZOOM_TRACK) return tr("Model Zoom");
     const raw = cleanBoneName(name);
     const lower = raw.toLowerCase();
-    const side = sidePrefix(raw);
+    const side = trackSide(raw);
     const withoutSide = lower
         .replace(/(^|_)(left|right|l|r)(?=_|$)/g, "_")
         .replace(/_(left|right|l|r)$/g, "")
@@ -1274,10 +1276,10 @@ export function humanizeBoneName(name) {
 
     const finger = withoutSide.match(/(thumb|index|middle|ring|pinky|little|finger)[_ ]?(\d+)?/);
     if (finger) {
-        const fingerName = finger[1] === "pinky" || finger[1] === "little"
+        const fingerName = tr(finger[1] === "pinky" || finger[1] === "little"
             ? "Little Finger"
-            : `${finger[1][0].toUpperCase()}${finger[1].slice(1)}${finger[1] === "thumb" ? "" : " Finger"}`;
-        return `${side}${numberedPartLabel(fingerName, finger[2])}`;
+            : `${finger[1][0].toUpperCase()}${finger[1].slice(1)}${finger[1] === "thumb" ? "" : " Finger"}`);
+        return localizedSideName(side, numberedPartLabel(fingerName, finger[2]));
     }
 
     const compact = withoutSide.replace(/_/g, "");
@@ -1311,10 +1313,13 @@ export function humanizeBoneName(name) {
         toe: "Toes",
         toebase: "Toes",
     };
-    if (exact[compact]) return `${side}${exact[compact]}`;
+    if (exact[compact]) return localizedSideName(side, tr(exact[compact]));
 
     const spine = compact.match(/^(spine|chest)(\d+)$/);
-    if (spine) return `${spine[1] === "chest" ? "Chest" : "Spine"} ${String(Number(spine[2])).padStart(2, "0")}`;
+    if (spine) return tr("{part} {number}", {
+        part: spine[1] === "chest" ? tr("Chest") : tr("Spine"),
+        number: String(Number(spine[2])).padStart(2, "0"),
+    });
     const generic = withoutSide
         .replace(/_/g, " ")
         .replace(/\bupperarm\b/gi, "Upper Arm")
@@ -1322,7 +1327,7 @@ export function humanizeBoneName(name) {
         .replace(/\bupperleg\b/gi, "Thigh")
         .replace(/\blowerleg\b/gi, "Lower Leg")
         .replace(/\b\w/g, character => character.toUpperCase());
-    return `${side}${generic}`.trim();
+    return localizedSideName(side, tr(generic.trim()));
 }
 
 export function groupTimelineTracks(trackNames = []) {
@@ -1368,7 +1373,8 @@ export function buildTimelineRows({
     const groups = groupTimelineTracks(trackNames);
     const rows = [];
     for (const group of groups) {
-        const groupMatchesSearch = !query || group.label.toLowerCase().includes(query);
+        const groupLabel = tr(group.label);
+        const groupMatchesSearch = !query || groupLabel.toLowerCase().includes(query);
         let candidates = group.trackNames.filter(trackName => {
             if (trackName === activeTrack) return true;
             if (
@@ -1401,7 +1407,7 @@ export function buildTimelineRows({
             id: `group:${group.id}`,
             groupId: group.id,
             depth: 0,
-            label: group.label,
+            label: groupLabel,
             trackNames: candidates,
             keyFrames,
             keyCount: candidates.reduce((sum, name) => sum + (state?.tracks?.[name]?.keys?.length || 0), 0),
@@ -1445,7 +1451,7 @@ export function buildTimelineRows({
                         groupId: subgroupId,
                         parentGroupId: group.id,
                         depth: 1,
-                        label: finger.label,
+                        label: tr(finger.label),
                         trackNames: tracks,
                         keyFrames: aggregateTimelineKeyFrames(state, tracks),
                         keyCount: tracks.reduce((sum, name) => sum + (state?.tracks?.[name]?.keys?.length || 0), 0),
@@ -1731,17 +1737,17 @@ export class PoseAnimationTimeline {
 
         this.toolbar = document.createElement("div");
         this.toolbar.className = "vnccs-ps-tl-toolbar";
-        this.firstButton = this._button("|◀", "First frame", () => this.setFrame(0));
-        this.previousButton = this._button("◀", "Previous frame", () => this.setFrame(this.state.currentFrame - 1));
-        this.playButton = this._button("▶", "Play / Pause (Space)", () => this.togglePlayback(), "play");
-        this.nextButton = this._button("▶", "Next frame", () => this.setFrame(this.state.currentFrame + 1));
-        this.lastButton = this._button("▶|", "Last frame", () => this.setFrame(this.state.frameCount - 1));
+        this.firstButton = this._button("|◀", tr("First frame"), () => this.setFrame(0));
+        this.previousButton = this._button("◀", tr("Previous frame"), () => this.setFrame(this.state.currentFrame - 1));
+        this.playButton = this._button("▶", tr("Play / Pause (Space)"), () => this.togglePlayback(), "play");
+        this.nextButton = this._button("▶", tr("Next frame"), () => this.setFrame(this.state.currentFrame + 1));
+        this.lastButton = this._button("▶|", tr("Last frame"), () => this.setFrame(this.state.frameCount - 1));
 
         this.frameInput = document.createElement("input");
         this.frameInput.className = "vnccs-ps-tl-number current-frame";
         this.frameInput.type = "number";
         this.frameInput.min = "0";
-        this.frameInput.title = "Current frame number";
+        this.frameInput.title = tr("Current frame number");
         for (const type of ["input", "change"]) {
             this.frameInput.addEventListener(type, () => {
                 const value = this.frameInput.value;
@@ -1757,19 +1763,19 @@ export class PoseAnimationTimeline {
         this.status = document.createElement("span");
         this.status.className = "vnccs-ps-tl-status";
 
-        this.addKeyButton = this._button("◆", "Add/update key for the selected track", () => {
+        this.addKeyButton = this._button("◆", tr("Add/update key for the selected track"), () => {
             const trackName = this.getPreferredTrack();
             if (trackName) this.onRequestKey(trackName, this.state.currentFrame);
         }, "key");
-        this.deleteKeyButton = this._button("⌫", "Delete selected keys", () => this.deleteSelectedKeys());
+        this.deleteKeyButton = this._button("⌫", tr("Delete selected keys"), () => this.deleteSelectedKeys());
 
         this.interpolationSelect = document.createElement("select");
         this.interpolationSelect.className = "vnccs-ps-tl-select";
-        this.interpolationSelect.title = "Outgoing interpolation of the selected keys";
+        this.interpolationSelect.title = tr("Outgoing interpolation of the selected keys");
         for (const preset of INTERPOLATION_PRESETS) {
             const option = document.createElement("option");
             option.value = preset.value;
-            option.textContent = preset.label;
+            option.textContent = tr(preset.label);
             this.interpolationSelect.appendChild(option);
         }
         this.interpolationSelect.addEventListener("change", () => {
@@ -1788,12 +1794,12 @@ export class PoseAnimationTimeline {
             }
         });
 
-        this.autoKeyButton = this._button("AUTO", "Auto-Key", () => {
+        this.autoKeyButton = this._button(tr("AUTO"), tr("Auto-Key"), () => {
             this.state.autoKey = !this.state.autoKey;
             this.updateToolbar();
             this.onStateChange({ type: "autoKey" });
         }, "toggle");
-        this.loopButton = this._button("↻", "Loop playback", () => {
+        this.loopButton = this._button("↻", tr("Loop playback"), () => {
             this.state.loop = !this.state.loop;
             this.updateToolbar();
             this.onStateChange({ type: "loop" });
@@ -1805,7 +1811,7 @@ export class PoseAnimationTimeline {
         this.fpsInput.min = String(MIN_ANIMATION_FPS);
         this.fpsInput.max = String(MAX_ANIMATION_FPS);
         this.fpsInput.step = "0.001";
-        this.fpsInput.title = "Animation frame rate";
+        this.fpsInput.title = tr("Animation frame rate");
 
         this.durationInput = document.createElement("input");
         this.durationInput.type = "number";
@@ -1813,7 +1819,7 @@ export class PoseAnimationTimeline {
         this.durationInput.min = "0.1";
         this.durationInput.max = "600";
         this.durationInput.step = "0.001";
-        this.durationInput.title = "Animation duration in seconds";
+        this.durationInput.title = tr("Animation duration in seconds");
         for (const [input, key] of [[this.fpsInput, "fps"], [this.durationInput, "duration"]]) {
             for (const type of ["input", "change"]) {
                 input.addEventListener(type, () => {
@@ -1848,12 +1854,12 @@ export class PoseAnimationTimeline {
         fpsLabel.append("FPS ", this.fpsInput);
         const durationLabel = document.createElement("label");
         durationLabel.className = "vnccs-ps-tl-compact-label";
-        durationLabel.append("Seconds ", this.durationInput);
+        durationLabel.append(tr("Seconds "), this.durationInput);
 
         this.searchInput = document.createElement("input");
         this.searchInput.type = "search";
         this.searchInput.className = "vnccs-ps-tl-search";
-        this.searchInput.placeholder = "Find track…";
+        this.searchInput.placeholder = tr("Find track…");
         this.searchInput.addEventListener("input", () => {
             this.search = this.searchInput.value.trim().toLowerCase();
             this.body.scrollTop = 0;
@@ -1862,7 +1868,7 @@ export class PoseAnimationTimeline {
 
         this.viewSelect = document.createElement("select");
         this.viewSelect.className = "vnccs-ps-tl-select vnccs-ps-tl-view-select";
-        this.viewSelect.title = "Track view";
+        this.viewSelect.title = tr("Track view");
         for (const [value, label] of [
             ["animated", "Animated"],
             ["focus", "Focus"],
@@ -1871,7 +1877,7 @@ export class PoseAnimationTimeline {
         ]) {
             const option = document.createElement("option");
             option.value = value;
-            option.textContent = label;
+            option.textContent = tr(label);
             this.viewSelect.appendChild(option);
         }
         this.viewSelect.value = this.viewMode;
@@ -1880,11 +1886,11 @@ export class PoseAnimationTimeline {
             this.body.scrollTop = 0;
             this.renderTracks();
         });
-        this.collapseButton = this._button("▾", "Collapse timeline", () => {
+        this.collapseButton = this._button("▾", tr("Collapse timeline"), () => {
             this.collapsed = !this.collapsed;
             this.element.classList.toggle("collapsed", this.collapsed);
             this.collapseButton.textContent = this.collapsed ? "▴" : "▾";
-            this.collapseButton.title = this.collapsed ? "Expand timeline" : "Collapse timeline";
+            this.collapseButton.title = this.collapsed ? tr("Expand timeline") : tr("Collapse timeline");
             if (this.collapsed) this.stopPlayback();
             else this._renderVisibleTrackRows(true);
         }, "vnccs-ps-tl-collapse");
@@ -1900,7 +1906,7 @@ export class PoseAnimationTimeline {
 
         this.resizer = document.createElement("div");
         this.resizer.className = "vnccs-ps-tl-resizer";
-        this.resizer.title = "Drag to resize timeline";
+        this.resizer.title = tr("Drag to resize timeline");
         this.body = document.createElement("div");
         this.body.className = "vnccs-ps-tl-body";
         this.content = document.createElement("div");
@@ -1914,8 +1920,8 @@ export class PoseAnimationTimeline {
         this.horizontalScrollInput.max = "0";
         this.horizontalScrollInput.step = "1";
         this.horizontalScrollInput.value = "0";
-        this.horizontalScrollInput.setAttribute("aria-label", "Timeline horizontal scroll");
-        this.horizontalScrollInput.title = "Drag to scroll the timeline horizontally";
+        this.horizontalScrollInput.setAttribute("aria-label", tr("Timeline horizontal scroll"));
+        this.horizontalScrollInput.title = tr("Drag to scroll the timeline horizontally");
         this.horizontalScrollInput.addEventListener("input", () => {
             this.body.scrollLeft = Number(this.horizontalScrollInput.value) || 0;
         });
@@ -2501,8 +2507,15 @@ export class PoseAnimationTimeline {
         const fps = getAnimationFPS(this.state);
         const frameValue = String(this.state.currentFrame);
         if (document.activeElement !== this.frameInput && this.frameInput.value !== frameValue) this.frameInput.value = frameValue;
-        const selectionStatus = this.selectedKeys.size ? ` · ${this.selectedKeys.size} key${this.selectedKeys.size === 1 ? "" : "s"}` : "";
-        const status = `Frame ${this.state.currentFrame} · ${(this.state.currentFrame / fps).toFixed(2)}s${selectionStatus}`;
+        const selectionStatus = this.selectedKeys.size
+            ? ` · ${this.selectedKeys.size === 1
+                ? tr("{count} key", { count: this.selectedKeys.size })
+                : tr("{count} keys", { count: this.selectedKeys.size })}`
+            : "";
+        const status = `${tr("Frame {frame} · {seconds}s", {
+            frame: this.state.currentFrame,
+            seconds: (this.state.currentFrame / fps).toFixed(2),
+        })}${selectionStatus}`;
         if (this.status.textContent !== status) this.status.textContent = status;
 
         const timingSignature = `${this.state.frameCount}|${fps}|${this.state.duration}`;
@@ -2789,7 +2802,14 @@ export class PoseAnimationTimeline {
                 this.onFrameChange(dragState.currentFrame, { transient: true });
                 this._dragPreview = { frames: originalFrames, delta: deltaFrame };
                 this._scheduleKeyLaneDraw();
-                lane.title = `Move ${originalSelections.length} key${originalSelections.length === 1 ? "" : "s"} by ${deltaFrame} frame${Math.abs(deltaFrame) === 1 ? "" : "s"}`;
+                lane.title = tr("Move {count} by {delta}", {
+                    count: originalSelections.length === 1
+                        ? tr("{count} key", { count: originalSelections.length })
+                        : tr("{count} keys", { count: originalSelections.length }),
+                    delta: Math.abs(deltaFrame) === 1
+                        ? tr("{delta} frame", { delta: deltaFrame })
+                        : tr("{delta} frames", { delta: deltaFrame }),
+                });
             };
             const end = endEvent => {
                 lane.removeEventListener("pointermove", move);
@@ -2828,7 +2848,13 @@ export class PoseAnimationTimeline {
             const aggregate = this._keyAtPointer(event, lane, row);
             const interpolation = aggregate?.members[0]?.key?.interpolation;
             lane.title = aggregate
-                ? `Frame ${aggregate.frame} · ${aggregate.members.length} key${aggregate.members.length === 1 ? "" : "s"} · ${INTERPOLATION_PRESETS.find(item => item.value === interpolation)?.label || interpolation}`
+                ? tr("Frame {frame} · {count} · {interpolation}", {
+                    frame: aggregate.frame,
+                    count: aggregate.members.length === 1
+                        ? tr("{count} key", { count: aggregate.members.length })
+                        : tr("{count} keys", { count: aggregate.members.length }),
+                    interpolation: tr(INTERPOLATION_PRESETS.find(item => item.value === interpolation)?.label || interpolation),
+                })
                 : "";
         });
         lane.addEventListener("dblclick", event => {
@@ -2860,8 +2886,8 @@ export class PoseAnimationTimeline {
             toggle.textContent = rowData.expanded ? "▾" : "▸";
             toggle.disabled = !!rowData.forcedExpanded;
             toggle.title = rowData.forcedExpanded
-                ? "Expanded by the current search or track view"
-                : (rowData.expanded ? `Collapse ${rowData.label}` : `Expand ${rowData.label}`);
+                ? tr("Expanded by the current search or track view")
+                : (rowData.expanded ? tr("Collapse {name}", { name: rowData.label }) : tr("Expand {name}", { name: rowData.label }));
             const toggleGroup = event => {
                 event.stopPropagation();
                 if (rowData.forcedExpanded) return;
@@ -2880,15 +2906,17 @@ export class PoseAnimationTimeline {
         const text = document.createElement("span");
         text.className = "vnccs-ps-tl-track-name";
         text.textContent = rowData.label;
-        text.title = rowData.rawName || `${rowData.label} · ${rowData.trackNames.length} track${rowData.trackNames.length === 1 ? "" : "s"}`;
+        text.title = rowData.rawName || (rowData.trackNames.length === 1
+            ? tr("{name} · {count} track", { name: rowData.label, count: rowData.trackNames.length })
+            : tr("{name} · {count} tracks", { name: rowData.label, count: rowData.trackNames.length }));
         label.appendChild(text);
         const count = document.createElement("span");
         count.className = "vnccs-ps-tl-track-count";
         count.textContent = String(rowData.keyCount || 0);
-        count.title = `${rowData.keyCount || 0} keyframes`;
+        count.title = tr("{count} keyframes", { count: rowData.keyCount || 0 });
         label.appendChild(count);
         if (rowData.type === "track") {
-            const add = this._button("◇", `Add/update key at frame ${this.state.currentFrame}`, event => {
+            const add = this._button("◇", tr("Add/update key at frame {frame}", { frame: this.state.currentFrame }), event => {
                 event.stopPropagation();
                 this.onRequestKey(rowData.trackName, this.state.currentFrame);
             }, "row-key");
@@ -2943,7 +2971,7 @@ export class PoseAnimationTimeline {
         rulerRow.className = "vnccs-ps-tl-row ruler";
         const rulerLabel = document.createElement("div");
         rulerLabel.className = "vnccs-ps-tl-track-label ruler";
-        rulerLabel.textContent = "Dope Sheet · Frames";
+        rulerLabel.textContent = tr("Dope Sheet · Frames");
         const rulerLane = this._makeLane(null, true);
         rulerRow.append(rulerLabel, rulerLane);
         this.content.appendChild(rulerRow);
@@ -2964,7 +2992,7 @@ export class PoseAnimationTimeline {
         if (!rows.length) {
             const empty = document.createElement("div");
             empty.className = "vnccs-ps-tl-empty";
-            empty.textContent = "No matching bone tracks";
+            empty.textContent = tr("No matching bone tracks");
             this.content.appendChild(empty);
         }
         this.updatePlayheads();

@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/spark/three.module.js";
-import { loadFactoryModel, disposeFactoryModel } from "./model_loader.mjs?v=20260902.2";
+import { loadFactoryModel, disposeFactoryModel } from "./model_loader.mjs?v=20261110.1";
 
 // A job preview is deliberately outside the editable/persisted scene object collection.
 export class FactoryGenerationPreview {

@@ -17,6 +17,8 @@
  * import and one install call (kept merge-friendly for parallel branches).
  */
 
+import { t as tr } from "../i18n/index.mjs";
+
 export const BRUSH_FAMILY_TOOLS = new Set(["brush", "eraser", "mask"]);
 export const BRUSH_SIZE_MIN = 1;
 export const BRUSH_SIZE_MAX = 220;
@@ -220,7 +222,7 @@ function commitGesture(uc) {
   if (gesture.sector) {
     const key = gesture.sector.key;
     const value = key === "color" ? uc.fg : (key === "size" ? uc.brushSize : (key === "opacity" ? uc.opacity : uc.brushHardness));
-    message = `[VNCCS UniCanvas] ${gesture.sector.label} ${formatHudValue(key, value)}`;
+    message = tr("[VNCCS UniCanvas] {label} {value}", { label: tr(gesture.sector.label), value: formatHudValue(key, value) });
   }
   commitToolSettings(uc, gesture.before, message);
   uc.updateToolPreviewOverlay();
@@ -310,7 +312,7 @@ function drawRadialHud(ctx, uc, gesture) {
     ctx.font = "11px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(sector.label, labelX, labelY);
+    ctx.fillText(tr(sector.label), labelX, labelY);
   }
   ctx.fillStyle = "rgba(10,10,15,.85)";
   ctx.beginPath();
@@ -325,7 +327,7 @@ function drawRadialHud(ctx, uc, gesture) {
     const value = key === "color" ? uc.fg : (key === "size" ? uc.brushSize : (key === "opacity" ? uc.opacity : uc.brushHardness));
     ctx.fillText(formatHudValue(key, value), x, y);
   } else {
-    ctx.fillText("drag", x, y);
+    ctx.fillText(tr("drag"), x, y);
   }
   ctx.restore();
 }
@@ -378,7 +380,7 @@ export function installUniCanvasInputTools(uc) {
     const panel = uc.toolSettings;
     if (!panel || !panel.classList.contains("visible") || !BRUSH_FAMILY_TOOLS.has(uc.tool)) return;
     if (panel.querySelector('input[data-control="brushHardness"]')) return;
-    panel.insertAdjacentHTML("beforeend", `<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">Hardness</span><input class="vnccs-uc-range" type="range" min="0" max="1" step="0.01" value="${clamp01(uc.brushHardness)}" data-control="brushHardness"></label>`);
+    panel.insertAdjacentHTML("beforeend", `<label class="vnccs-uc-tool-setting"><span class="vnccs-uc-tool-setting-label">${tr("Hardness")}</span><input class="vnccs-uc-range" type="range" min="0" max="1" step="0.01" value="${clamp01(uc.brushHardness)}" data-control="brushHardness"></label>`);
   };
 
   const originalCreateHistorySnapshot = uc.createHistorySnapshot;

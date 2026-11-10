@@ -10,15 +10,18 @@
  * history and calls into this module.
  */
 
+import { t as tr } from "../i18n/index.mjs";
+
 export const QUAD_KEYS = ["nw", "ne", "se", "sw"];
 export const TRANSFORM_MODES = ["free", "crop", "skew", "distort", "perspective", "warp"];
+// Getters, so the label follows the ComfyUI language when the menu is built.
 export const TRANSFORM_MODE_LABELS = {
-  free: "Free transform",
-  crop: "Crop",
-  skew: "Skew",
-  distort: "Distort",
-  perspective: "Perspective",
-  warp: "Warp",
+  get free() { return tr("Free transform"); },
+  get crop() { return tr("Crop"); },
+  get skew() { return tr("Skew"); },
+  get distort() { return tr("Distort"); },
+  get perspective() { return tr("Perspective"); },
+  get warp() { return tr("Warp"); },
 };
 const CORNER_UV = { nw: [0, 0], ne: [1, 0], se: [1, 1], sw: [0, 1] };
 const EDGE_CORNERS = { n: ["nw", "ne"], e: ["ne", "se"], s: ["sw", "se"], w: ["nw", "sw"] };

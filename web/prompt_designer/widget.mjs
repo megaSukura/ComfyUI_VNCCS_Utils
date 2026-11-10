@@ -7,6 +7,7 @@ import { syncPromptOutputs } from "./outputs.mjs";
 import { blockRows, blockSourceMode } from "./block_source.mjs";
 import { promptSnapshot, promptSignature, openPromptState, mergeCategories } from "./prompt_library.mjs";
 import { LibraryActions } from "./library_actions.mjs";
+import { t } from "../i18n/index.mjs";
 
 const CARD_SELECTOR = "[data-block-id], [data-condition], [data-multi-prompt]";
 const PROMPT_CLIPBOARD = "application/x-vnccs-prompt-parts";
@@ -42,9 +43,9 @@ export class PromptDesignerWidget {
         this.libraryView = "blocks";
         this.libraryTabs = element("div", "vnccs-pd-library-tabs");
         this.libraryTabs.setAttribute("role", "tablist");
-        this.libraryTabs.setAttribute("aria-label", "Library contents");
+        this.libraryTabs.setAttribute("aria-label", t("Library contents"));
         for (const [view, label] of [["blocks", "Blocks"], ["prompts", "Prompts"]]) {
-            const button = this.button(label, () => this.setLibraryView(view));
+            const button = this.button(t(label), () => this.setLibraryView(view));
             button.dataset.view = view; button.setAttribute("role", "tab"); this.libraryTabs.append(button);
         }
         this.on(this.libraryTabs, "keydown", event => {
@@ -57,31 +58,31 @@ export class PromptDesignerWidget {
         library.append(this.libraryTabs);
         this.libraryCategory = "";
         this.categories = element("div", "vnccs-pd-categories");
-        this.categories.setAttribute("aria-label", "Library categories");
+        this.categories.setAttribute("aria-label", t("Library categories"));
         this.categoryName = element("input");
-        this.categoryName.placeholder = "Category name"; this.categoryName.maxLength = 128;
-        this.categoryName.setAttribute("aria-label", "New category name");
+        this.categoryName.placeholder = t("Category name"); this.categoryName.maxLength = 128;
+        this.categoryName.setAttribute("aria-label", t("New category name"));
         this.categoryForm = element("div", "vnccs-pd-category-form");
         this.categoryForm.hidden = true;
-        this.categoryForm.append(this.categoryName, this.button("Add", () => this.addCategory()),
-            this.button("Cancel", () => { this.categoryForm.hidden = true; }));
+        this.categoryForm.append(this.categoryName, this.button(t("Add"), () => this.addCategory()),
+            this.button(t("Cancel"), () => { this.categoryForm.hidden = true; }));
         this.search = element("input");
         this.search.type = "search";
-        this.search.placeholder = "Search blocks…";
-        this.search.setAttribute("aria-label", "Search saved blocks");
+        this.search.placeholder = t("Search blocks…");
+        this.search.setAttribute("aria-label", t("Search saved blocks"));
         this.list = element("div", "vnccs-pd-list");
         this.list.id = `vnccs-pd-library-${promptId()}`; this.list.setAttribute("role", "tabpanel");
         for (const button of this.libraryTabs.children) {
             button.id = `${this.list.id}-${button.dataset.view}`; button.setAttribute("aria-controls", this.list.id);
         }
-        this.libraryHint = element("div", "vnccs-pd-hint", "Drag into the prompt. Click to edit.");
-        this.libraryAction = this.button("+ New block", () => this.libraryView === "prompts" ? this.editPromptDetails() : this.newBlock());
+        this.libraryHint = element("div", "vnccs-pd-hint", t("Drag into the prompt. Click to edit."));
+        this.libraryAction = this.button(t("+ New block"), () => this.libraryView === "prompts" ? this.editPromptDetails() : this.newBlock());
         library.append(this.categories, this.categoryForm, this.search, this.list, this.libraryHint, this.libraryAction);
         this.libraryResize = element("div", "vnccs-pd-library-resize");
         this.libraryResize.tabIndex = 0;
         this.libraryResize.setAttribute("role", "separator");
         this.libraryResize.setAttribute("aria-orientation", "vertical");
-        this.libraryResize.setAttribute("aria-label", "Resize block library");
+        this.libraryResize.setAttribute("aria-label", t("Resize block library"));
         this.libraryResize.setAttribute("aria-valuemin", "240");
         this.libraryResize.setAttribute("aria-valuenow", "460");
         library.append(this.libraryResize);
@@ -90,33 +91,33 @@ export class PromptDesignerWidget {
         const toolbar = element("div", "vnccs-pd-toolbar");
         this.tabs = element("div", "vnccs-pd-tabs");
         this.tabs.setAttribute("role", "tablist");
-        this.tabs.setAttribute("aria-label", "Prompt documents");
-        this.undo = this.button("Undo", () => this.moveHistory("undo"));
-        this.redo = this.button("Redo", () => this.moveHistory("redo"));
-        const savePrompt = this.button("Save Prompt Template", () => this.editPromptDetails());
+        this.tabs.setAttribute("aria-label", t("Prompt documents"));
+        this.undo = this.button(t("Undo"), () => this.moveHistory("undo"));
+        this.redo = this.button(t("Redo"), () => this.moveHistory("redo"));
+        const savePrompt = this.button(t("Save Prompt Template"), () => this.editPromptDetails());
         savePrompt.classList.add("primary");
         this.blockSearch = element("input", "vnccs-pd-block-search");
         this.blockSearch.type = "search";
-        this.blockSearch.placeholder = "Search in block…";
-        this.blockSearch.setAttribute("aria-label", "Search block variants");
+        this.blockSearch.placeholder = t("Search in block…");
+        this.blockSearch.setAttribute("aria-label", t("Search block variants"));
         toolbar.append(this.tabs, this.undo, this.redo, savePrompt);
         this.main = element("div", "vnccs-pd-doc");
         this.main.id = `vnccs-pd-main-${promptId()}`;
         this.main.setAttribute("role", "tabpanel");
-        this.main.append(element("div", "vnccs-pd-hint", "Main prompt · Double-click a block or press Enter for instance settings"));
+        this.main.append(element("div", "vnccs-pd-hint", t("Main prompt · Double-click a block or press Enter for instance settings")));
         this.editor = element("div", "vnccs-pd-editor");
         this.editor.contentEditable = "true";
         this.editor.spellcheck = false;
         this.editor.setAttribute("role", "textbox");
         this.editor.setAttribute("aria-multiline", "true");
-        this.editor.setAttribute("aria-label", "Main prompt editor");
-        this.conditionSuggestion = this.button("Tab · Insert if condition", () => this.insertCondition());
+        this.editor.setAttribute("aria-label", t("Main prompt editor"));
+        this.conditionSuggestion = this.button(t("Tab · Insert if condition"), () => this.insertCondition());
         this.conditionSuggestion.classList.add("vnccs-pd-condition-suggestion");
         this.conditionSuggestion.setAttribute("aria-keyshortcuts", "Tab");
         this.conditionSuggestion.hidden = true;
         this.conditionPanel = element("fieldset", "vnccs-pd-condition-panel");
         this.conditionPanel.hidden = true;
-        this.conditionPanel.append(element("legend", null, "Edit condition"));
+        this.conditionPanel.append(element("legend", null, t("Edit condition")));
         const conditionRow = element("div", "vnccs-pd-condition-row");
         const field = (label, control) => {
             const wrapper = element("label", null, label);
@@ -124,7 +125,7 @@ export class PromptDesignerWidget {
             return wrapper;
         };
         this.conditionSource = element("div", "vnccs-pd-editor vnccs-pd-condition-source");
-        this.conditionSource.setAttribute("aria-label", "Drop the block to check here");
+        this.conditionSource.setAttribute("aria-label", t("Drop the block to check here"));
         this.installConditionSourceInteractions(this.conditionSource, () => this.applyCondition(false));
         this.on(this.conditionSource, "dragover", event => {
             if (!event.dataTransfer.types.includes("application/x-vnccs-prompt-block")) return;
@@ -139,29 +140,29 @@ export class PromptDesignerWidget {
             this.applyCondition(false);
         });
         this.conditionOperator = element("select");
-        const emptyOperator = element("option", null, "Choose condition…"); emptyOperator.value = "";
+        const emptyOperator = element("option", null, t("Choose condition…")); emptyOperator.value = "";
         emptyOperator.disabled = true; emptyOperator.hidden = true; emptyOperator.selected = true;
         this.conditionOperator.append(emptyOperator);
         for (const [value, label] of Object.entries(CONDITION_OPERATORS)) {
-            const option = element("option", null, label);
+            const option = element("option", null, t(label));
             option.value = value;
             this.conditionOperator.append(option);
         }
         this.conditionValue = element("input");
         this.conditionValue.maxLength = 64 * 1024;
-        conditionRow.append(field("If block", this.conditionSource), field("Condition", this.conditionOperator), field("Comparison text", this.conditionValue));
+        conditionRow.append(field(t("If block"), this.conditionSource), field(t("Condition"), this.conditionOperator), field(t("Comparison text"), this.conditionValue));
         this.conditionExtraRows = element("div", "vnccs-pd-condition-extra-rows");
         const conditionTools = element("div", "vnccs-pd-tools");
-        conditionTools.append(this.button("+ AND", () => this.addConditionClause("and")),
-            this.button("+ OR", () => this.addConditionClause("or")));
+        conditionTools.append(this.button(t("+ AND"), () => this.addConditionClause("and")),
+            this.button(t("+ OR"), () => this.addConditionClause("or")));
         this.conditionOutput = element("div", "vnccs-pd-editor vnccs-pd-variant-editor");
         this.conditionElseOutput = element("div", "vnccs-pd-editor vnccs-pd-variant-editor");
-        for (const [editor, label] of [[this.conditionOutput, "Then output"], [this.conditionElseOutput, "Else output (optional)"]]) {
+        for (const [editor, label] of [[this.conditionOutput, t("Then output")], [this.conditionElseOutput, t("Else output (optional)")]]) {
             editor.contentEditable = "true"; editor.spellcheck = false;
             editor.setAttribute("role", "textbox");
             editor.setAttribute("aria-multiline", "true");
-            editor.setAttribute("aria-label", `${label} text and blocks`);
-            editor.dataset.placeholder = "Write text or drop blocks";
+            editor.setAttribute("aria-label", t("{label} text and blocks", { label }));
+            editor.dataset.placeholder = t("Write text or drop blocks");
             this.installPromptInteractions(editor);
             this.on(editor, "input", () => { this.clearCardSelection(); this.applyCondition(false); });
             this.on(editor, "pointerup", () => {
@@ -177,24 +178,24 @@ export class PromptDesignerWidget {
             });
         }
         this.conditionPanel.append(conditionRow, this.conditionExtraRows, conditionTools,
-            element("div", "vnccs-pd-hint", "AND is evaluated before OR. Checks use the nearest block insertion on the left, or the next insertion if none precedes If."),
-            field("Then insert", this.conditionOutput), field("Else insert (optional)", this.conditionElseOutput),
-            this.button("Apply condition", () => this.applyCondition()),
-            this.button("Close", () => this.closeCondition()));
+            element("div", "vnccs-pd-hint", t("AND is evaluated before OR. Checks use the nearest block insertion on the left, or the next insertion if none precedes If.")),
+            field(t("Then insert"), this.conditionOutput), field(t("Else insert (optional)"), this.conditionElseOutput),
+            this.button(t("Apply condition"), () => this.applyCondition()),
+            this.button(t("Close"), () => this.closeCondition()));
         this.main.append(this.conditionSuggestion);
         this.multiPanel = element("fieldset", "vnccs-pd-multi-panel");
         this.multiPanel.hidden = true;
-        this.multiPanel.append(element("legend", null, "Multi-prompt"),
-            element("div", "vnccs-pd-hint", "Each row replaces this fragment in its own output. Rows with the same number share an output."));
+        this.multiPanel.append(element("legend", null, t("Multi-prompt")),
+            element("div", "vnccs-pd-hint", t("Each row replaces this fragment in its own output. Rows with the same number share an output.")));
         this.multiRows = element("div", "vnccs-pd-multi-rows");
-        this.multiPanel.append(this.multiRows, this.button("+ Add output", () => this.addMultiVariant()),
-            this.button("Done", () => this.closeMultiPrompt()));
+        this.multiPanel.append(this.multiRows, this.button(t("+ Add output"), () => this.addMultiVariant()),
+            this.button(t("Done"), () => this.closeMultiPrompt()));
         this.main.append(this.editor,
-            element("div", "vnccs-pd-hint", "Drop a block at the cursor · Type if, then Tab for a condition · Ctrl/Cmd+Z to undo"));
+            element("div", "vnccs-pd-hint", t("Drop a block at the cursor · Type if, then Tab for a condition · Ctrl/Cmd+Z to undo")));
         const tools = element("div", "vnccs-pd-tools");
-        tools.setAttribute("role", "toolbar"); tools.setAttribute("aria-label", "Prompt tools");
-        this.ifTool = this.button("If", () => this.insertCondition(false));
-        const multiTool = this.button("Multi-prompt", () => this.insertMultiPrompt());
+        tools.setAttribute("role", "toolbar"); tools.setAttribute("aria-label", t("Prompt tools"));
+        this.ifTool = this.button(t("If"), () => this.insertCondition(false));
+        const multiTool = this.button(t("Multi-prompt"), () => this.insertMultiPrompt());
         for (const button of [this.ifTool, multiTool]) this.on(button, "pointerdown", event => event.preventDefault());
         tools.append(this.ifTool, multiTool);
         this.main.append(tools);
@@ -204,87 +205,87 @@ export class PromptDesignerWidget {
         const blockHead = element("div", "vnccs-pd-doc-head");
         this.blockName = element("input");
         this.blockName.maxLength = 128;
-        this.blockName.setAttribute("aria-label", "Block name");
+        this.blockName.setAttribute("aria-label", t("Block name"));
         blockHead.append(this.blockName,
-            this.button("Insert into prompt", () => this.insertBlock(this.state.activeTab)),
-            this.button("Delete block", () => this.confirmLibraryDelete("block", this.activeBlock())));
+            this.button(t("Insert into prompt"), () => this.insertBlock(this.state.activeTab)),
+            this.button(t("Delete block"), () => this.confirmLibraryDelete("block", this.activeBlock())));
         const variantsHead = element("div", "vnccs-pd-variants-head");
         this.blockStatus = element("span", "vnccs-pd-status");
         this.blockStatus.setAttribute("role", "status");
-        this.variantsTitle = element("div", "vnccs-pd-heading", "Variants");
+        this.variantsTitle = element("div", "vnccs-pd-heading", t("Variants"));
         variantsHead.append(this.variantsTitle, this.blockStatus);
         this.variants = element("ol", "vnccs-pd-variants");
-        this.variants.setAttribute("aria-label", "Ready block variants");
+        this.variants.setAttribute("aria-label", t("Ready block variants"));
         this.variants.setAttribute("role", "list");
         this.blockRaw = element("textarea", "vnccs-pd-editor vnccs-pd-source-text");
         this.blockRaw.hidden = true;
         this.blockRaw.spellcheck = false;
         this.blockRaw.maxLength = 64 * 1024;
-        this.blockRaw.setAttribute("aria-label", "Block source text");
+        this.blockRaw.setAttribute("aria-label", t("Block source text"));
         this.blockDoc.append(blockHead, variantsHead, this.variants, this.blockRaw,
-            element("div", "vnccs-pd-hint", "Dynamic Prompts: {~a|b|c} random · {@a|b|c} cycle · {2$$a|b|c} multiple"));
+            element("div", "vnccs-pd-hint", t("Dynamic Prompts: {~a|b|c} random · {@a|b|c} cycle · {2$$a|b|c} multiple")));
         editing.append(toolbar, this.main, this.blockDoc);
         this.inspector = element("aside", "vnccs-pd-inspector");
         this.inspector.hidden = true;
-        this.inspector.setAttribute("aria-label", "Inspector");
+        this.inspector.setAttribute("aria-label", t("Inspector"));
         this.inspectorResize = element("div", "vnccs-pd-inspector-resize");
         this.inspectorResize.tabIndex = 0;
         this.inspectorResize.setAttribute("role", "separator");
         this.inspectorResize.setAttribute("aria-orientation", "vertical");
-        this.inspectorResize.setAttribute("aria-label", "Resize inspector");
+        this.inspectorResize.setAttribute("aria-label", t("Resize inspector"));
         this.inspectorResize.setAttribute("aria-valuemin", "240");
         this.inspectorResize.setAttribute("aria-valuenow", "310");
         this.inspector.append(this.inspectorResize);
         this.installPanelResize(this.inspector, this.inspectorResize, "inspector");
         const inspectorHead = element("div", "vnccs-pd-inspector-head");
-        this.inspectorTitle = element("div", "vnccs-pd-heading", "Inspector");
-        inspectorHead.append(this.inspectorTitle, this.button("Close", () => this.closeInspector()));
+        this.inspectorTitle = element("div", "vnccs-pd-heading", t("Inspector"));
+        inspectorHead.append(this.inspectorTitle, this.button(t("Close"), () => this.closeInspector()));
         this.cardPanel = element("div", "vnccs-pd-card-panel");
         this.cardPanel.hidden = true;
         this.blockView = element("div", "vnccs-pd-editor-modes");
         this.blockView.value = "variants";
         this.blockView.setAttribute("role", "group");
-        this.blockView.setAttribute("aria-label", "Editor mode");
+        this.blockView.setAttribute("aria-label", t("Editor mode"));
         for (const [value, label] of [["variants", "Variants"], ["text", "Text"]]) {
-            const button = this.button(label, () => this.setBlockView(value));
+            const button = this.button(t(label), () => this.setBlockView(value));
             button.dataset.view = value;
             this.blockView.append(button);
         }
         this.blockMode = element("select");
         for (const [value, label] of [["random", "Random"], ["cycle", "Cycle"]]) {
-            const option = element("option", null, label); option.value = value; this.blockMode.append(option);
+            const option = element("option", null, t(label)); option.value = value; this.blockMode.append(option);
         }
         this.blockColor = element("input");
         this.blockColor.type = "color";
         this.blockCategory = element("select");
         this.categoryColor = element("input"); this.categoryColor.type = "color";
-        this.categoryColorField = field("Category color", this.categoryColor);
-        this.cardPanel.append(field("Editor mode", this.blockView), field("Sampling mode", this.blockMode),
-            field("Category", this.blockCategory), field("Card color", this.blockColor),
-            this.button("Use category color", () => this.setBlockPreference("color", undefined)),
-            this.categoryColorField, field("Search variants", this.blockSearch));
+        this.categoryColorField = field(t("Category color"), this.categoryColor);
+        this.cardPanel.append(field(t("Editor mode"), this.blockView), field(t("Sampling mode"), this.blockMode),
+            field(t("Category"), this.blockCategory), field(t("Card color"), this.blockColor),
+            this.button(t("Use category color"), () => this.setBlockPreference("color", undefined)),
+            this.categoryColorField, field(t("Search variants"), this.blockSearch));
         this.instancePanel = element("div", "vnccs-pd-card-panel"); this.instancePanel.hidden = true;
         this.instanceName = element("div", "vnccs-pd-heading");
         this.instanceRandom = element("input"); this.instanceRandom.type = "checkbox";
-        const randomInstance = field("Randomize this instance", this.instanceRandom);
+        const randomInstance = field(t("Randomize this instance"), this.instanceRandom);
         randomInstance.className = "vnccs-pd-checkbox";
-        this.instanceReturn = this.button("Done", () => this.closeBlockInstance());
+        this.instanceReturn = this.button(t("Done"), () => this.closeBlockInstance());
         this.instancePanel.append(this.instanceName, randomInstance,
-            element("div", "vnccs-pd-hint", "Copies share the same result by default. Enable to give this instance an independent random draw."),
-            this.button("Edit shared block", () => {
+            element("div", "vnccs-pd-hint", t("Copies share the same result by default. Enable to give this instance an independent random draw.")),
+            this.button(t("Edit shared block"), () => {
                 const id = this.editingBlockInstance?.chip.dataset.blockId;
                 if (id) this.openBlock(id);
             }), this.instanceReturn);
         this.on(this.instanceRandom, "input", () => this.setBlockInstanceRandom());
         this.promptPanel = element("div", "vnccs-pd-card-panel"); this.promptPanel.hidden = true;
-        this.promptName = element("input"); this.promptName.maxLength = 128; this.promptName.placeholder = "Prompt name";
+        this.promptName = element("input"); this.promptName.maxLength = 128; this.promptName.placeholder = t("Prompt name");
         this.promptCategory = element("select");
         this.promptColor = element("input"); this.promptColor.type = "color";
-        this.promptSave = this.button("Save Prompt Template", () => this.saveLibraryPrompt());
-        this.promptSaveCopy = this.button("Save as new", () => this.saveLibraryPrompt(true));
-        this.promptDelete = this.button("Delete Prompt Template", () => this.confirmLibraryDelete("prompt", this.editingSavedPrompt));
+        this.promptSave = this.button(t("Save Prompt Template"), () => this.saveLibraryPrompt());
+        this.promptSaveCopy = this.button(t("Save as new"), () => this.saveLibraryPrompt(true));
+        this.promptDelete = this.button(t("Delete Prompt Template"), () => this.confirmLibraryDelete("prompt", this.editingSavedPrompt));
         this.promptDelete.hidden = true;
-        this.promptPanel.append(field("Name", this.promptName), field("Category", this.promptCategory), field("Prompt color", this.promptColor),
+        this.promptPanel.append(field(t("Name"), this.promptName), field(t("Category"), this.promptCategory), field(t("Prompt color"), this.promptColor),
             this.promptSave, this.promptSaveCopy, this.promptDelete);
         this.inspector.append(inspectorHead, this.cardPanel, this.instancePanel, this.conditionPanel, this.multiPanel, this.promptPanel);
         workspace.append(library, editing, this.inspector);
@@ -293,35 +294,35 @@ export class PromptDesignerWidget {
         this.status = element("span", "vnccs-pd-status");
         this.status.hidden = true;
         this.status.setAttribute("role", "status");
-        this.copy = this.button("Copy", async () => {
+        this.copy = this.button(t("Copy"), async () => {
             try { await navigator.clipboard.writeText(this.output.textContent); }
-            catch { this.setStatus("Clipboard unavailable. Select the preview text to copy it.", true); }
+            catch { this.setStatus(t("Clipboard unavailable. Select the preview text to copy it."), true); }
         });
-        previewHead.append(element("div", "vnccs-pd-heading", "Final prompt"), this.status);
+        previewHead.append(element("div", "vnccs-pd-heading", t("Final prompt")), this.status);
         this.output = element("pre", "vnccs-pd-output");
         this.output.tabIndex = 0;
-        this.output.setAttribute("aria-label", "Resolved prompt preview");
+        this.output.setAttribute("aria-label", t("Resolved prompt preview"));
         this.outputSelect = element("select");
-        this.outputSelect.setAttribute("aria-label", "Preview output");
+        this.outputSelect.setAttribute("aria-label", t("Preview output"));
         this.outputSelect.hidden = true;
         previewHead.append(this.outputSelect, this.copy);
         this.on(this.outputSelect, "change", () => this.showResolvedPrompts(this.resolvedPrompts, Number(this.outputSelect.value)));
         preview.append(previewHead, this.output);
         const footer = element("div", "vnccs-pd-footer");
-        const seedLabel = element("label", null, "Seed");
+        const seedLabel = element("label", null, t("Seed"));
         this.seed = element("input", "vnccs-pd-seed");
         this.seed.inputMode = "numeric";
         this.seed.maxLength = 20;
         seedLabel.append(this.seed);
-        const afterLabel = element("label", null, "After generate");
+        const afterLabel = element("label", null, t("After generate"));
         this.after = element("select");
         for (const [value, label] of [["randomize", "Randomize"], ["fixed", "Keep seed"]]) {
-            const option = element("option", null, label);
+            const option = element("option", null, t(label));
             option.value = value;
             this.after.append(option);
         }
         afterLabel.append(this.after);
-        const shuffle = this.button("Shuffle preview", () => {
+        const shuffle = this.button(t("Shuffle preview"), () => {
             if (hasCycle(this.state)) this.state.cycleIndex = Math.max(0, this.state.cycleIndex ?? -1) + 1;
             this.state.seed = randomSeed();
             this.seed.value = this.state.seed;
@@ -569,10 +570,10 @@ export class PromptDesignerWidget {
         const raw = event.clipboardData?.getData(PROMPT_CLIPBOARD);
         if (!raw) { this.insertNode(document.createTextNode(event.clipboardData?.getData("text/plain") ?? ""), editor); return; }
         try {
-            if (raw.length > MAX_STATE_CHARS) throw new Error("The copied prompt is too large.");
+            if (raw.length > MAX_STATE_CHARS) throw new Error(t("The copied prompt is too large."));
             const snapshot = promptSnapshot(normalizeState(JSON.parse(raw)));
             if (editor !== this.editor && snapshot.parts.some(part => part.condition || part.multiPrompt)) {
-                throw new Error("This field accepts text and blocks only.");
+                throw new Error(t("This field accepts text and blocks only."));
             }
             const imported = openPromptState(this.state, snapshot);
             this.state.blocks = imported.blocks; this.state.categories = imported.categories;
@@ -580,7 +581,7 @@ export class PromptDesignerWidget {
             fragment.append(...imported.parts.map(part => this.partNode(part)));
             this.insertNode(fragment, editor);
             this.renderLibrary();
-        } catch (error) { this.setStatus(`Cannot paste prompt cards: ${error.message}`, true); }
+        } catch (error) { this.setStatus(t("Cannot paste prompt cards: {error}", { error: error.message }), true); }
     }
 
     installPromptInteractions(editor) {
@@ -811,7 +812,7 @@ export class PromptDesignerWidget {
     refreshPromptCategories() {
         if (!this.promptCategory) return;
         const value = this.promptCategory.value;
-        const empty = element("option", null, "Uncategorized"); empty.value = "";
+        const empty = element("option", null, t("Uncategorized")); empty.value = "";
         this.promptCategory.replaceChildren(empty, ...this.categoryDefinitions().map(category => {
             const option = element("option", null, category.name); option.value = category.name; return option;
         }));
@@ -856,7 +857,7 @@ export class PromptDesignerWidget {
         this.promptName.value = details.name ?? "";
         this.refreshPromptCategories(); this.promptCategory.value = details.category ?? "";
         this.promptColor.value = details.color ?? "#b8a9e8";
-        this.promptSave.textContent = this.activePrompt()?.templateId ? "Save Changes" : "Save Prompt Template";
+        this.promptSave.textContent = this.activePrompt()?.templateId ? t("Save Changes") : t("Save Prompt Template");
         this.promptSaveCopy.hidden = !this.activePrompt()?.templateId; this.promptDelete.hidden = !(details.revision > 0);
     }
 
@@ -887,20 +888,20 @@ export class PromptDesignerWidget {
     }
 
     closePrompt(id) {
-        if (this.promptSaving) { this.setStatus("Wait for the template save to finish before closing a prompt.", true); return; }
+        if (this.promptSaving) { this.setStatus(t("Wait for the template save to finish before closing a prompt."), true); return; }
         this.capturePromptTabs();
         const tab = this.state.promptTabs.find(tab => tab.id === id);
         if (!tab) return;
         if ((!tab.dirty && tab.details.revision > 0) || !tab.parts.length) { this.removePromptTab(id); return; }
-        this.libraryActions.dialog({ title: "Save prompt before closing?",
-            message: "This prompt has unsaved work. Closing without saving a template will discard it.",
-            value: tab.details.name ?? "", label: "Save", discard: () => this.removePromptTab(id),
+        this.libraryActions.dialog({ title: t("Save prompt before closing?"),
+            message: t("This prompt has unsaved work. Closing without saving a template will discard it."),
+            value: tab.details.name ?? "", label: t("Save"), discard: () => this.removePromptTab(id),
             action: async name => {
                 const saved = await this.saveLibraryPrompt(false, id, { ...tab.details, name });
-                if (!saved) throw new Error(this.status.textContent || "Prompt could not be saved. Your tab is retained.");
+                if (!saved) throw new Error(this.status.textContent || t("Prompt could not be saved. Your tab is retained."));
                 // A later edit during the request must remain open.
                 this.capturePromptTabs();
-                if (this.state.promptTabs.find(item => item.id === id)?.dirty) throw new Error("Newer edits are still unsaved. Save again before closing.");
+                if (this.state.promptTabs.find(item => item.id === id)?.dirty) throw new Error(t("Newer edits are still unsaved. Save again before closing."));
                 this.removePromptTab(id);
             } });
     }
@@ -928,10 +929,10 @@ export class PromptDesignerWidget {
         this.promptName.value = details.name ?? "";
         this.refreshPromptCategories(); this.promptCategory.value = details.category ?? this.libraryCategory;
         this.promptColor.value = details.color ?? "#b8a9e8";
-        this.promptSave.textContent = this.activePrompt()?.templateId ? "Save Changes" : "Save Prompt Template";
+        this.promptSave.textContent = this.activePrompt()?.templateId ? t("Save Changes") : t("Save Prompt Template");
         this.promptSaveCopy.hidden = !this.activePrompt()?.templateId;
         this.promptDelete.hidden = !(this.editingSavedPrompt?.revision > 0);
-        this.showInspector(this.promptPanel, "prompt-details", "Inspector · Prompt");
+        this.showInspector(this.promptPanel, "prompt-details", t("Inspector · Prompt"));
         this.promptName.focus({ preventScroll: true });
     }
 
@@ -953,7 +954,7 @@ export class PromptDesignerWidget {
                 const response = await this.api.fetchApi(`/vnccs/prompt_designer/prompts?q=${query}&offset=${offset}`);
                 const result = await readPromptResponse(response);
                 if (this.disposed || revision !== this.promptLibraryRevision) return;
-                if (!response.ok) throw new Error(result.error || "Saved prompts could not be read.");
+                if (!response.ok) throw new Error(result.error || t("Saved prompts could not be read."));
                 prompts.push(...result.prompts); offset += result.prompts.length;
                 if (!result.prompts.length || offset >= result.total) break;
             }
@@ -967,7 +968,7 @@ export class PromptDesignerWidget {
         const tab = this.state.promptTabs.find(tab => tab.id === tabId) ?? this.activePrompt();
         const metadata = details ?? { name: this.promptName.value, category: this.promptCategory.value, color: this.promptColor.value };
         const name = metadata.name.trim();
-        if (!name) { this.setStatus("Enter a prompt name.", true); this.promptName.focus(); return false; }
+        if (!name) { this.setStatus(t("Enter a prompt name."), true); this.promptName.focus(); return false; }
         let snapshot;
         try { snapshot = promptSnapshot(this.promptTabState(tab)); }
         catch (error) { this.setStatus(error.message, true); return false; }
@@ -991,8 +992,8 @@ export class PromptDesignerWidget {
                 signal: AbortSignal.timeout(30_000),
             });
             const result = await readPromptResponse(response);
-            if (!response.ok) throw new Error(result.error || "Prompt could not be saved.");
-            if (!Number.isSafeInteger(result.revision) || result.revision < 1) throw new Error("Invalid prompt save acknowledgement.");
+            if (!response.ok) throw new Error(result.error || t("Prompt could not be saved."));
+            if (!Number.isSafeInteger(result.revision) || result.revision < 1) throw new Error(t("Invalid prompt save acknowledgement."));
             entry.revision = result.revision;
             if (this.disposed || restoreRevision !== this.restoreRevision) return false;
             const owner = this.state.promptTabs.find(item => item.id === tab.id);
@@ -1006,7 +1007,7 @@ export class PromptDesignerWidget {
             this.savedPrompts = [...(this.savedPrompts ?? []).filter(prompt => prompt.id !== entry.id), summary];
             this.renderLibrary(); this.setStatus(""); await this.loadSavedPrompts(); return true;
         } catch (error) {
-            if (!this.disposed && restoreRevision === this.restoreRevision) this.setStatus(`Prompt was not saved: ${error.message}. Your current edits are retained.`, true);
+            if (!this.disposed && restoreRevision === this.restoreRevision) this.setStatus(t("Prompt was not saved: {error}. Your current edits are retained.", { error: error.message }), true);
             return false;
         }
         finally {
@@ -1029,20 +1030,20 @@ export class PromptDesignerWidget {
             const url = `/vnccs/prompt_designer/documents/${encodeURIComponent(entry.id)}`;
             const response = await this.api.fetchApi(url, { signal: AbortSignal.timeout(30_000) });
             const result = await readPromptResponse(response);
-            if (!response.ok) throw new Error(result.error || "Template could not be read.");
-            if (!Number.isSafeInteger(result.revision) || result.revision < 0) throw new Error("Invalid template revision.");
+            if (!response.ok) throw new Error(result.error || t("Template could not be read."));
+            if (!Number.isSafeInteger(result.revision) || result.revision < 0) throw new Error(t("Invalid template revision."));
             let revision = result.revision;
-            if (!deleting && !result.state?.savedPrompt) throw new Error("Saved prompt is unavailable.");
+            if (!deleting && !result.state?.savedPrompt) throw new Error(t("Saved prompt is unavailable."));
             if (result.state?.savedPrompt) {
-                if (result.revision !== entry.revision) throw new Error("The template has newer edits. Reopen it before changing it.");
+                if (result.revision !== entry.revision) throw new Error(t("The template has newer edits. Reopen it before changing it."));
                 const state = { ...result.state };
                 if (deleting) delete state.savedPrompt;
                 else state.savedPrompt = { ...state.savedPrompt, name };
                 const saved = await this.api.fetchApi(url, { method: "PUT", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ state, revision: entry.revision }), signal: AbortSignal.timeout(30_000) });
                 const acknowledgement = await readPromptResponse(saved);
-                if (!saved.ok) throw new Error(acknowledgement.error || "Template could not be changed.");
-                if (!Number.isSafeInteger(acknowledgement.revision) || acknowledgement.revision <= entry.revision) throw new Error("Invalid template change acknowledgement.");
+                if (!saved.ok) throw new Error(acknowledgement.error || t("Template could not be changed."));
+                if (!Number.isSafeInteger(acknowledgement.revision) || acknowledgement.revision <= entry.revision) throw new Error(t("Invalid template change acknowledgement."));
                 revision = acknowledgement.revision;
             }
             if (this.disposed || restoreRevision !== this.restoreRevision) return true;
@@ -1068,7 +1069,7 @@ export class PromptDesignerWidget {
             this.persist(); this.renderTabs(); this.renderLibrary(); this.setStatus("");
             return true;
         } catch (error) {
-            if (!this.disposed && restoreRevision === this.restoreRevision) this.setStatus(`Template was not ${deleting ? "deleted" : "renamed"}: ${error.message}`, true);
+            if (!this.disposed && restoreRevision === this.restoreRevision) this.setStatus(deleting ? t("Template was not deleted: {error}", { error: error.message }) : t("Template was not renamed: {error}", { error: error.message }), true);
             return false;
         } finally {
             this.promptSaving = false;
@@ -1086,8 +1087,8 @@ export class PromptDesignerWidget {
             const response = await this.api.fetchApi(`/vnccs/prompt_designer/documents/${encodeURIComponent(entry.id)}`);
             const result = await readPromptResponse(response);
             if (this.disposed || this.restoring || this.container.inert || request !== this.savedPromptLoadRevision || value !== this.persisted) return;
-            if (!response.ok) throw new Error(result.error || "Prompt could not be opened.");
-            if (!result.state?.savedPrompt || !Number.isSafeInteger(result.revision) || result.revision < 1) throw new Error("Saved prompt is unavailable.");
+            if (!response.ok) throw new Error(result.error || t("Prompt could not be opened."));
+            if (!result.state?.savedPrompt || !Number.isSafeInteger(result.revision) || result.revision < 1) throw new Error(t("Saved prompt is unavailable."));
             this.capturePromptTabs();
             const next = openPromptState(this.state, result.state);
             const details = { ...result.state.savedPrompt };
@@ -1123,7 +1124,7 @@ export class PromptDesignerWidget {
     refreshCardCategories() {
         const block = this.activeBlock();
         if (!block) return;
-        const empty = element("option", null, "Uncategorized"); empty.value = "";
+        const empty = element("option", null, t("Uncategorized")); empty.value = "";
         this.blockCategory.replaceChildren(empty, ...this.categoryDefinitions().map(category => {
             const option = element("option", null, category.name); option.value = category.name; return option;
         }));
@@ -1181,7 +1182,7 @@ export class PromptDesignerWidget {
         }
         this.invalidateRestore();
         const restoreRevision = this.restoreRevision;
-        this.setStatus("Restoring saved prompt…");
+        this.setStatus(t("Restoring saved prompt…"));
         const storage = new DocumentStorage(this.node, this.api, (message, error) => {
             if (!this.disposed && this.documentStorage === storage) { this.storageStatus = { message, error }; this.setStatus(message, error); }
         });
@@ -1197,7 +1198,7 @@ export class PromptDesignerWidget {
             if (this.disposed || restoreRevision !== this.restoreRevision || this.documentStorage !== storage) return;
             this.restoreError = error;
             this.restoring = false;
-            this.setStatus(`Could not restore state: ${error.message}. Existing data was retained.`, true);
+            this.setStatus(t("Could not restore state: {error}. Existing data was retained.", { error: error.message }), true);
             return;
         }
         if (this.disposed || restoreRevision !== this.restoreRevision || this.documentStorage !== storage) return;
@@ -1211,7 +1212,7 @@ export class PromptDesignerWidget {
             this.state = restored;
             this.restoreError = error;
             this.restoring = false;
-            this.setStatus(`Could not restore state: ${error.message}. Existing data was retained.`, true);
+            this.setStatus(t("Could not restore state: {error}. Existing data was retained.", { error: error.message }), true);
             return;
         }
         this.hideInspector();
@@ -1245,7 +1246,7 @@ export class PromptDesignerWidget {
                 const response = await this.api.fetchApi(`/vnccs/prompt_designer/${bundled ? "defaults" : "library"}?q=${query}&offset=${offset}`);
                 const result = await readPromptResponse(response);
                 if (this.disposed || revision !== this[revisionKey]) return;
-                if (!response.ok) throw new Error(result.error || "Library could not be read.");
+                if (!response.ok) throw new Error(result.error || t("Library could not be read."));
                 cards.push(...result.cards.map(block => ({ ...block, id: promptId() })));
                 categories = result.categories ?? categories;
                 offset += result.cards.length;
@@ -1309,15 +1310,15 @@ export class PromptDesignerWidget {
 
     chip(id, part = {}) {
         const block = this.state.blocks.find(item => item.id === id);
-        const chip = element("span", "vnccs-pd-chip", block.name || "Untitled block");
+        const chip = element("span", "vnccs-pd-chip", block.name || t("Untitled block"));
         chip.contentEditable = "false";
         chip.draggable = true;
         chip.dataset.blockId = id;
         if (part.random) chip.dataset.blockRandom = "true";
         chip.tabIndex = 0;
         chip.setAttribute("role", "button");
-        chip.setAttribute("aria-label", `Edit block: ${block.name}`);
-        chip.title = "Click to select. Double-click or press Enter for instance settings. Drag to move.";
+        chip.setAttribute("aria-label", t("Edit block: {name}", { name: block.name }));
+        chip.title = t("Click to select. Double-click or press Enter for instance settings. Drag to move.");
         chip.style.setProperty("--pd-chip-color", this.cardColor(block));
         return chip;
     }
@@ -1338,10 +1339,11 @@ export class PromptDesignerWidget {
                     const block = this.state.blocks.find(block => block.id === part.blockId);
                     for (const card of cards) {
                         card.dataset.blockInstance = String(number);
-                        const label = `${block?.name || "Untitled block"} ${number}`;
+                        const label = `${block?.name || t("Untitled block")} ${number}`;
                         if (card.textContent !== label) card.textContent = label;
-                        card.setAttribute("aria-label", `Instance settings: ${card.textContent}`);
-                        card.title = `Double-click or press Enter for instance settings. ${part.random ? "Independent random draw." : "Shares the block result."} Drag to move.`;
+                        card.setAttribute("aria-label", t("Instance settings: {label}", { label: card.textContent }));
+                        card.title = t("Double-click or press Enter for instance settings. {detail} Drag to move.",
+                            { detail: part.random ? t("Independent random draw.") : t("Shares the block result.") });
                     }
                 } else if (part.multiPrompt) {
                     part.multiPrompt.variants.forEach((variant, index) => visit(variant, cards.includes(this.editingMultiPrompt)
@@ -1365,8 +1367,8 @@ export class PromptDesignerWidget {
         if (!editor || editor.contentEditable !== "true" || !editor.contains(chip)) return;
         this.instanceName.textContent = chip.textContent;
         this.instanceRandom.checked = chip.dataset.blockRandom === "true";
-        this.instanceReturn.textContent = this.editingMultiPrompt ? "Back to multi-prompt" : this.editingCondition ? "Back to condition" : "Done";
-        this.showInspector(this.instancePanel, chip, "Inspector · Block instance");
+        this.instanceReturn.textContent = this.editingMultiPrompt ? t("Back to multi-prompt") : this.editingCondition ? t("Back to condition") : t("Done");
+        this.showInspector(this.instancePanel, chip, t("Inspector · Block instance"));
         this.editingBlockInstance = { chip, editor };
     }
 
@@ -1479,8 +1481,8 @@ export class PromptDesignerWidget {
             ...this.conditionSource.querySelectorAll("[data-block-id]"), ...this.conditionOutput.querySelectorAll("[data-block-id]"),
             ...this.conditionElseOutput.querySelectorAll("[data-block-id]"), ...this.conditionExtraRows.querySelectorAll("[data-block-id]")]) {
             if (chip.dataset.blockId !== block.id) continue;
-            chip.textContent = `${block.name || "Untitled block"}${chip.dataset.blockInstance ? ` ${chip.dataset.blockInstance}` : ""}`;
-            chip.setAttribute("aria-label", chip.dataset.blockInstance ? `Instance settings: ${chip.textContent}` : `Edit block: ${block.name}`);
+            chip.textContent = `${block.name || t("Untitled block")}${chip.dataset.blockInstance ? ` ${chip.dataset.blockInstance}` : ""}`;
+            chip.setAttribute("aria-label", chip.dataset.blockInstance ? t("Instance settings: {label}", { label: chip.textContent }) : t("Edit block: {name}", { name: block.name }));
             chip.style.setProperty("--pd-chip-color", this.cardColor(block));
         }
         for (const chip of this.editor.querySelectorAll("[data-condition]")) this.labelCondition(chip, JSON.parse(chip.dataset.condition));
@@ -1492,32 +1494,32 @@ export class PromptDesignerWidget {
         chip.draggable = false;
         chip.tabIndex = 0;
         chip.setAttribute("role", "group");
-        chip.setAttribute("aria-label", "If condition");
+        chip.setAttribute("aria-label", t("If condition"));
         const handle = element("span", "vnccs-pd-condition-handle", "⠿");
         handle.draggable = true; handle.tabIndex = 0;
-        handle.title = "Drag to move the condition";
-        handle.setAttribute("role", "button"); handle.setAttribute("aria-label", "Move condition");
+        handle.title = t("Drag to move the condition");
+        handle.setAttribute("role", "button"); handle.setAttribute("aria-label", t("Move condition"));
         const source = element("span", "vnccs-pd-condition-inline-field vnccs-pd-condition-drop");
-        source.dataset.placeholder = "Drop block";
-        source.setAttribute("aria-label", "Condition block: drag from the library");
+        source.dataset.placeholder = t("Drop block");
+        source.setAttribute("aria-label", t("Condition block: drag from the library"));
         const operator = element("select", "vnccs-pd-condition-inline-field");
-        operator.setAttribute("aria-label", "Condition operator");
-        const empty = element("option", null, "Condition…"); empty.value = "";
+        operator.setAttribute("aria-label", t("Condition operator"));
+        const empty = element("option", null, t("Condition…")); empty.value = "";
         empty.disabled = true; empty.hidden = true; empty.selected = true;
         operator.append(empty, ...Object.entries(CONDITION_OPERATORS).map(([value, label]) => {
-            const option = element("option", null, label); option.value = value; return option;
+            const option = element("option", null, t(label)); option.value = value; return option;
         }));
         const value = element("input", "vnccs-pd-condition-inline-field vnccs-pd-condition-value");
-        value.placeholder = "Text"; value.maxLength = 64 * 1024;
-        value.setAttribute("aria-label", "Condition comparison text");
+        value.placeholder = t("Text"); value.maxLength = 64 * 1024;
+        value.setAttribute("aria-label", t("Condition comparison text"));
         const output = element("div", "vnccs-pd-editor vnccs-pd-condition-inline-field vnccs-pd-condition-output");
         const elseOutput = element("div", "vnccs-pd-editor vnccs-pd-condition-inline-field vnccs-pd-condition-output");
-        for (const [editor, label] of [[output, "Then output"], [elseOutput, "Else output (optional)"]]) {
+        for (const [editor, label] of [[output, t("Then output")], [elseOutput, t("Else output (optional)")]]) {
             editor.contentEditable = "true"; editor.spellcheck = false;
             editor.dataset.inlineConditionOutput = "true";
-            editor.dataset.placeholder = editor === elseOutput ? "Optional" : "Text / block";
+            editor.dataset.placeholder = editor === elseOutput ? t("Optional") : t("Text / block");
             editor.setAttribute("role", "textbox"); editor.setAttribute("aria-multiline", "true");
-            editor.setAttribute("aria-label", `${label} text and blocks`);
+            editor.setAttribute("aria-label", t("{label} text and blocks", { label }));
             this.installPromptInteractions(editor);
             this.on(editor, "input", () => { this.clearCardSelection(); this.saveInlineCondition(chip); });
             this.on(editor, "beforeinput", event => {
@@ -1531,10 +1533,10 @@ export class PromptDesignerWidget {
         const clauses = element("span", "vnccs-pd-condition-clauses");
         chip.conditionControls = { source, operator, value, output, elseOutput, clauses };
         this.installConditionSourceInteractions(source, () => this.saveInlineCondition(chip));
-        chip.append(handle, element("span", "vnccs-pd-condition-label", "If"), source, operator, value,
+        chip.append(handle, element("span", "vnccs-pd-condition-label", t("If")), source, operator, value,
             clauses,
-            element("span", "vnccs-pd-condition-label", "Then"), output,
-            element("span", "vnccs-pd-condition-label", "Else"), elseOutput);
+            element("span", "vnccs-pd-condition-label", t("Then")), output,
+            element("span", "vnccs-pd-condition-label", t("Else")), elseOutput);
         for (const field of [source, operator, value, output, elseOutput, clauses]) {
             this.on(field, "focusin", () => {
                 if (this.selectedCard === chip) this.clearCardSelection();
@@ -1588,7 +1590,7 @@ export class PromptDesignerWidget {
             }
         }
         this.sizeInlineCondition(chip);
-        chip.title = "Edit fields here or double-click the If label to open the inspector. Drag the handle to move the condition.";
+        chip.title = t("Edit fields here or double-click the If label to open the inspector. Drag the handle to move the condition.");
     }
 
     sizeInlineCondition(chip) {
@@ -1596,12 +1598,12 @@ export class PromptDesignerWidget {
         for (const controls of [{ source, operator, value }, ...[...clauses.children].map(row => row.conditionControls)]) {
             const label = CONDITION_OPERATORS[controls.operator.value] ?? "Condition…";
             controls.operator.style.width = `calc(${Math.min(16, label.length)}ch + 24px)`;
-            controls.operator.title = label;
+            controls.operator.title = t(label);
             controls.value.style.width = `calc(${Math.max(4, Math.min(12, controls.value.value.length))}ch + 12px)`;
             controls.value.title = controls.value.value;
         }
         for (const editor of [output, elseOutput]) editor.title = readEditor(editor).map(part => part.text
-            ?? this.state.blocks.find(block => block.id === part.blockId)?.name ?? "").join("") || "Write text or drop blocks";
+            ?? this.state.blocks.find(block => block.id === part.blockId)?.name ?? "").join("") || t("Write text or drop blocks");
     }
 
     saveInlineCondition(chip) {
@@ -1660,13 +1662,13 @@ export class PromptDesignerWidget {
         const save = () => chip ? this.saveInlineCondition(chip) : this.applyCondition(false);
         const heading = element(chip ? "span" : "div", chip ? "vnccs-pd-condition-label" : "vnccs-pd-tools");
         heading.append(element("strong", null, clause.join.toUpperCase()));
-        if (!chip) heading.append(this.button("Remove", () => { wrapper.remove(); save(); }));
+        if (!chip) heading.append(this.button(t("Remove"), () => { wrapper.remove(); save(); }));
         const row = element(chip ? "span" : "div", chip ? "vnccs-pd-condition-inline-check" : "vnccs-pd-condition-row");
         const source = element(chip ? "span" : "div", chip ? "vnccs-pd-condition-drop" : "vnccs-pd-editor vnccs-pd-condition-source");
         this.installConditionSourceInteractions(source, save);
-        source.dataset.placeholder = "Drop block";
+        source.dataset.placeholder = t("Drop block");
         source.value = clause.blockId;
-        source.setAttribute("aria-label", `${clause.join.toUpperCase()} block: drag from the library`);
+        source.setAttribute("aria-label", t("{join} block: drag from the library", { join: clause.join.toUpperCase() }));
         if (clause.blockId) source.append(this.chip(clause.blockId));
         this.on(source, "dragover", event => {
             if (!event.dataTransfer.types.includes("application/x-vnccs-prompt-block")) return;
@@ -1684,16 +1686,16 @@ export class PromptDesignerWidget {
             event.dataTransfer.setData("application/x-vnccs-prompt-block", source.value);
         });
         const operator = element("select");
-        const empty = element("option", null, chip ? "Condition…" : "Choose condition…"); empty.value = "";
+        const empty = element("option", null, chip ? t("Condition…") : t("Choose condition…")); empty.value = "";
         empty.disabled = true; empty.hidden = true; empty.selected = true;
         operator.append(empty, ...Object.entries(CONDITION_OPERATORS).map(([value, label]) => {
-            const option = element("option", null, label); option.value = value; return option;
+            const option = element("option", null, t(label)); option.value = value; return option;
         }));
-        operator.value = clause.operator; operator.setAttribute("aria-label", "Additional condition operator");
+        operator.value = clause.operator; operator.setAttribute("aria-label", t("Additional condition operator"));
         const value = element("input");
         if (chip) value.classList.add("vnccs-pd-condition-value");
-        value.value = clause.value; value.maxLength = 64 * 1024; value.placeholder = chip ? "Text" : "Comparison text";
-        value.setAttribute("aria-label", "Additional condition comparison text");
+        value.value = clause.value; value.maxLength = 64 * 1024; value.placeholder = chip ? t("Text") : t("Comparison text");
+        value.setAttribute("aria-label", t("Additional condition comparison text"));
         this.on(operator, "change", save);
         this.on(value, "input", save);
         wrapper.conditionControls = { source, operator, value };
@@ -1703,7 +1705,7 @@ export class PromptDesignerWidget {
 
     addConditionClause(join) {
         if (!this.editingCondition) return;
-        if (this.conditionExtraRows.children.length >= 64) { this.setStatus("A condition supports up to 64 additional checks.", true); return; }
+        if (this.conditionExtraRows.children.length >= 64) { this.setStatus(t("A condition supports up to 64 additional checks."), true); return; }
         this.conditionExtraRows.append(this.conditionClauseRow({ join, blockId: "", operator: "", value: "" }));
         this.applyCondition(false);
     }
@@ -1747,7 +1749,7 @@ export class PromptDesignerWidget {
             editor.savedCaret = null;
         }
         this.conditionPanel.hidden = false;
-        this.showInspector(this.conditionPanel, chip, "Inspector · If");
+        this.showInspector(this.conditionPanel, chip, t("Inspector · If"));
         this.refreshInstanceLabels();
         this.conditionSuggestion.hidden = true;
         this.conditionValue.focus({ preventScroll: true });
@@ -1762,7 +1764,7 @@ export class PromptDesignerWidget {
         });
         if (close && (!this.conditionSource.value || !this.conditionOperator.value || !this.conditionValue.value.trim()
             || clauses.some(clause => !clause.blockId || !clause.operator || !clause.value.trim()))) {
-            this.setStatus("Choose a block, a condition and comparison text.", true); return;
+            this.setStatus(t("Choose a block, a condition and comparison text."), true); return;
         }
         const condition = { blockId: this.conditionSource.value, operator: this.conditionOperator.value, value: this.conditionValue.value,
             then: this.conditionOutputValue(this.conditionOutput), else: this.conditionOutputValue(this.conditionElseOutput),
@@ -1786,15 +1788,15 @@ export class PromptDesignerWidget {
     multiPromptChip(multi) {
         const chip = element("span", "vnccs-pd-chip vnccs-pd-multi");
         chip.contentEditable = "false"; chip.tabIndex = 0; chip.draggable = true;
-        chip.setAttribute("role", "button"); chip.setAttribute("aria-label", "Edit multi-prompt");
+        chip.setAttribute("role", "button"); chip.setAttribute("aria-label", t("Edit multi-prompt"));
         this.labelMultiPrompt(chip, multi);
         return chip;
     }
 
     labelMultiPrompt(chip, multi) {
         chip.dataset.multiPrompt = JSON.stringify(multi);
-        chip.textContent = `Multi-prompt · ${multi.variants.length} outputs`;
-        chip.title = "Click to select. Double-click or press Enter to edit output variants. Drag to move.";
+        chip.textContent = t("Multi-prompt · {count} outputs", { count: multi.variants.length });
+        chip.title = t("Click to select. Double-click or press Enter to edit output variants. Drag to move.");
     }
 
     insertMultiPrompt() {
@@ -1808,7 +1810,7 @@ export class PromptDesignerWidget {
         this.editingMultiPrompt = chip;
         this.multiPanel.hidden = false;
         this.renderMultiRows();
-        this.showInspector(this.multiPanel, chip, "Inspector · Multi-prompt");
+        this.showInspector(this.multiPanel, chip, t("Inspector · Multi-prompt"));
     }
 
     renderMultiRows() {
@@ -1827,9 +1829,9 @@ export class PromptDesignerWidget {
             const editor = element("div", "vnccs-pd-editor vnccs-pd-variant-editor");
             editor.contentEditable = "true"; editor.spellcheck = false;
             editor.setAttribute("role", "textbox"); editor.setAttribute("aria-multiline", "true");
-            editor.setAttribute("aria-label", `Text and blocks for prompt${index + 1}`);
+            editor.setAttribute("aria-label", t("Text and blocks for prompt{number}", { number: index + 1 }));
             editor.append(...variant.map(part => this.partNode(part)));
-            const remove = this.button("Remove variant", () => this.removeMultiVariant(index));
+            const remove = this.button(t("Remove variant"), () => this.removeMultiVariant(index));
             remove.className = "vnccs-pd-multi-remove";
             remove.disabled = multi.variants.length <= 2;
             header.append(element("span", null, `prompt${index + 1}`), remove);
@@ -1870,7 +1872,7 @@ export class PromptDesignerWidget {
     addMultiVariant() {
         if (!this.editingMultiPrompt) return;
         const multi = JSON.parse(this.editingMultiPrompt.dataset.multiPrompt);
-        if (multi.variants.length === MAX_PROMPT_OUTPUTS) { this.setStatus(`Up to ${MAX_PROMPT_OUTPUTS} outputs are supported.`, true); return; }
+        if (multi.variants.length === MAX_PROMPT_OUTPUTS) { this.setStatus(t("Up to {max} outputs are supported.", { max: MAX_PROMPT_OUTPUTS }), true); return; }
         multi.variants.push([]);
         this.changeMultiVariants(multi);
     }
@@ -1879,7 +1881,7 @@ export class PromptDesignerWidget {
         const multi = JSON.parse(this.editingMultiPrompt.dataset.multiPrompt);
         if (multi.variants.length <= 2) return;
         if (this.node.outputs?.slice(index).some(output => output.links?.length)) {
-            this.setStatus("Disconnect affected output links before removing or renumbering variants.", true); return;
+            this.setStatus(t("Disconnect affected output links before removing or renumbering variants."), true); return;
         }
         multi.variants.splice(index, 1);
         this.changeMultiVariants(multi);
@@ -1921,8 +1923,8 @@ export class PromptDesignerWidget {
         const key = libraryCardKey(block);
         if (order !== undefined) this.libraryOrder.set(key, order);
         row.dataset.libraryKey = key;
-        row.querySelector(".vnccs-pd-block-name").textContent = block.name || "Untitled block";
-        row.querySelector(".vnccs-pd-excerpt").textContent = block.text || "Empty block";
+        row.querySelector(".vnccs-pd-block-name").textContent = block.name || t("Untitled block");
+        row.querySelector(".vnccs-pd-excerpt").textContent = block.text || t("Empty block");
         row.style.setProperty("--pd-chip-color", this.cardColor(block));
         row.hidden = !block.name.toLowerCase().includes(this.search.value.toLowerCase())
             || (!!this.libraryCategory && block.category?.toLowerCase() !== this.libraryCategory.toLowerCase());
@@ -1936,19 +1938,19 @@ export class PromptDesignerWidget {
             button.tabIndex = active ? 0 : -1;
             if (active) this.list.setAttribute("aria-labelledby", button.id);
         }
-        this.search.placeholder = this.libraryView === "prompts" ? "Search prompts…" : "Search blocks…";
-        this.search.setAttribute("aria-label", this.libraryView === "prompts" ? "Search saved prompts" : "Search saved blocks");
-        this.libraryAction.textContent = this.libraryView === "prompts" ? "+ Save Prompt Template" : "+ New block";
-        this.libraryHint.textContent = this.libraryView === "prompts" ? "Click a saved prompt to open it." : "Drag into the prompt. Click to edit.";
+        this.search.placeholder = this.libraryView === "prompts" ? t("Search prompts…") : t("Search blocks…");
+        this.search.setAttribute("aria-label", this.libraryView === "prompts" ? t("Search saved prompts") : t("Search saved blocks"));
+        this.libraryAction.textContent = this.libraryView === "prompts" ? t("+ Save Prompt Template") : t("+ New block");
+        this.libraryHint.textContent = this.libraryView === "prompts" ? t("Click a saved prompt to open it.") : t("Drag into the prompt. Click to edit.");
         const definitions = this.categoryDefinitions();
         if (this.libraryCategory) this.libraryCategory = definitions.find(category => category.name.toLowerCase() === this.libraryCategory.toLowerCase())?.name ?? "";
         this.categories.replaceChildren(...[{ name: "All", value: "" }, ...definitions.map(category => ({ ...category, value: category.name }))].map(category => {
-            const button = this.button(category.name, () => { this.libraryCategory = category.value; this.renderLibrary(); });
+            const button = this.button(t(category.name), () => { this.libraryCategory = category.value; this.renderLibrary(); });
             button.classList.toggle("active", this.libraryCategory === category.value);
             button.setAttribute("aria-pressed", String(this.libraryCategory === category.value));
             if (category.color) button.style.setProperty("--pd-category-color", category.color);
             return button;
-        }), this.button("+ Category", () => { this.categoryForm.hidden = false; this.categoryName.focus(); }));
+        }), this.button(t("+ Category"), () => { this.categoryForm.hidden = false; this.categoryName.focus(); }));
         const scroll = this.node.properties?.promptDesignerPanelScroll;
         const savedScroll = scroll?.libraryViews?.[this.libraryView] ?? (this.libraryView === "blocks" ? scroll?.library : { top: 0, left: 0 });
         const top = savedScroll?.top ?? this.list.scrollTop;
@@ -1968,7 +1970,7 @@ export class PromptDesignerWidget {
                     || (!!this.libraryCategory && prompt.category?.toLowerCase() !== this.libraryCategory.toLowerCase());
                 this.list.append(row);
             }
-            if (!this.savedPrompts?.length) this.list.append(element("div", "vnccs-pd-hint", "No saved prompts yet."));
+            if (!this.savedPrompts?.length) this.list.append(element("div", "vnccs-pd-hint", t("No saved prompts yet.")));
             this.list.scrollTop = top;
             this.list.scrollLeft = savedScroll?.left ?? 0;
             return;
@@ -2006,10 +2008,10 @@ export class PromptDesignerWidget {
             this.installLibraryMenu(row, "block", block);
             row.style.setProperty("--pd-chip-color", this.cardColor(block));
             row.draggable = true;
-            row.title = "Click to edit. Drag into the main prompt. Use Insert into prompt for keyboard insertion.";
+            row.title = t("Click to edit. Drag into the main prompt. Use Insert into prompt for keyboard insertion.");
             const copy = element("div", "vnccs-pd-block-copy");
-            copy.append(element("div", "vnccs-pd-block-name", block.name || "Untitled block"),
-                element("span", "vnccs-pd-excerpt", block.text || "Empty block"));
+            copy.append(element("div", "vnccs-pd-block-name", block.name || t("Untitled block")),
+                element("span", "vnccs-pd-excerpt", block.text || t("Empty block")));
             row.append(element("span", "handle", "⠿"), copy);
             row.hidden = !block.name.toLowerCase().includes(this.search.value.toLowerCase())
                 || (!!this.libraryCategory && block.category?.toLowerCase() !== this.libraryCategory.toLowerCase());
@@ -2025,7 +2027,7 @@ export class PromptDesignerWidget {
             });
             this.list.append(row);
         }
-        if (!seen.size) this.list.append(element("div", "vnccs-pd-hint", "No saved blocks. Create your first block below."));
+        if (!seen.size) this.list.append(element("div", "vnccs-pd-hint", t("No saved blocks. Create your first block below.")));
         this.list.scrollTop = top;
         this.list.scrollLeft = savedScroll?.left ?? this.list.scrollLeft;
         this.markLibrarySelection();
@@ -2047,7 +2049,7 @@ export class PromptDesignerWidget {
         for (const id of ids) {
             const prompt = this.state.promptTabs.find(tab => `prompt:${tab.id}` === id);
             const block = this.state.blocks.find(item => item.id === id);
-            const label = prompt ? prompt.details.name || "Prompt" : block?.name || "Untitled block";
+            const label = prompt ? prompt.details.name || t("Prompt") : block?.name || t("Untitled block");
             let tab = [...this.tabs.children].find(item => item.dataset.tabId === id);
             if (!tab) {
                 tab = element("div", "vnccs-pd-tab");
@@ -2073,12 +2075,12 @@ export class PromptDesignerWidget {
             tab.classList.toggle("active", active);
             tab.firstChild.textContent = label;
             tab.firstChild.setAttribute("aria-selected", String(active));
-            tab.firstChild.title = prompt?.dirty ? `${label} · Unsaved template changes` : label;
-            tab.querySelector(".close")?.setAttribute("aria-label", `Close ${label} tab`);
+            tab.firstChild.title = prompt?.dirty ? t("{label} · Unsaved template changes", { label }) : label;
+            tab.querySelector(".close")?.setAttribute("aria-label", t("Close {label} tab", { label }));
         }
         if (!this.newPromptButton) {
             this.newPromptButton = this.button("+", () => this.newPrompt());
-            this.newPromptButton.setAttribute("aria-label", "New prompt tab"); this.newPromptButton.title = "New prompt tab";
+            this.newPromptButton.setAttribute("aria-label", t("New prompt tab")); this.newPromptButton.title = t("New prompt tab");
             this.tabs.append(this.newPromptButton);
         }
         this.tabs.scrollLeft = left;
@@ -2114,7 +2116,7 @@ export class PromptDesignerWidget {
             this.blockName.value = block.name;
             this.blockMode.value = block.mode ?? (/^\s*\{\s*@/.test(block.text) ? "cycle" : "random");
             this.refreshCardCategories();
-            this.showInspector(this.cardPanel, block.id, "Inspector · Card");
+            this.showInspector(this.cardPanel, block.id, t("Inspector · Card"));
             const saved = this.scroll.get(block.id);
             this.blockView.value = saved?.view ?? "variants";
             if (this.blockSearch.dataset.tabId !== block.id) {
@@ -2162,7 +2164,7 @@ export class PromptDesignerWidget {
         }
         this.blockRaw.hidden = !raw;
         this.variants.hidden = raw;
-        this.variantsTitle.textContent = raw ? "Text" : "Variants";
+        this.variantsTitle.textContent = raw ? t("Text") : t("Variants");
         this.blockSearch.disabled = raw;
         if (raw) {
             const same = this.blockRaw.dataset.blockId === block.id;
@@ -2175,7 +2177,7 @@ export class PromptDesignerWidget {
             this.blockRaw.setSelectionRange(start, end);
             this.blockRaw.scrollTop = top;
             this.blockRaw.scrollLeft = left;
-            this.blockStatus.textContent = result.variants.length ? `${result.variants.length} variants` : "Empty block";
+            this.blockStatus.textContent = result.variants.length ? t("{count} variants", { count: result.variants.length }) : t("Empty block");
             return;
         }
         let top = this.variants.childNodes.length ? this.variants.scrollTop : saved.previewTop ?? 0;
@@ -2201,9 +2203,9 @@ export class PromptDesignerWidget {
             content.contentEditable = "true";
             content.spellcheck = false;
             content.setAttribute("role", "textbox");
-            content.setAttribute("aria-label", `Variant ${index + 1}`);
+            content.setAttribute("aria-label", t("Variant {number}", { number: index + 1 }));
             content.setAttribute("aria-multiline", "true");
-            if (draft) content.dataset.placeholder = "Write a new variant…";
+            if (draft) content.dataset.placeholder = t("Write a new variant…");
             if (!matches.length) content.textContent = text;
             else {
                 let offset = 0;
@@ -2243,7 +2245,7 @@ export class PromptDesignerWidget {
                     draft = false; delete content.dataset.placeholder;
                     this.blockEditRanges = ranges;
                     this.blockVariants = { variants: ranges.map(item => item.text) };
-                    this.blockStatus.textContent = `${ranges.length} variants`;
+                    this.blockStatus.textContent = t("{count} variants", { count: ranges.length });
                     this.variants.append(createRow("", ranges.length, true));
                     return;
                 }
@@ -2296,9 +2298,9 @@ export class PromptDesignerWidget {
         if (!query) this.variants.append(createRow("", block.text || parsed.wrapped ? result.variants.length : 0, true));
         this.variants.scrollTop = top;
         this.variants.scrollLeft = left;
-        this.blockStatus.textContent = query ? rows.length ? `${rows.length} of ${result.variants.length} variants match`
-            : "No matches · Try another search or clear the field"
-            : result.variants.length ? `${result.variants.length} variants` : "Empty block";
+        this.blockStatus.textContent = query ? rows.length ? t("{count} of {total} variants match", { count: rows.length, total: result.variants.length })
+            : t("No matches · Try another search or clear the field")
+            : result.variants.length ? t("{count} variants", { count: result.variants.length }) : t("Empty block");
     }
 
     refreshVariantRows(content, start) {
@@ -2334,7 +2336,7 @@ export class PromptDesignerWidget {
         if (!block || this.disposed) return;
         const revision = this.blockRevision;
         const request = this.blockRequest = new AbortController();
-        const timeout = setTimeout(() => request.abort(new DOMException("Block preview timed out. Try editing again.", "TimeoutError")), 10_000);
+        const timeout = setTimeout(() => request.abort(new DOMException(t("Block preview timed out. Try editing again."), "TimeoutError")), 10_000);
         try {
             const response = await this.api.fetchApi(`/vnccs/prompt_designer/preview?block_id=${encodeURIComponent(block.id)}`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
@@ -2342,9 +2344,9 @@ export class PromptDesignerWidget {
             });
             const result = await readPromptResponse(response);
             if (this.disposed || revision !== this.blockRevision) return;
-            if (!response.ok) throw new Error(result.error || "Could not parse block variants.");
+            if (!response.ok) throw new Error(result.error || t("Could not parse block variants."));
             this.blockStatus.classList.remove("error");
-            if (!this.blockSearch.value) this.blockStatus.textContent = block.text ? `${blockRows(block.text).rows.length} variants` : "Empty block";
+            if (!this.blockSearch.value) this.blockStatus.textContent = block.text ? t("{count} variants", { count: blockRows(block.text).rows.length }) : t("Empty block");
         } catch (error) {
             if (!this.disposed && revision === this.blockRevision && error.name !== "AbortError") {
                 this.blockStatus.textContent = error.message;
@@ -2364,7 +2366,7 @@ export class PromptDesignerWidget {
     }
 
     newBlock() {
-        if (this.state.blocks.length >= 256) { this.setStatus("The block library supports up to 256 blocks.", true); return; }
+        if (this.state.blocks.length >= 256) { this.setStatus(t("The block library supports up to 256 blocks."), true); return; }
         const id = promptId();
         this.state.blocks.push({ id, name: "New block", category: this.libraryCategory, text: "" });
         this.commit();
@@ -2397,11 +2399,11 @@ export class PromptDesignerWidget {
                     else { const block = this.useLibraryBlock(item); this.renderLibrary(); this.openBlock(block.id); }
                 } catch (error) { this.setStatus(error.message, true); }
             }],
-            ["Rename", () => this.libraryActions.dialog({ title: kind === "prompt" ? "Rename prompt template" : "Rename block",
-                message: `Choose a new name for “${item.name}”.`, value: item.name,
+            ["Rename", () => this.libraryActions.dialog({ title: kind === "prompt" ? t("Rename prompt template") : t("Rename block"),
+                message: t("Choose a new name for “{name}”.", { name: item.name }), value: item.name,
                 action: async name => {
                     const changed = kind === "prompt" ? await this.changeLibraryPrompt(item, name) : this.renameLibraryBlock(item, name);
-                    if (!changed) throw new Error(this.status.textContent || "The card could not be renamed.");
+                    if (!changed) throw new Error(this.status.textContent || t("The card could not be renamed."));
                     this.renderLibrary();
                 } })],
             ["Delete", () => this.confirmLibraryDelete(kind, item)],
@@ -2412,10 +2414,10 @@ export class PromptDesignerWidget {
 
     confirmLibraryDelete(kind, item) {
         if (!item) return;
-        this.libraryActions.dialog({ title: kind === "prompt" ? "Delete prompt template" : "Delete block",
-            message: `Delete “${item.name}” from the library?`, action: async () => {
+        this.libraryActions.dialog({ title: kind === "prompt" ? t("Delete prompt template") : t("Delete block"),
+            message: t("Delete “{name}” from the library?", { name: item.name }), action: async () => {
                 const changed = kind === "prompt" ? await this.deleteLibraryPrompt(item) : this.deleteBlock(item);
-                if (!changed) throw new Error(this.status.textContent || "The card could not be deleted.");
+                if (!changed) throw new Error(this.status.textContent || t("The card could not be deleted."));
             } });
     }
 
@@ -2518,7 +2520,7 @@ export class PromptDesignerWidget {
         try { this.capturePromptTabs(); normalizeState(this.state); }
         catch (error) {
             if (this.saved) { this.state = normalizeState(JSON.parse(this.saved)); this.render(); }
-            this.setStatus(`${error.message} Last valid edit was retained.`, true);
+            this.setStatus(t("{error} Last valid edit was retained.", { error: error.message }), true);
             return;
         }
         const value = JSON.stringify(this.state);
@@ -2596,11 +2598,11 @@ export class PromptDesignerWidget {
     }
 
     prepareForQueue() {
-        if (this.restoring || this.container?.inert) throw new Error("Prompt Designer state restoration is not complete.");
+        if (this.restoring || this.container?.inert) throw new Error(t("Prompt Designer state restoration is not complete."));
         if (this.restoreError) throw this.restoreError;
         if (hasCycle(this.state)) {
             const cycleIndex = (this.state.cycleIndex ?? -1) + 1;
-            if (!Number.isSafeInteger(cycleIndex)) throw new Error("Cycle position is too large.");
+            if (!Number.isSafeInteger(cycleIndex)) throw new Error(t("Cycle position is too large."));
             this.state.cycleIndex = cycleIndex;
         }
         if (this.state.afterGenerate === "randomize") {
@@ -2612,7 +2614,7 @@ export class PromptDesignerWidget {
     }
 
     serializeForPrompt() {
-        if (this.restoring || this.container?.inert) throw new Error("Prompt Designer state restoration is not complete.");
+        if (this.restoring || this.container?.inert) throw new Error(t("Prompt Designer state restoration is not complete."));
         if (this.restoreError) throw this.restoreError;
         return this.persist();
     }
@@ -2627,8 +2629,8 @@ export class PromptDesignerWidget {
         if (this.disposed || this.restoring || this.container?.inert) return;
         this.revision++;
         this.copy.disabled = true;
-        if (this.restoreError) { this.setStatus(`Could not restore state: ${this.restoreError.message}`, true); return; }
-        this.setStatus("Updating preview…");
+        if (this.restoreError) { this.setStatus(t("Could not restore state: {error}", { error: this.restoreError.message }), true); return; }
+        this.setStatus(t("Updating preview…"));
         if (this.previewFrame || this.previewBusy || this.disposed) return;
         this.previewFrame = requestAnimationFrame(() => { this.previewFrame = null; this.preview(); });
     }
@@ -2637,7 +2639,7 @@ export class PromptDesignerWidget {
         const revision = this.revision;
         this.previewBusy = true;
         const request = this.request = new AbortController();
-        const timeout = setTimeout(() => request.abort(new DOMException("Preview timed out. Try editing again.", "TimeoutError")), 10_000);
+        const timeout = setTimeout(() => request.abort(new DOMException(t("Preview timed out. Try editing again."), "TimeoutError")), 10_000);
         try {
             const response = await this.api.fetchApi("/vnccs/prompt_designer/preview", {
                 method: "POST", headers: { "Content-Type": "application/json" },
@@ -2645,11 +2647,11 @@ export class PromptDesignerWidget {
             });
             const result = await readPromptResponse(response);
             if (this.disposed || revision !== this.revision) return;
-            if (!response.ok) throw new Error(result.error || "Preview failed.");
+            if (!response.ok) throw new Error(result.error || t("Preview failed."));
             this.showResolvedPrompts(result.prompts ?? [result.prompt]);
             this.copy.disabled = false;
             const saved = this.storageStatus;
-            this.setStatus(saved?.message ?? "Live preview · Waiting for disk save", saved?.error ?? false);
+            this.setStatus(saved?.message ?? t("Live preview · Waiting for disk save"), saved?.error ?? false);
         } catch (error) {
             if (!this.disposed && revision === this.revision && error.name !== "AbortError") this.setStatus(error.message, true);
         } finally {

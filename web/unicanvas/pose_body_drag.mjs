@@ -4,6 +4,8 @@
  * own behavior; the move goes through the backdrop's character transform path, so it persists,
  * undoes and respects the wall like any other placement.
  */
+import { t } from "../i18n/index.mjs";
+
 const TORSO = /(pelvis|hips|spine|chest)/i;
 const NOT_TORSO = /(head|neck)/i;
 
@@ -44,7 +46,7 @@ function createIndicator(canvas) {
             if (mode !== depth) {
                 mode = depth;
                 icon.innerHTML = depth ? DEPTH_ICON : PLANE_ICON;
-                label.textContent = depth ? "Depth (Z): up = away, down = closer" : "Move: left / right / up / down";
+                label.textContent = depth ? t("Depth (Z): up = away, down = closer") : t("Move: left / right / up / down");
                 element.classList.toggle("depth", depth);
             }
             element.hidden = false;

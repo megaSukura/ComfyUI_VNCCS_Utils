@@ -10,6 +10,8 @@
  * The seed is not user-facing: the backend draws a fresh one for every run.
  */
 
+import { t } from "../i18n/index.mjs";
+
 export const REMOVE_BG_METHODS = [
   ["edit", "Edit model"],
   ["birefnet", "BiRefNet"],
@@ -61,8 +63,8 @@ export function removeBgEditSettings(settings, editModel) {
 export function buildRemoveBgSettings(settings, ui) {
   const { bind, makeSelect, commit, assets, familyDefaults } = ui;
   const selection = resolveRemoveBgSelection(settings);
-  const method = makeSelect(REMOVE_BG_METHODS, selection.method);
-  bind("Remove background", method);
+  const method = makeSelect(REMOVE_BG_METHODS.map(([value, label]) => [value, t(label)]), selection.method);
+  bind(t("Remove background"), method);
 
   const editRows = [];
   const editRow = (label, control) => {
@@ -70,8 +72,8 @@ export function buildRemoveBgSettings(settings, ui) {
     editRows.push(row);
     return row;
   };
-  const mode = makeSelect(REMOVE_BG_EDIT_MODES, selection.editModel);
-  const modeRow = editRow("Mode", mode);
+  const mode = makeSelect(REMOVE_BG_EDIT_MODES.map(([value, label]) => [value, t(label)]), selection.editModel);
+  const modeRow = editRow(t("Mode"), mode);
 
   const stored = () => {
     settings.remove_bg_edit ||= {};
@@ -96,9 +98,9 @@ export function buildRemoveBgSettings(settings, ui) {
     if (value && stored()[key] === undefined) stored()[key] = value;
   };
   const withCurrent = (list, value) => (value && !list.includes(value) ? [value, ...list] : list)
-    .map((name) => [name, name || "None"]);
+    .map((name) => [name, name || t("None")]);
 
-  const loader = makeSelect(EDIT_LOADERS, "diffusion_model");
+  const loader = makeSelect(EDIT_LOADERS.map(([value, label]) => [value, t(label)]), "diffusion_model");
   const diffusionModel = makeSelect([], "");
   const ggufModel = makeSelect([], "");
   const ggufArch = makeSelect([], "");
@@ -117,19 +119,19 @@ export function buildRemoveBgSettings(settings, ui) {
   const compact = document.createElement("div");
   compact.className = "vnccs-uc-settings-inline";
   compact.style.cssText = "display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr); gap:6px;";
-  const loaderRow = editRow("Loader", loader);
+  const loaderRow = editRow(t("Loader"), loader);
   loaderRow.before(compact);
-  compact.append(loaderRow, editRow("Steps", steps), editRow("CFG", cfg));
+  compact.append(loaderRow, editRow(t("Steps"), steps), editRow(t("CFG"), cfg));
   editRows.push(compact);
-  const diffusionRow = editRow("Diffusion model", diffusionModel);
-  const ggufRow = editRow("GGUF model", ggufModel);
-  const archRow = editRow("GGUF architecture", ggufArch);
-  editRow("CLIP", clip);
-  editRow("VAE", vae);
-  editRow("Sampler", sampler);
-  editRow("Scheduler", scheduler);
-  editRow("Turbo LoRA (optional)", lora);
-  editRow("Remove bg prompt (sent on every run)", prompt);
+  const diffusionRow = editRow(t("Diffusion model"), diffusionModel);
+  const ggufRow = editRow(t("GGUF model"), ggufModel);
+  const archRow = editRow(t("GGUF architecture"), ggufArch);
+  editRow(t("CLIP"), clip);
+  editRow(t("VAE"), vae);
+  editRow(t("Sampler"), sampler);
+  editRow(t("Scheduler"), scheduler);
+  editRow(t("Turbo LoRA (optional)"), lora);
+  editRow(t("Remove bg prompt (sent on every run)"), prompt);
 
   const fill = (select, list, value) => {
     select.replaceChildren(...withCurrent(list, value).map(([optionValue, label]) => {
