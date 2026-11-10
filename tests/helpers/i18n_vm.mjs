@@ -7,7 +7,9 @@ import { t } from "../../web/i18n/index.mjs";
 
 const { createContext, runInNewContext } = vm;
 const withTranslation = (context = {}) => {
+    // Modules that already use `t` as a local name import the helper as `tr`.
     if (!("t" in context)) context.t = t;
+    if (!("tr" in context)) context.tr = t;
     return context;
 };
 vm.createContext = (context, options) => createContext(withTranslation(context), options);

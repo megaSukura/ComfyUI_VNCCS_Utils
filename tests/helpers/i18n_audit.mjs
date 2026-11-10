@@ -12,7 +12,8 @@ const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const SKIPPED_DIRECTORIES = new Set(["vendor", "i18n"]);
 const PLACEHOLDER = /\{(\w+)\}/g;
 
-const CALL = /(?<![\w$.])t\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1\s*([,)])/g;
+// `tr` is the import alias in modules that already use `t` as a local name.
+const CALL = /(?<![\w$.])tr?\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1\s*([,)])/g;
 const HINTS = [
     /\b(?:textContent|innerText|title|placeholder|ariaLabel|alt)\s*=\s*(["'`])(?=[^"'`]*[A-Za-z]{2})(?:\\.|(?!\1)[^\\])*\1/,
     /setAttribute\(\s*["'](?:title|aria-label|placeholder|alt)["']\s*,\s*(["'`])(?=[^"'`]*[A-Za-z]{2})/,
@@ -66,7 +67,7 @@ export function auditI18n(targets, dictionary) {
             else if (!(call.key in dictionary)) missing.push({ file: relative, line: call.line, key: call.key });
         }
         source.split("\n").forEach((text, index) => {
-            if (/console\.|\bt\(/.test(text)) return;
+            if (/console\.|\btr?\(/.test(text)) return;
             if (HINTS.some(pattern => pattern.test(text))) hints.push({ file: relative, line: index + 1, text: text.trim().slice(0, 160) });
         });
     }
