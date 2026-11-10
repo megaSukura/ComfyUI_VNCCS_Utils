@@ -1,0 +1,17 @@
+{
+  "settingsCategories": {
+    "VNCCS": "VNCCS",
+    "UniCanvas": "UniCanvas",
+    "Prompt enhance": "Prompt enhance",
+    "Standalone sidebar": "Standalone sidebar"
+  },
+  "nodeCategories": {
+    "VNCCS": "VNCCS",
+    "pose": "pose",
+    "canvas": "canvas",
+    "config": "config",
+    "prompt": "prompt",
+    "detailing": "detailing",
+    "3D": "3D"
+  }
+}

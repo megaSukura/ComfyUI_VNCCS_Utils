@@ -1,0 +1,367 @@
+{
+  "VNCCS_PositionControl": {
+    "display_name": "VNCCS Position Control",
+    "inputs": {
+      "azimuth": {
+        "name": "azimuth",
+        "tooltip": "Angle of the camera around the subject (0=Front, 90=Right, 180=Back)"
+      },
+      "elevation": {
+        "name": "elevation",
+        "tooltip": "Vertical angle of the camera (-30=Low, 0=Eye Level, 60=High)"
+      },
+      "distance": {
+        "name": "distance"
+      },
+      "include_trigger": {
+        "name": "include_trigger",
+        "tooltip": "Include <sks> trigger word"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "prompt"
+      }
+    }
+  },
+  "VNCCS_VisualPositionControl": {
+    "display_name": "VNCCS Visual Camera Control",
+    "outputs": {
+      "0": {
+        "name": "prompt"
+      }
+    }
+  },
+  "VNCCS_BBox_Extractor": {
+    "display_name": "VNCCS BBox Extractor",
+    "inputs": {
+      "image": {
+        "name": "image"
+      },
+      "bbox_detector": {
+        "name": "bbox_detector"
+      },
+      "threshold": {
+        "name": "threshold"
+      },
+      "dilation": {
+        "name": "dilation"
+      },
+      "drop_size": {
+        "name": "drop_size"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "images"
+      }
+    }
+  },
+  "VNCCS_PoseStudio": {
+    "display_name": "VNCCS Pose Studio",
+    "inputs": {
+      "pose_data": {
+        "name": "pose_data"
+      },
+      "pose_image": {
+        "name": "pose_image"
+      },
+      "camera_prompt": {
+        "name": "camera_prompt",
+        "tooltip": "Camera direction from VNCCS Visual Camera Control."
+      },
+      "animation_image_batch": {
+        "name": "animation_image_batch",
+        "tooltip": "Return animation frames as one IMAGE batch instead of VIDEO."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "images"
+      },
+      "1": {
+        "name": "lighting_prompt"
+      }
+    }
+  },
+  "VNCCS_PoseLibraryCreator": {
+    "display_name": "VNCCS Pose Library Creator",
+    "inputs": {
+      "model": {
+        "name": "model"
+      },
+      "clip": {
+        "name": "clip"
+      },
+      "vae": {
+        "name": "vae"
+      },
+      "PoseImage": {
+        "name": "PoseImage",
+        "tooltip": "One image containing the pose to reconstruct with SAM 3D Body."
+      },
+      "CharacterImage": {
+        "name": "CharacterImage",
+        "tooltip": "One character reference for Qwen Image 2.1 image2."
+      },
+      "seed": {
+        "name": "seed"
+      },
+      "resolution_scale": {
+        "name": "resolution_scale"
+      },
+      "steps": {
+        "name": "steps"
+      },
+      "cfg": {
+        "name": "cfg"
+      },
+      "sampler_name": {
+        "name": "sampler_name"
+      },
+      "scheduler": {
+        "name": "scheduler"
+      },
+      "category": {
+        "name": "category",
+        "tooltip": "Override the generated category. Leave empty for automatic categorization."
+      },
+      "tags": {
+        "name": "tags",
+        "tooltip": "Extra comma-separated tags. Added to generated tags; duplicates are removed ignoring case."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "image"
+      }
+    }
+  },
+  "VNCCS_UniCanvas": {
+    "display_name": "VNCCS UniCanvas",
+    "inputs": {
+      "unicanvas_state": {
+        "name": "unicanvas_state"
+      },
+      "config": {
+        "name": "config"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "image"
+      }
+    }
+  },
+  "VNCCS_Config": {
+    "display_name": "VNCSS Config",
+    "inputs": {
+      "node_state": {
+        "name": "node_state"
+      },
+      "model": {
+        "name": "model"
+      },
+      "clip": {
+        "name": "clip"
+      },
+      "vae": {
+        "name": "vae"
+      },
+      "audio_vae": {
+        "name": "audio_vae"
+      },
+      "reference_image_1": {
+        "name": "reference_image_1"
+      },
+      "reference_image_2": {
+        "name": "reference_image_2"
+      },
+      "reference_image_3": {
+        "name": "reference_image_3"
+      },
+      "reference_image_4": {
+        "name": "reference_image_4"
+      },
+      "reference_image_5": {
+        "name": "reference_image_5"
+      },
+      "reference_image_6": {
+        "name": "reference_image_6"
+      },
+      "reference_image_7": {
+        "name": "reference_image_7"
+      },
+      "reference_image_8": {
+        "name": "reference_image_8"
+      },
+      "reference_image_9": {
+        "name": "reference_image_9"
+      },
+      "reference_image_10": {
+        "name": "reference_image_10"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "config"
+      }
+    }
+  },
+  "VNCCS_PromptDesigner": {
+    "display_name": "VNCCS Prompt Designer",
+    "description": "Compose text and reusable random blocks in an automatically saved tabbed editor.",
+    "inputs": {
+      "node_state": {
+        "name": "node_state"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "prompt"
+      },
+      "1": {
+        "name": "prompt2"
+      },
+      "2": {
+        "name": "prompt3"
+      },
+      "3": {
+        "name": "prompt4"
+      },
+      "4": {
+        "name": "prompt5"
+      },
+      "5": {
+        "name": "prompt6"
+      },
+      "6": {
+        "name": "prompt7"
+      },
+      "7": {
+        "name": "prompt8"
+      },
+      "8": {
+        "name": "prompt9"
+      },
+      "9": {
+        "name": "prompt10"
+      },
+      "10": {
+        "name": "prompt11"
+      },
+      "11": {
+        "name": "prompt12"
+      },
+      "12": {
+        "name": "prompt13"
+      },
+      "13": {
+        "name": "prompt14"
+      },
+      "14": {
+        "name": "prompt15"
+      },
+      "15": {
+        "name": "prompt16"
+      }
+    }
+  },
+  "VNCCS_3DFactory": {
+    "display_name": "VNCCS 3D Factory",
+    "inputs": {
+      "factory_data": {
+        "name": "factory_data"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "preview"
+      },
+      "1": {
+        "name": "scene"
+      }
+    }
+  },
+  "VNCCS_FactoryRender": {
+    "display_name": "VNCCS Factory Render",
+    "description": "Capture RGB, metric depth, view normals and object masks from the connected 3D Factory scene. Fresh captures require its open widget in 3D view.",
+    "inputs": {
+      "scene": {
+        "name": "scene"
+      },
+      "profile": {
+        "name": "profile",
+        "tooltip": "Gaussian splats require explicit coarse box approval. Boxes are approximate conditioning geometry."
+      },
+      "width": {
+        "name": "width"
+      },
+      "height": {
+        "name": "height"
+      },
+      "depth_min": {
+        "name": "depth_min",
+        "tooltip": "Meters; white in the depth preview."
+      },
+      "depth_max": {
+        "name": "depth_max",
+        "tooltip": "Meters; black in the preview. Raw metric depth is retained independently."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "rgb"
+      },
+      "1": {
+        "name": "depth"
+      },
+      "2": {
+        "name": "normal"
+      },
+      "3": {
+        "name": "alpha"
+      },
+      "4": {
+        "name": "object_id"
+      },
+      "5": {
+        "name": "camera_metadata"
+      },
+      "6": {
+        "name": "capture"
+      }
+    }
+  },
+  "VNCCS_FactoryMask": {
+    "display_name": "VNCCS Factory Mask",
+    "description": "Select exact entity IDs from a Factory capture. White means selected foreground. Empty selection selects all geometry.",
+    "inputs": {
+      "capture": {
+        "name": "capture"
+      },
+      "entities": {
+        "name": "entities",
+        "tooltip": "Comma/newline-separated entity keys from camera_metadata, e.g. object:<id>, wall:<id>, room:<id>. Empty selects all."
+      },
+      "invert": {
+        "name": "invert"
+      },
+      "grow_pixels": {
+        "name": "grow_pixels",
+        "tooltip": "Positive dilates; negative erodes."
+      },
+      "feather_pixels": {
+        "name": "feather_pixels"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "mask"
+      },
+      "1": {
+        "name": "metadata"
+      }
+    }
+  }
+}

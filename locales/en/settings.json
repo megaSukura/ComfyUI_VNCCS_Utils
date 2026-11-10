@@ -1,0 +1,10 @@
+{
+  "VNCCS_UniCanvas_PromptEnhance_Prompts": {
+    "name": "System prompts per model family",
+    "tooltip": "Opens a window with one tab per model family. A family without a system prompt has no wand. The wand, automatic mode and the wand's encoder are in the UniCanvas settings."
+  },
+  "VNCCS_UniCanvas_StandaloneSidebar": {
+    "name": "Show the standalone UniCanvas sidebar tab",
+    "tooltip": "Adds a UniCanvas workspace to the ComfyUI sidebar that works without a node or workflow."
+  }
+}

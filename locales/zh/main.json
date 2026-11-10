@@ -1,0 +1,17 @@
+{
+  "settingsCategories": {
+    "VNCCS": "VNCCS",
+    "UniCanvas": "UniCanvas",
+    "Prompt enhance": "提示词增强",
+    "Standalone sidebar": "独立侧边栏"
+  },
+  "nodeCategories": {
+    "VNCCS": "VNCCS",
+    "pose": "姿势",
+    "canvas": "画布",
+    "config": "配置",
+    "prompt": "提示词",
+    "detailing": "细节处理",
+    "3D": "3D"
+  }
+}

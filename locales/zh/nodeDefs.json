@@ -1,0 +1,367 @@
+{
+  "VNCCS_PositionControl": {
+    "display_name": "VNCCS 位置控制",
+    "inputs": {
+      "azimuth": {
+        "name": "方位角",
+        "tooltip": "相机围绕主体的角度（0=正面，90=右侧，180=背面）"
+      },
+      "elevation": {
+        "name": "俯仰角",
+        "tooltip": "相机的垂直角度（-30=低角度，0=平视，60=高角度）"
+      },
+      "distance": {
+        "name": "取景距离"
+      },
+      "include_trigger": {
+        "name": "包含触发词",
+        "tooltip": "包含 <sks> 触发词"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "提示词"
+      }
+    }
+  },
+  "VNCCS_VisualPositionControl": {
+    "display_name": "VNCCS 可视化相机控制",
+    "outputs": {
+      "0": {
+        "name": "提示词"
+      }
+    }
+  },
+  "VNCCS_BBox_Extractor": {
+    "display_name": "VNCCS 边界框提取器",
+    "inputs": {
+      "image": {
+        "name": "图像"
+      },
+      "bbox_detector": {
+        "name": "边界框检测器"
+      },
+      "threshold": {
+        "name": "阈值"
+      },
+      "dilation": {
+        "name": "扩展像素"
+      },
+      "drop_size": {
+        "name": "忽略尺寸"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "图像"
+      }
+    }
+  },
+  "VNCCS_PoseStudio": {
+    "display_name": "VNCCS 姿势工作室",
+    "inputs": {
+      "pose_data": {
+        "name": "姿势数据"
+      },
+      "pose_image": {
+        "name": "姿势图像"
+      },
+      "camera_prompt": {
+        "name": "相机提示词",
+        "tooltip": "来自 VNCCS 可视化相机控制的相机方向。"
+      },
+      "animation_image_batch": {
+        "name": "动画图像批次",
+        "tooltip": "将动画帧作为单个图像批次返回，而不是视频。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "图像"
+      },
+      "1": {
+        "name": "光照提示词"
+      }
+    }
+  },
+  "VNCCS_PoseLibraryCreator": {
+    "display_name": "VNCCS 姿势库创建器",
+    "inputs": {
+      "model": {
+        "name": "模型"
+      },
+      "clip": {
+        "name": "CLIP"
+      },
+      "vae": {
+        "name": "VAE"
+      },
+      "PoseImage": {
+        "name": "姿势图像",
+        "tooltip": "一张包含待重建姿势的图像，由 SAM 3D Body 处理。"
+      },
+      "CharacterImage": {
+        "name": "角色图像",
+        "tooltip": "一张角色参考图，用于 Qwen Image 2.1 的 image2。"
+      },
+      "seed": {
+        "name": "随机种"
+      },
+      "resolution_scale": {
+        "name": "分辨率缩放"
+      },
+      "steps": {
+        "name": "步数"
+      },
+      "cfg": {
+        "name": "CFG"
+      },
+      "sampler_name": {
+        "name": "采样器"
+      },
+      "scheduler": {
+        "name": "调度器"
+      },
+      "category": {
+        "name": "分类",
+        "tooltip": "覆盖生成的分类。留空则自动分类。"
+      },
+      "tags": {
+        "name": "标签",
+        "tooltip": "额外的逗号分隔标签。会添加到生成的标签中，重复项忽略大小写。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "图像"
+      }
+    }
+  },
+  "VNCCS_UniCanvas": {
+    "display_name": "VNCCS UniCanvas 画布",
+    "inputs": {
+      "unicanvas_state": {
+        "name": "UniCanvas 状态"
+      },
+      "config": {
+        "name": "配置"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "图像"
+      }
+    }
+  },
+  "VNCCS_Config": {
+    "display_name": "VNCSS 配置",
+    "inputs": {
+      "node_state": {
+        "name": "节点状态"
+      },
+      "model": {
+        "name": "模型"
+      },
+      "clip": {
+        "name": "CLIP"
+      },
+      "vae": {
+        "name": "VAE"
+      },
+      "audio_vae": {
+        "name": "音频 VAE"
+      },
+      "reference_image_1": {
+        "name": "参考图像 1"
+      },
+      "reference_image_2": {
+        "name": "参考图像 2"
+      },
+      "reference_image_3": {
+        "name": "参考图像 3"
+      },
+      "reference_image_4": {
+        "name": "参考图像 4"
+      },
+      "reference_image_5": {
+        "name": "参考图像 5"
+      },
+      "reference_image_6": {
+        "name": "参考图像 6"
+      },
+      "reference_image_7": {
+        "name": "参考图像 7"
+      },
+      "reference_image_8": {
+        "name": "参考图像 8"
+      },
+      "reference_image_9": {
+        "name": "参考图像 9"
+      },
+      "reference_image_10": {
+        "name": "参考图像 10"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "配置"
+      }
+    }
+  },
+  "VNCCS_PromptDesigner": {
+    "display_name": "VNCCS 提示词设计器",
+    "description": "在自动保存的标签页编辑器中组合文本和可复用的随机块。",
+    "inputs": {
+      "node_state": {
+        "name": "节点状态"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "提示词"
+      },
+      "1": {
+        "name": "提示词2"
+      },
+      "2": {
+        "name": "提示词3"
+      },
+      "3": {
+        "name": "提示词4"
+      },
+      "4": {
+        "name": "提示词5"
+      },
+      "5": {
+        "name": "提示词6"
+      },
+      "6": {
+        "name": "提示词7"
+      },
+      "7": {
+        "name": "提示词8"
+      },
+      "8": {
+        "name": "提示词9"
+      },
+      "9": {
+        "name": "提示词10"
+      },
+      "10": {
+        "name": "提示词11"
+      },
+      "11": {
+        "name": "提示词12"
+      },
+      "12": {
+        "name": "提示词13"
+      },
+      "13": {
+        "name": "提示词14"
+      },
+      "14": {
+        "name": "提示词15"
+      },
+      "15": {
+        "name": "提示词16"
+      }
+    }
+  },
+  "VNCCS_3DFactory": {
+    "display_name": "VNCCS 3D 工厂",
+    "inputs": {
+      "factory_data": {
+        "name": "工厂数据"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "预览"
+      },
+      "1": {
+        "name": "场景"
+      }
+    }
+  },
+  "VNCCS_FactoryRender": {
+    "display_name": "VNCCS 工厂渲染",
+    "description": "从连接的 3D 工厂场景采集中采集 RGB、度量深度、视角法线和对象蒙版。实时采集需要它的组件在 3D 视图中打开。",
+    "inputs": {
+      "scene": {
+        "name": "场景"
+      },
+      "profile": {
+        "name": "采集配置",
+        "tooltip": "高斯泼溅需要显式批准粗略包围盒。包围盒是近似的条件几何体。"
+      },
+      "width": {
+        "name": "宽度"
+      },
+      "height": {
+        "name": "高度"
+      },
+      "depth_min": {
+        "name": "深度最小值",
+        "tooltip": "单位：米；在深度预览中显示为白色。"
+      },
+      "depth_max": {
+        "name": "深度最大值",
+        "tooltip": "单位：米；在预览中显示为黑色。原始度量深度会单独保留。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "RGB"
+      },
+      "1": {
+        "name": "深度"
+      },
+      "2": {
+        "name": "法线"
+      },
+      "3": {
+        "name": "透明度"
+      },
+      "4": {
+        "name": "对象 ID"
+      },
+      "5": {
+        "name": "相机元数据"
+      },
+      "6": {
+        "name": "采集"
+      }
+    }
+  },
+  "VNCCS_FactoryMask": {
+    "display_name": "VNCCS 工厂蒙版",
+    "description": "从工厂采集中选择精确的实体 ID。白色表示选中的前景。空选择会选中所有几何体。",
+    "inputs": {
+      "capture": {
+        "name": "采集"
+      },
+      "entities": {
+        "name": "实体",
+        "tooltip": "来自 camera_metadata 的实体键，用逗号或换行分隔，例如 object:<id>、wall:<id>、room:<id>。留空则选择全部。"
+      },
+      "invert": {
+        "name": "反转"
+      },
+      "grow_pixels": {
+        "name": "扩展像素",
+        "tooltip": "正值膨胀，负值腐蚀。"
+      },
+      "feather_pixels": {
+        "name": "羽化像素"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "蒙版"
+      },
+      "1": {
+        "name": "元数据"
+      }
+    }
+  }
+}

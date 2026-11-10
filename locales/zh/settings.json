@@ -1,0 +1,10 @@
+{
+  "VNCCS_UniCanvas_PromptEnhance_Prompts": {
+    "name": "每个模型系列的系统提示词",
+    "tooltip": "打开一个窗口，每个模型系列一个标签页。没有系统提示词的系列不会显示魔法棒。魔法棒、自动模式和魔法棒的编码器位于 UniCanvas 设置中。"
+  },
+  "VNCCS_UniCanvas_StandaloneSidebar": {
+    "name": "显示独立的 UniCanvas 侧边栏标签页",
+    "tooltip": "在 ComfyUI 侧边栏中添加一个无需节点或工作流即可使用的 UniCanvas 工作区。"
+  }
+}
