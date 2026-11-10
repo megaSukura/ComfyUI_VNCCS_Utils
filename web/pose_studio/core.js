@@ -7,7 +7,7 @@
 
 import { normalizeCaptureLens } from "./animation.mjs?v=20261110.1";
 import { t as tr } from "../i18n/index.mjs";
-import { JointLimiter } from "./joint_limits.mjs?v=20261110.2";
+import { JointLimiter } from "./joint_limits.mjs?v=20261110.3";
 
 // Determine the extension's base URL dynamically to support varied directory names
 const EXTENSION_URL = new URL(".", import.meta.url).toString();
@@ -1337,7 +1337,7 @@ export class PoseViewerCore {
 
     // TransformControls rebuilds the rotation from the drag start on every move, so the
     // gizmo's own rotation is tracked apart from the limited bone and only each move's
-    // increment is applied to it. A joint stopped at its limit follows again as soon as
+    // increment is applied to it. A joint held at its limit follows again as soon as
     // the drag turns back.
     limitGizmoRotation(bone) {
         const drag = this._gizmoDrag;
@@ -1345,10 +1345,10 @@ export class PoseViewerCore {
         if (!limiter?.hasLimit(bone) || drag?.bone !== bone) return false;
         const target = drag.limited.clone().multiply(drag.gizmo.invert()).multiply(bone.quaternion).normalize();
         drag.gizmo.copy(bone.quaternion);
-        const stopped = limiter.stopAtLimit(bone, drag.limited, target);
+        const limited = limiter.limitRotation(bone, drag.limited, target);
         drag.limited.copy(bone.quaternion);
         bone.updateMatrixWorld(true);
-        return stopped;
+        return limited;
     }
 
     dispatchPoseChange() {

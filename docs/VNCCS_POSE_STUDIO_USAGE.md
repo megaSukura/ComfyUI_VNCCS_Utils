@@ -167,8 +167,10 @@ The reset is one Undo step and, in Animation mode, is keyed like a joint drag.
 
 **Settings → Joint Limits** (off by default) keeps the spine, neck, head,
 clavicles, shoulders, elbows, wrists, hips, knees, ankles, and toes within a
-loose human range of motion while you rotate a joint or drag a limb. A rotation
-gizmo stops where the joint reaches its limit instead of turning it around
+loose human range of motion while you rotate a joint or drag a limb. At a limit,
+a rotation gizmo keeps sliding the joint along it while that still turns the
+joint roughly the way you drag (a twisted knee keeps bending on its hinge) and
+stops when you push straight into the limit, so the joint never swings around
 another axis; a joint already outside its range can be turned back but not
 further out. Elbows and knees bend only in their natural direction; when you
 drag a hand or foot, the upper arm or thigh turns so the elbow or knee can

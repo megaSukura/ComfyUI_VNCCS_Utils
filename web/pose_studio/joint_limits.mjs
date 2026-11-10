@@ -38,6 +38,11 @@ const JOINT_LIMITS = {
 
 const clampRange = (value, [min, max]) => Math.min(max, Math.max(min, value));
 const outsideRange = (value, [min, max]) => Math.max(0, min - value, value - max);
+const ANGLES = ["flexion", "lateral", "twist"];
+// Past a limit a gizmo drag slides along it while the slide turns the bone around an axis
+// within 50 degrees of the drag's axis, slows down until 70 degrees and stops beyond.
+const SLIDE_FULL = Math.cos(50 * DEG);
+const SLIDE_NONE = Math.cos(70 * DEG);
 
 export class JointLimiter {
     constructor(THREE) {
@@ -143,6 +148,15 @@ export class JointLimiter {
         };
     }
 
+    // Rebuild a local rotation from frame angles; the frame is the one last resolved for the bone.
+    _compose(target, flexion, lateral, twist) {
+        const swingAngle = Math.hypot(flexion, lateral);
+        if (swingAngle < 1e-9) this._swing.identity();
+        else this._swing.setFromAxisAngle(this._a.set(flexion / swingAngle, 0, lateral / swingAngle), swingAngle);
+        this._twist.setFromAxisAngle(this._yAxis, twist);
+        return target.copy(this._frame).multiply(this._swing).multiply(this._twist).multiply(this._inverseFrame);
+    }
+
     /** Clamp a bone's local rotation to its range of motion. Returns true when it changed. */
     clamp(bone) {
         const state = this._decompose(bone);
@@ -153,42 +167,54 @@ export class JointLimiter {
         const nextTwist = clampRange(twist, limit.twist);
         // Rotations already on a boundary decompose with rounding error; leave them alone.
         if (Math.abs(nextFlexion - flexion) + Math.abs(nextLateral - lateral) + Math.abs(nextTwist - twist) < 1e-7) return false;
-
-        const swingAngle = Math.hypot(nextFlexion, nextLateral);
-        if (swingAngle < 1e-9) this._swing.identity();
-        else this._swing.setFromAxisAngle(this._a.set(nextFlexion / swingAngle, 0, nextLateral / swingAngle), swingAngle);
-        this._twist.setFromAxisAngle(this._yAxis, nextTwist);
-        bone.quaternion.copy(this._frame).multiply(this._swing).multiply(this._twist).multiply(this._inverseFrame);
+        this._compose(bone.quaternion, nextFlexion, nextLateral, nextTwist);
         return true;
     }
 
-    // How far a local rotation lies outside the bone's ranges, summed over its three angles.
-    _violation(bone, quaternion) {
-        const state = this._decompose(bone, quaternion);
-        if (!state) return 0;
-        const { limit } = state;
-        return outsideRange(state.flexion, limit.flexion) + outsideRange(state.lateral, limit.lateral) + outsideRange(state.twist, limit.twist);
+    // Rotation axis, scaled by the sine of half the angle, that turns `from` into `to` in the parent frame.
+    _turnAxis(to, from) {
+        const q = from.clone().invert().premultiply(to);
+        return q.w < 0 ? new this.THREE.Vector3(-q.x, -q.y, -q.z) : new this.THREE.Vector3(q.x, q.y, q.z);
     }
 
     /**
-     * Turn a bone from `from` toward `to` and stop where it would leave its range,
-     * instead of projecting onto the range like clamp(), which can swing the bone
-     * around another axis. A rotation that is already out of range may move back
-     * but not further out. Writes bone.quaternion; returns true when it stopped.
+     * Turn a bone from `from` toward `to` within its range. The bone follows up to
+     * the limit. Past it, it slides along the limit while that still turns it about
+     * the way the drag does (a twisted knee keeps bending) and stops when the drag
+     * pushes against the limit, so a blocked axis never turns the bone around
+     * another one. Angles already out of range may move back but not further out.
+     * Writes bone.quaternion and returns true when the motion was limited.
      */
-    stopAtLimit(bone, from, to) {
-        const allowed = this._violation(bone, from) + 1e-9;
-        if (this._violation(bone, to) <= allowed) {
+    limitRotation(bone, from, to) {
+        const start = this._decompose(bone, from);
+        if (!start) {
             bone.quaternion.copy(to);
             return false;
         }
+        const ranges = ANGLES.map(key => [Math.min(start.limit[key][0], start[key]), Math.max(start.limit[key][1], start[key])]);
+        const anglesOf = quaternion => {
+            const state = this._decompose(bone, quaternion);
+            return ANGLES.map(key => state[key]);
+        };
+        const inRange = angles => angles.every((value, i) => outsideRange(value, ranges[i]) < 1e-9);
+        const target = anglesOf(to);
+        if (inRange(target)) {
+            bone.quaternion.copy(to);
+            return false;
+        }
+
         let low = 0, high = 1;
         for (let i = 0; i < 24; i++) {
             const middle = (low + high) / 2;
-            if (this._violation(bone, this._step.slerpQuaternions(from, to, middle)) <= allowed) low = middle;
+            if (inRange(anglesOf(this._step.slerpQuaternions(from, to, middle)))) low = middle;
             else high = middle;
         }
-        bone.quaternion.slerpQuaternions(from, to, low);
+        const reached = bone.quaternion.slerpQuaternions(from, to, low).clone();
+        const slid = this._compose(new this.THREE.Quaternion(), ...target.map((value, i) => clampRange(value, ranges[i])));
+        const drag = this._turnAxis(to, reached), slide = this._turnAxis(slid, reached);
+        const cosine = drag.dot(slide) / (drag.length() * slide.length() || 1);
+        const amount = clampRange((cosine - SLIDE_NONE) / (SLIDE_FULL - SLIDE_NONE), [0, 1]);
+        if (amount > 0) bone.quaternion.slerpQuaternions(reached, slid, amount);
         return true;
     }
 

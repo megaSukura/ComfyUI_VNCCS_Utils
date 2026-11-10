@@ -103,12 +103,12 @@ test("joint limits keep rotations in range unchanged and are off by default", ()
     assert.equal(viewer.applyJointLimits(viewer.bones.pelvis), false, "the pelvis orientation is never limited");
 });
 
-test("a limited gizmo rotation stops at the joint limit instead of turning around another axis", () => {
+test("a gizmo drag that mostly pushes into a limit stops instead of turning around another axis", () => {
     const { viewer } = rigScene();
     viewer.setJointLimitsEnabled(true);
     const { forearm, hinge, side } = forearmAxes(viewer);
-    // Half bend, half sideways: the sideways part reaches its 15 degree limit first.
-    const axis = hinge.clone().add(side).normalize();
+    // Mostly sideways with a little bend: the sideways part reaches its 15 degree limit.
+    const axis = side.clone().multiplyScalar(Math.cos(10 * DEG)).addScaledVector(hinge, Math.sin(10 * DEG));
     const rotate = gizmoDrag(viewer, forearm);
     const angles = [];
     for (let degrees = 0; degrees <= 90; degrees += 3) {
@@ -116,11 +116,33 @@ test("a limited gizmo rotation stops at the joint limit instead of turning aroun
         assert.ok(turned.offAxis < 1e-9, `the forearm only turns around the gizmo axis at ${degrees}: ${turned.offAxis}`);
         angles.push(turned.degrees);
     }
-    const stop = 15 * Math.SQRT2;
+    const stop = 15 / Math.cos(10 * DEG);
     assert.ok(angles.every((value, i) => i === 0 || value >= angles[i - 1] - 1e-9), "the joint never turns backwards");
     assert.ok(Math.abs(angles.at(-1) - stop) < 1e-4, `the forearm stops at the sideways limit: ${angles.at(-1)}`);
     assert.equal(new JointLimiter(THREE).clamp(forearm), false, "the stopped rotation is in range");
     assert.ok(Math.abs(rotationAbout(rotate(axis, 87), axis).degrees - (stop - 3)) < 1e-4, "turning back moves the joint at once");
+});
+
+test("a twisted knee keeps bending when the gizmo's bend ring leans into the sideways limit", () => {
+    for (const twist of [30, -30]) {
+        const { viewer } = rigScene();
+        viewer.setJointLimitsEnabled(true);
+        const calf = viewer.bones.calf_l;
+        const hinge = new THREE.Vector3().crossVectors(restDirection(calf.parent), restDirection(calf)).normalize();
+        const ring = new THREE.Vector3(Math.sign(hinge.x), 0, 0);
+        calf.quaternion.setFromAxisAngle(restDirection(calf), twist * DEG);
+        const rotate = gizmoDrag(viewer, calf);
+        for (let degrees = 0; degrees <= 270; degrees += 3) rotate(ring, degrees);
+        const knee = hingeState(viewer, "calf_l");
+        assert.ok(knee.bend > 150, `twist ${twist}: the knee bends to the end of its range: ${knee.bend}`);
+        assert.ok(knee.offPlane <= 10 + 1e-3, `twist ${twist}: the knee stays on its hinge: ${knee.offPlane}`);
+        assert.equal(new JointLimiter(THREE).clamp(calf), false, `twist ${twist}: the bent knee is in range`);
+
+        const sideways = gizmoDrag(viewer, calf);
+        const bent = calf.quaternion.clone();
+        for (let degrees = 0; degrees <= 60; degrees += 3) sideways(new THREE.Vector3(0, 0, 1), degrees);
+        assert.ok(calf.quaternion.angleTo(bent) < 12 * DEG, `twist ${twist}: a sideways drag does not swing the bent knee around`);
+    }
 });
 
 test("a gizmo drag does not snap an out-of-range joint and only lets it move back", () => {
