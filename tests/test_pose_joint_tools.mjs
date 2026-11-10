@@ -48,6 +48,29 @@ function rotateAroundRestHinge(viewer, name, degrees) {
     bone.updateMatrixWorld(true);
 }
 
+// The forearm's hinge axis and its sideways axis in the forearm's local frame.
+function forearmAxes(viewer) {
+    const forearm = viewer.bones.lowerarm_l;
+    const hinge = new THREE.Vector3().crossVectors(restDirection(forearm.parent), restDirection(forearm)).normalize();
+    return { forearm, hinge, side: new THREE.Vector3().crossVectors(hinge, restDirection(forearm)) };
+}
+
+// Mimics a local-space TransformControls rotation: every move rebuilds the rotation from the drag start.
+function gizmoDrag(viewer, bone) {
+    const start = bone.quaternion.clone();
+    viewer._gizmoDrag = { bone, gizmo: start.clone(), limited: start.clone() };
+    return (axis, degrees) => {
+        bone.quaternion.copy(start).multiply(new THREE.Quaternion().setFromAxisAngle(axis, degrees * DEG));
+        viewer.limitGizmoRotation(bone);
+        return bone.quaternion.clone();
+    };
+}
+
+function rotationAbout(q, axis) {
+    const vector = new THREE.Vector3(q.x, q.y, q.z);
+    return { degrees: 2 * Math.atan2(vector.dot(axis), q.w) / DEG, offAxis: vector.cross(axis).length() };
+}
+
 test("joint limits stop elbows and knees from bending backwards or folding through themselves", () => {
     const { viewer } = rigScene();
     viewer.setJointLimitsEnabled(true);
@@ -78,6 +101,38 @@ test("joint limits keep rotations in range unchanged and are off by default", ()
     assert.equal(viewer.applyJointLimits(forearm), false);
     assert.ok(forearm.quaternion.equals(inRange), "a rotation inside the range is not rewritten");
     assert.equal(viewer.applyJointLimits(viewer.bones.pelvis), false, "the pelvis orientation is never limited");
+});
+
+test("a limited gizmo rotation stops at the joint limit instead of turning around another axis", () => {
+    const { viewer } = rigScene();
+    viewer.setJointLimitsEnabled(true);
+    const { forearm, hinge, side } = forearmAxes(viewer);
+    // Half bend, half sideways: the sideways part reaches its 15 degree limit first.
+    const axis = hinge.clone().add(side).normalize();
+    const rotate = gizmoDrag(viewer, forearm);
+    const angles = [];
+    for (let degrees = 0; degrees <= 90; degrees += 3) {
+        const turned = rotationAbout(rotate(axis, degrees), axis);
+        assert.ok(turned.offAxis < 1e-9, `the forearm only turns around the gizmo axis at ${degrees}: ${turned.offAxis}`);
+        angles.push(turned.degrees);
+    }
+    const stop = 15 * Math.SQRT2;
+    assert.ok(angles.every((value, i) => i === 0 || value >= angles[i - 1] - 1e-9), "the joint never turns backwards");
+    assert.ok(Math.abs(angles.at(-1) - stop) < 1e-4, `the forearm stops at the sideways limit: ${angles.at(-1)}`);
+    assert.equal(new JointLimiter(THREE).clamp(forearm), false, "the stopped rotation is in range");
+    assert.ok(Math.abs(rotationAbout(rotate(axis, 87), axis).degrees - (stop - 3)) < 1e-4, "turning back moves the joint at once");
+});
+
+test("a gizmo drag does not snap an out-of-range joint and only lets it move back", () => {
+    const { viewer } = rigScene();
+    viewer.setJointLimitsEnabled(true);
+    const { forearm, side } = forearmAxes(viewer);
+    forearm.quaternion.setFromAxisAngle(side, 40 * DEG);
+    const posed = forearm.quaternion.clone();
+    const rotate = gizmoDrag(viewer, forearm);
+    assert.ok(sameRotation(rotate(side, 0), posed), "grabbing the gizmo keeps the pose");
+    assert.ok(Math.abs(rotationAbout(rotate(side, -10), side).degrees - 30) < 1e-6, "turning toward the range follows");
+    assert.ok(Math.abs(rotationAbout(rotate(side, 10), side).degrees - 30) < 1e-6, "turning further out is stopped");
 });
 
 test("left and right joints share mirrored ranges", () => {
