@@ -10,7 +10,7 @@ import {
     POSE_STUDIO_CAPTURE_FOV,
     PoseViewerCore,
     buildEquivalentPerspectiveProjectionFrame,
-} from "./pose_studio/core.js?v=20261110.3";
+} from "./pose_studio/core.js?v=20261110.4";
 import {
     cameraPromptToSkydomeRotation,
 } from "./camera_control/utils.mjs";
